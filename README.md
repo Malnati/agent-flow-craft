@@ -7,7 +7,7 @@
 ## 📚 Contextualização do Projeto
 Este repositório nasce de uma análise comparativa das principais ferramentas de desenvolvimento de agentes de IA (LangChain, LangFlow, AutoGen, CrewAI e Agno), avaliando popularidade, comunidade ativa e frequência de commits.
 
-O objetivo é documentar e estruturar um fluxo escalável para criação e gestão de agentes de IA especializados em microtarefas, replicando processos que seriam feitos manualmente.
+O objetivo principal é criar agentes de IA para execução autônoma de microtarefas, automatizando fluxos e utilizando a inteligência artificial para replicar e acelerar o trabalho humano.
 
 ---
 
@@ -32,7 +32,9 @@ Cada agente conterá:
 
 ---
 
-## 🚀 Tecnologias escolhidas
+## 🚀 Tecnologias consideradas para o projeto
+Abaixo, a lista de ferramentas consideradas durante a análise para compor o ecossistema deste projeto:
+
 | Ferramenta      | Motivo da escolha                                     |
 |-----------------|-------------------------------------------------------|
 | **LangChain**   | Comunidade enorme e altíssima frequência de commits.  |
@@ -41,6 +43,8 @@ Cada agente conterá:
 | **Agno**        | Flexível e adaptável, excelente para prototipação.    |
 | **CrewAI**      | Orientado a colaboração entre múltiplos agentes.      |
 | **UV**          | Gerenciador de ambientes Python rápido e prático.     |
+
+**Decisões atuais**: já está definido o uso do **UV**, do **Cursor** como IDE e do **Aider** para o fluxo de desenvolvimento assistido. As demais ferramentas ainda estão em avaliação, com forte tendência de escolha pelo **LangChain** ou pelo **Microsoft AutoGen**, a depender de testes adicionais.
 
 ---
 
