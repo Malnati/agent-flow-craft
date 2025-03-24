@@ -46,6 +46,7 @@ Cada agente conterá:
 
 ## 📂 Estrutura planejada do repositório
 
+```bash
 agent-flow-craft/
 │
 ├── docs/                  # Documentação completa
@@ -61,6 +62,7 @@ agent-flow-craft/
 ├── CONTRIBUTING.md
 ├── LICENSE
 └── roadmap.md
+```
 
 ---
 
