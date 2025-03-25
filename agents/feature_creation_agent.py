@@ -116,7 +116,19 @@ class FeatureCreationAgent(AssistantAgent):
         self.logger.info(f"Título da issue: {issue_title}")
         
         issue_number = self.create_github_issue(issue_title, prompt_text)
-        branch_name = f'feature/issue-{issue_number}'
+        
+        # Detectar tipo de branch automaticamente a partir do plano de execução
+        if any(keyword in execution_plan.lower() for keyword in ["corrigir", "correção", "bug", "fix"]):
+            branch_type = "fix"
+        elif any(keyword in execution_plan.lower() for keyword in ["documentação", "docs"]):
+            branch_type = "docs"
+        elif any(keyword in execution_plan.lower() for keyword in ["chore", "infraestrutura", "ajuste", "infra"]):
+            branch_type = "chore"
+        else:
+            branch_type = "feat"
+
+        generated_branch_suffix = execution_plan.replace(" ", "-").lower()[:30]
+        branch_name = f'{branch_type}/{issue_number}/{generated_branch_suffix}'
         
         self.create_branch(branch_name)
 
