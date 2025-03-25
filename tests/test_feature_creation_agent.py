@@ -38,7 +38,7 @@ class TestFeatureCreationAgent(unittest.TestCase):
         
         # Verificar se os logs foram chamados
         self.logger_mock.info.assert_any_call("Criando issue: Test Issue")
-        self.logger_mock.info.assert_any_call("Issue #123 criada com sucesso")
+        self.logger_mock.info.assert_any_call("Issue #123 criada e capturada com sucesso")
 
     @patch('subprocess.run')
     def test_create_branch(self, mock_run):
