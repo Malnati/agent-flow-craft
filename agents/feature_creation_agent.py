@@ -3,7 +3,7 @@ import subprocess
 import json
 import os
 import logging
-import re
+from slugify import slugify
 
 class FeatureCreationAgent(AssistantAgent):
     def __init__(self, github_token, repo_owner, repo_name):
@@ -149,26 +149,21 @@ class FeatureCreationAgent(AssistantAgent):
         
         git_log = self.get_git_main_log()
         suggestion = self.get_suggestion_from_openai(openai_token, prompt_text, git_log)
-        # parse suggestion aqui (usuário fará manualmente ou em próxima etapa)
 
-        issue_title = prompt_text.split('.')[0][:50]
-        self.logger.info(f"Título da issue: {issue_title}")
-        
-        issue_number = self.create_github_issue(issue_title, prompt_text)
-        
-        # Detectar tipo de branch automaticamente a partir do plano de execução
-        if any(keyword in execution_plan.lower() for keyword in ["corrigir", "correção", "bug", "fix"]):
-            branch_type = "fix"
-        elif any(keyword in execution_plan.lower() for keyword in ["documentação", "docs"]):
-            branch_type = "docs"
-        elif any(keyword in execution_plan.lower() for keyword in ["chore", "infraestrutura", "ajuste", "infra"]):
-            branch_type = "chore"
-        else:
-            branch_type = "feat"
+        branch_type_match = re.search(r'O tipo da branch:\s*(\w+)', suggestion)
+        branch_type = branch_type_match.group(1) if branch_type_match else "feat"
 
-        generated_branch_suffix = execution_plan.replace(" ", "-").lower()[:30]
+        title_match = re.search(r'Título curto para a issue:\s*"?(.+?)"?$', suggestion, re.MULTILINE)
+        issue_title = title_match.group(1) if title_match else prompt_text.split('.')[0][:50]
+
+        description_match = re.search(r'Descrição detalhada para a issue:\s*(.+)', suggestion, re.DOTALL)
+        issue_description = description_match.group(1) if description_match else prompt_text
+
+        issue_number = self.create_github_issue(issue_title, issue_description)
+
+        generated_branch_suffix = slugify(issue_title)[:30]
         branch_name = f'{branch_type}/{issue_number}/{generated_branch_suffix}'
-        
+
         self.create_branch(branch_name)
 
         self.create_pr_plan_file(issue_number, prompt_text, execution_plan, branch_name)
