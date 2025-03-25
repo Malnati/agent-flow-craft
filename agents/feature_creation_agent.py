@@ -93,23 +93,8 @@ class FeatureCreationAgent(AssistantAgent):
         with open(file_name, 'w') as f:
             f.write(f'# Plano de execução para a issue #{issue_number}\n\n')
             f.write(f'**Prompt recebido:** {prompt_text}\n\n')
-            f.write('**Plano de execução gerado automaticamente:**\n\n')
-            f.write('## Entregáveis:\n\n')
-            f.write('- **Entregável 1:** Descrição breve\n')
-            f.write('  - **Dependências:**\n    - Dependência A\n    - Dependência B\n')
-            f.write('  - **Exemplo:**\n    - Exemplo concreto de uso\n')
-            f.write('  - **Critérios de aceite:**\n    - Critério 1\n    - Critério 2\n')
-            f.write('  - **Troubleshooting:**\n    - Possível falha e como corrigir\n')
-            f.write('  - **Passo-a-passo:**\n    1. Passo inicial\n    2. Passo seguinte\n\n')
-            f.write('- **Entregável 2:** Descrição breve\n')
-            f.write('  - **Dependências:**\n    - Dependência X\n')
-            f.write('  - **Exemplo:**\n    - Exemplo de saída esperada\n')
-            f.write('  - **Critérios de aceite:**\n    - Checklist de validação\n')
-            f.write('  - **Troubleshooting:**\n    - Erros comuns e resolução\n')
-            f.write('  - **Passo-a-passo:**\n    1. Passo inicial\n    2. Passo seguinte\n\n')
-            f.write('## Observações Finais:\n')
-            f.write('- O agente deve consultar o histórico de commits e arquivos do projeto para enriquecer o plano.\n')
-            f.write('- Todos os exemplos devem estar alinhados ao codebase atual.\n')
+            f.write(f'**Plano de execução gerado automaticamente:**\n\n')
+            f.write(json.dumps(execution_plan, indent=4, ensure_ascii=False))
         
         subprocess.run(['git', 'add', file_name], check=True, timeout=30)
         subprocess.run(['git', 'commit', '-m', f'Add PR plan file for issue #{issue_number}'], check=True, timeout=30)
@@ -179,24 +164,36 @@ class FeatureCreationAgent(AssistantAgent):
         project_context = self.get_project_context()
 
         suggestion_prompt = f"""
-        Você é um planejador técnico. Gere um plano real, específico e sem placeholders.
+Você é um planejador técnico experiente. Baseado no prompt do usuário, histórico de commits e estrutura de arquivos do projeto, gere um JSON estruturado contendo:
 
-        Prompt do usuário: "{prompt_text}"
-        Histórico de commits da main:
-        {git_log}
+{{
+  "branch_type": "<feat|fix|docs|chore>",
+  "issue_title": "<Título curto da issue>",
+  "issue_description": "<Descrição detalhada da issue>",
+  "generated_branch_suffix": "<sufixo da branch (slug)>",
+  "execution_plan": {{
+    "deliverables": [
+      {{
+        "name": "<Nome do entregável>",
+        "description": "<Descrição detalhada>",
+        "dependencies": ["<lista de dependências do projeto>"],
+        "usage_example": "<exemplo de uso ou saída>",
+        "acceptance_criteria": ["<lista de critérios de aceite objetivos>"],
+        "troubleshooting": [
+          {{
+            "problem": "<problema possível>",
+            "possible_cause": "<causa provável>",
+            "resolution": "<resolução recomendada>"
+          }}
+        ],
+        "implementation_steps": ["<passo-a-passo ordenado para implementação>"]
+      }}
+    ]
+  }}
+}}
 
-        Estrutura e arquivos do projeto:
-        {project_context}
-
-        Responda somente com um JSON contendo:
-        {{
-            "branch_type": "<feat|fix|docs|chore>",
-            "issue_title": "<Título curto da issue>",
-            "issue_description": "<Descrição detalhada da issue>",
-            "generated_branch_suffix": "<sufixo da branch (slug)>",
-            "execution_plan": "<plano detalhado contendo: lista de entregáveis baseados no projeto real, cada um com nome descritivo, sub-lista de dependências extraídas do código, exemplos concretos de uso ou saída, critérios de aceite verificáveis, troubleshooting realista com causas prováveis e resoluções, e um passo-a-passo sequencial para implementação. Nenhum conteúdo genérico ou placeholder deve ser incluído.>"
-        }}
-        """
+Se precisar, sugira um prompt de refinamento para organizar melhor a entrada do usuário e gerar uma resposta completa e detalhada, sem placeholders genéricos.
+"""
 
         response = client.chat.completions.create(
             model="gpt-4",
