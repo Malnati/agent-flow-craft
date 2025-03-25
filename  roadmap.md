@@ -44,4 +44,27 @@ Este roadmap será atualizado continuamente com a colaboração da comunidade.
 
 ---
 
+## 🔎 Primeira feature do projeto: Automação de fluxo de criação de features
+
+**Objetivo:**  
+Automatizar o fluxo de criação de novas funcionalidades ou atualizações a partir de um prompt fornecido pelo usuário.
+
+### Etapas desta feature:
+- O usuário fornecerá um prompt descrevendo a feature desejada.
+- O agente receberá esse prompt, processará a solicitação e:
+  - Criará automaticamente uma issue no repositório utilizando a API do GitHub via CLI autenticado.
+  - Criará uma branch vinculada à issue aberta.
+  - Abrirá um Pull Request relacionado à issue criada.
+- Estruturar o projeto para inicialização do primeiro agente responsável por esse fluxo.
+- Instalar e configurar a ferramenta **AutoGen da Microsoft** para criação e orquestração do agente.
+- Criar arquivos iniciais de configuração e setup do AutoGen no repositório.
+- Preparar ambiente local e CI para validação deste fluxo.
+
+### Tarefas manuais iniciais (até automação completa):
+- Criar manualmente uma issue, uma PR e uma branch para implementar esta primeira automação.
+- Documentar todo o fluxo, padrões e nomenclaturas adotadas no projeto.
+
+**Observação:**  
+Essa etapa marca o primeiro uso prático da arquitetura de agentes planejada e estabelece o padrão para todas as próximas automações.
+
 *Última atualização: 24 de março de 2025*
