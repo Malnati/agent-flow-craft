@@ -3,6 +3,7 @@ import subprocess
 import json
 import os
 import logging
+import re
 
 class FeatureCreationAgent(AssistantAgent):
     def __init__(self, github_token, repo_owner, repo_name):
@@ -24,36 +25,28 @@ class FeatureCreationAgent(AssistantAgent):
     def create_github_issue(self, title, body):
         self.logger.info(f"Criando issue: {title}")
 
-        subprocess.run(
+        result = subprocess.run(
             [
                 'gh', 'issue', 'create',
                 '--repo', f'{self.repo_owner}/{self.repo_name}',
                 '--title', title,
                 '--body', body
             ],
-            check=True, timeout=30
-        )
-
-        # Buscar a issue criada mais recentemente com o título correspondente
-        result = subprocess.run(
-            [
-                'gh', 'issue', 'list',
-                '--repo', f'{self.repo_owner}/{self.repo_name}',
-                '--state', 'open',
-                '--search', title,
-                '--json', 'number,title,createdAt',
-                '--limit', '1'
-            ],
             capture_output=True, text=True, check=True, timeout=30
         )
 
-        issues = json.loads(result.stdout)
-        if issues:
-            issue_number = issues[0]['number']
+        # A saída padrão contém a URL da issue criada
+        output = result.stdout.strip()
+        self.logger.info(f"Saída da criação da issue: {output}")
+
+        # Tentar extrair o número da URL
+        match = re.search(r'/issues/(\\d+)', output)
+        if match:
+            issue_number = int(match.group(1))
             self.logger.info(f"Issue #{issue_number} criada e capturada com sucesso")
             return issue_number
         else:
-            self.logger.error("Nenhuma issue correspondente encontrada após criação.")
+            self.logger.error("Falha ao extrair número da issue a partir da saída.")
             raise Exception("Falha ao capturar número da issue.")
         
     def create_branch(self, branch_name):
