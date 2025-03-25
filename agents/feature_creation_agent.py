@@ -80,7 +80,7 @@ class FeatureCreationAgent(AssistantAgent):
             '--base', 'main',
             '--head', branch_name,
             '--title', f'Automated PR for issue #{issue_number}',
-            '--body', f'This PR closes issue #{issue_number} and includes the execution plan in `docs/pr/{issue_number}_feature_plan.md`.'
+            '--body', f'Closes #{issue_number}.\n\nInclui o plano de execução em `docs/pr/{issue_number}_feature_plan.md`.'
         ], check=True, timeout=30)
         self.logger.info(f"Pull request criado com sucesso para a issue #{issue_number}")
 
