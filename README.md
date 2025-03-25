@@ -50,3 +50,51 @@ Para dúvidas ou denúncias, utilize o canal de issues ou entre em contato pelo 
 
 ## 💡 Contribua com a comunidade
 Se você gosta do projeto, ⭐ favorite o repositório, compartilhe com colegas e participe das discussões e melhorias!
+
+---
+
+## 📸 Demonstrações visuais
+
+### ✅ Ciclo de vida do agente
+![Ciclo de Vida do Agente](docs/assets/ciclo-agente.png)
+
+### ✅ Estrutura de pastas do projeto
+![Estrutura de Pastas](docs/assets/estrutura-pastas.png)
+
+### ✅ Execução simulada de um agente em terminal
+![Execução do Agente](docs/assets/execucao-terminal.png)
+
+### ✅ Ciclo de avaliação e feedback do agente
+![Ciclo de Feedback do Avaliador](docs/assets/ciclo-feedback.png)
+
+---
+
+## 🛡 Segurança
+
+Para detalhes sobre como relatar vulnerabilidades, consulte o nosso [SECURITY.md](./SECURITY.md).
+
+---
+
+## 🧩 Templates disponíveis
+
+O projeto oferece templates prontos para:
+- Relato de bugs: [Bug Report Template](.github/ISSUE_TEMPLATE/bug_report.md)
+- Sugestões de novas funcionalidades: [Feature Request Template](.github/ISSUE_TEMPLATE/feature_request.md)
+- Pull Requests: [Pull Request Template](.github/PULL_REQUEST_TEMPLATE.md)
+
+Esses modelos ajudam a manter a clareza e a organização das contribuições.
+
+---
+
+## 📣 Divulgação e engajamento
+
+Se você deseja divulgar o projeto ou acompanhar novidades:
+- Use a hashtag **#AgentFlowCraft** no Twitter e LinkedIn.
+- Em breve, teremos um canal de Discussões ativo aqui no GitHub.
+- Acompanhe a evolução pelo [roadmap](./roadmap.md).
+
+---
+
+## 📅 Última atualização deste README
+
+Este arquivo foi atualizado pela última vez em: **24 de março de 2025**.
