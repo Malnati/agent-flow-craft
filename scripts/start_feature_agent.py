@@ -1,7 +1,6 @@
 import argparse
 import logging
 import os
-import time
 from datetime import datetime
 from agents.feature_creation_agent import FeatureCreationAgent
 
@@ -29,19 +28,20 @@ def main():
     parser.add_argument("prompt", type=str, help="The user prompt for feature creation.")
     parser.add_argument("execution_plan", type=str, help="The execution plan for the feature.")
     parser.add_argument("--token", type=str, help="GitHub token", default=os.environ.get("GITHUB_TOKEN"))
-    parser.add_argument("--owner", type=str, help="Repository owner", default="your_repo_owner")
-    parser.add_argument("--repo", type=str, help="Repository name", default="your_repo_name")
+    parser.add_argument("--owner", type=str, help="Repository owner (obrigatório).")
+    parser.add_argument("--repo", type=str, help="Repository name (obrigatório).")
     args = parser.parse_args()
     
     if not args.token:
         logger.error("GitHub token não encontrado. Defina a variável de ambiente GITHUB_TOKEN ou use --token")
         return
+
+    if not args.owner or not args.repo:
+        logger.error("O argumento --owner e --repo são obrigatórios. Sugestão: use 'git config --get remote.origin.url' para verificar seu repositório.")
+        return
     
     logger.info("Iniciando processo de criação de feature")
     logger.info(f"Prompt: {args.prompt}")
-    
-    # Pequeno timeout antes de executar os comandos
-    time.sleep(1)
     
     try:
         agent = FeatureCreationAgent(args.token, args.owner, args.repo)
