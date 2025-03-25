@@ -109,9 +109,48 @@ class FeatureCreationAgent(AssistantAgent):
         except Exception as e:
             self.logger.error(f"Falha ao notificar o Agent SDK da OpenAI: {str(e)}")
 
+    def get_git_main_log(self):
+        self.logger.info("Obtendo histórico de log da branch main")
+        result = subprocess.run(
+            ['git', 'log', 'main', '--pretty=format:%h - %s', '-n', '20'],
+            capture_output=True, text=True, check=True
+        )
+        return result.stdout.strip()
+
+    def get_suggestion_from_openai(self, openai_token, prompt_text, git_log):
+        import openai
+        client = openai.OpenAI(api_key=openai_token)
+
+        suggestion_prompt = f"""
+        Considere o seguinte prompt de usuário para criação de feature: "{prompt_text}"
+        E o seguinte histórico de commits da branch main:
+        {git_log}
+
+        Com base nessas informações, sugira:
+        1. O tipo da branch (feat, fix, docs ou chore)
+        2. Um título curto (até 50 caracteres) para a issue
+        3. Uma descrição detalhada para a issue
+        """
+
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "Você é um assistente que auxilia a nomear branches, títulos e descrições de issues baseado no histórico do repositório e solicitações do usuário."},
+                {"role": "user", "content": suggestion_prompt}
+            ],
+            max_tokens=500
+        )
+        content = response.choices[0].message.content
+        self.logger.info(f"Sugestão recebida do OpenAI: {content}")
+        return content
+
     def execute_feature_creation(self, prompt_text, execution_plan, openai_token=None):
         self.logger.info("Iniciando processo de criação de feature")
         
+        git_log = self.get_git_main_log()
+        suggestion = self.get_suggestion_from_openai(openai_token, prompt_text, git_log)
+        # parse suggestion aqui (usuário fará manualmente ou em próxima etapa)
+
         issue_title = prompt_text.split('.')[0][:50]
         self.logger.info(f"Título da issue: {issue_title}")
         
