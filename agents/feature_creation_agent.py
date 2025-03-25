@@ -195,7 +195,7 @@ class FeatureCreationAgent(AssistantAgent):
             "issue_title": "<Título curto da issue>",
             "issue_description": "<Descrição detalhada da issue>",
             "generated_branch_suffix": "<sufixo da branch (slug)>",
-            "execution_plan": "<plano detalhado seguindo entregáveis, exemplos reais, critérios objetivos e troubleshooting específico>"
+            "execution_plan": "<plano detalhado contendo: lista de entregáveis baseados no projeto real, cada um com nome descritivo, sub-lista de dependências extraídas do código, exemplos concretos de uso ou saída, critérios de aceite verificáveis, troubleshooting realista com causas prováveis e resoluções, e um passo-a-passo sequencial para implementação. Nenhum conteúdo genérico ou placeholder deve ser incluído.>"
         }}
         """
 
