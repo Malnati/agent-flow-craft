@@ -40,7 +40,7 @@ class FeatureCreationAgent(AssistantAgent):
         self.logger.info(f"Saída da criação da issue: {output}")
 
         # Tentar extrair o número da URL
-        match = re.search(r'/issues/(\\d+)', output)
+        match = re.search(r'/issues/(\d+)', output)
         if match:
             issue_number = int(match.group(1))
             self.logger.info(f"Issue #{issue_number} criada e capturada com sucesso")
