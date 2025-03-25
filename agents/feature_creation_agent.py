@@ -84,7 +84,7 @@ class FeatureCreationAgent(AssistantAgent):
         subprocess.run(['git', 'push', '--set-upstream', 'origin', branch_name], check=True, timeout=30)
         self.logger.info(f"Branch {branch_name} criada e enviada para o repositório remoto")
 
-    def create_pr_plan_file(self, issue_number, prompt_text, execution_plan, branch_name):
+    def create_pr_plan_file(self, issue_number, prompt_text, execution_plan, branch_name, suggestion=None):
         self.logger.info(f"Criando arquivo de plano para PR da issue #{issue_number}")
         
         file_name = f'docs/pr/{issue_number}_feature_plan.md'
@@ -94,7 +94,66 @@ class FeatureCreationAgent(AssistantAgent):
             f.write(f'# Plano de execução para a issue #{issue_number}\n\n')
             f.write(f'**Prompt recebido:** {prompt_text}\n\n')
             f.write(f'**Plano de execução gerado automaticamente:**\n\n')
-            f.write(json.dumps(execution_plan, indent=4, ensure_ascii=False))
+            
+            if suggestion and 'execution_plan' in suggestion:
+                plan = suggestion['execution_plan']
+                f.write(f'## Detalhes do Plano\n\n')
+                
+                # Escrever os entregáveis
+                if 'deliverables' in plan:
+                    for idx, deliverable in enumerate(plan['deliverables']):
+                        f.write(f'### Entregável {idx+1}: {deliverable.get("name", "Sem nome")}\n\n')
+                        
+                        if 'description' in deliverable:
+                            f.write(f'**Descrição:** {deliverable["description"]}\n\n')
+                        
+                        if 'dependencies' in deliverable:
+                            f.write('**Dependências:**\n')
+                            for dep in deliverable['dependencies']:
+                                f.write(f'- {dep}\n')
+                            f.write('\n')
+                        
+                        if 'usage_example' in deliverable:
+                            f.write('**Exemplo de uso:**\n')
+                            f.write(f'```\n{deliverable["usage_example"]}\n```\n\n')
+                        
+                        if 'acceptance_criteria' in deliverable:
+                            f.write('**Critérios de aceitação:**\n')
+                            for criteria in deliverable['acceptance_criteria']:
+                                f.write(f'- {criteria}\n')
+                            f.write('\n')
+                        
+                        if 'troubleshooting' in deliverable:
+                            f.write('**Resolução de problemas:**\n')
+                            
+                            if isinstance(deliverable['troubleshooting'], list):
+                                for trouble in deliverable['troubleshooting']:
+                                    if isinstance(trouble, dict):
+                                        f.write(f'- Problema: {trouble.get("problem", "N/A")}\n')
+                                        f.write(f'  - Causa possível: {trouble.get("possible_cause", "N/A")}\n')
+                                        f.write(f'  - Resolução: {trouble.get("resolution", "N/A")}\n')
+                            elif isinstance(deliverable['troubleshooting'], dict):
+                                if 'problem' in deliverable['troubleshooting']:
+                                    f.write(f'- Problema: {deliverable["troubleshooting"]["problem"]}\n')
+                                    f.write(f'  - Causa possível: {deliverable["troubleshooting"].get("possible_cause", "N/A")}\n')
+                                    f.write(f'  - Resolução: {deliverable["troubleshooting"].get("resolution", "N/A")}\n')
+                                elif 'possible_causes' in deliverable['troubleshooting'] and 'resolutions' in deliverable['troubleshooting']:
+                                    causes = deliverable['troubleshooting']['possible_causes']
+                                    resolutions = deliverable['troubleshooting']['resolutions']
+                                    for i in range(min(len(causes), len(resolutions))):
+                                        f.write(f'- Problema {i+1}:\n')
+                                        f.write(f'  - Causa possível: {causes[i]}\n')
+                                        f.write(f'  - Resolução: {resolutions[i]}\n')
+                            f.write('\n')
+                        
+                        if 'implementation_steps' in deliverable:
+                            f.write('**Passos de implementação:**\n')
+                            for idx, step in enumerate(deliverable['implementation_steps']):
+                                f.write(f'{idx+1}. {step}\n')
+                            f.write('\n')
+            else:
+                # Se não tiver o plano formatado, usa o texto original
+                f.write(f"{execution_plan}\n")
         
         subprocess.run(['git', 'add', file_name], check=True, timeout=30)
         subprocess.run(['git', 'commit', '-m', f'Add PR plan file for issue #{issue_number}'], check=True, timeout=30)
@@ -113,12 +172,13 @@ class FeatureCreationAgent(AssistantAgent):
         ], check=True, timeout=30)
         self.logger.info(f"Pull request criado com sucesso para a issue #{issue_number}")
 
-    def notify_openai_agent_sdk(self, openai_token, issue_number, branch_name):
+    def notify_openai_agent_sdk(self, openai_token, issue_number, branch_name, suggestion=None):
         self.logger.info("Notificando o Agent SDK da OpenAI...")
         import openai
 
         client = openai.OpenAI(api_key=openai_token)
 
+        # Construir mensagem detalhada incluindo os entregáveis do plano
         message_content = f"""
         Uma nova feature foi criada:
         - Número da Issue: {issue_number}
@@ -126,14 +186,37 @@ class FeatureCreationAgent(AssistantAgent):
         - Link da PR: https://github.com/{self.repo_owner}/{self.repo_name}/pull/new/{branch_name}
         """
 
+        if suggestion and 'execution_plan' in suggestion:
+            message_content += "\n\nDetalhes do plano de execução:\n"
+            
+            for idx, deliverable in enumerate(suggestion['execution_plan'].get('deliverables', [])):
+                message_content += f"\nEntregável {idx+1}: {deliverable.get('name', 'Sem nome')}\n"
+                message_content += f"- Descrição: {deliverable.get('description', 'N/A')}\n"
+                
+                if 'dependencies' in deliverable:
+                    deps = ', '.join(deliverable['dependencies'])
+                    message_content += f"- Dependências: {deps}\n"
+                
+                if 'acceptance_criteria' in deliverable:
+                    message_content += "- Critérios de aceitação principais:\n"
+                    for i, criteria in enumerate(deliverable['acceptance_criteria'][:3]):  # Limita a 3 critérios
+                        message_content += f"  * {criteria}\n"
+                
+                if 'implementation_steps' in deliverable:
+                    message_content += "- Passos principais:\n"
+                    for i, step in enumerate(deliverable['implementation_steps'][:3]):  # Limita a 3 passos
+                        message_content += f"  * {step}\n"
+
+        message_content += "\n\nPor favor, verifique se o plano de execução está completo e adequado para esta feature."
+
         try:
             response = client.chat.completions.create(
                 model="gpt-4",
                 messages=[
-                    {"role": "system", "content": "Você é um assistente de monitoramento de fluxo de desenvolvimento."},
+                    {"role": "system", "content": "Você é um assistente de monitoramento de fluxo de desenvolvimento que analisa planos de execução e sugere melhorias quando necessário."},
                     {"role": "user", "content": message_content}
                 ],
-                max_tokens=50
+                max_tokens=150
             )
             self.logger.info(f"Notificação enviada para o Agent SDK da OpenAI: {response.choices[0].message.content}")
         except Exception as e:
@@ -175,32 +258,40 @@ class FeatureCreationAgent(AssistantAgent):
         project_context = self.get_project_context()
 
         suggestion_prompt = f"""
-Você é um planejador técnico experiente. Baseado no prompt do usuário abaixo, no histórico de commits e na estrutura de arquivos do projeto, você deve gerar um JSON completo e detalhado contendo:
+Você é um planejador técnico experiente especializado em desenvolvimento de software. Baseado no prompt do usuário abaixo, no histórico de commits e na estrutura de arquivos do projeto, você deve gerar um JSON completo e detalhado.
+
+Histórico de commits recentes:
+{git_log}
+
+Contexto do projeto:
+{project_context}
+
+Você deve gerar um JSON completo e detalhado contendo:
 
 {{
-  "branch_type": "<feat|fix|docs|chore>",
-  "issue_title": "<Título curto da issue>",
-  "issue_description": "<Descrição detalhada da issue>",
-  "generated_branch_suffix": "<sufixo da branch (slug)>",
+  "branch_type": "<feat|fix|docs|chore>", 
+  "issue_title": "<Título curto e descritivo da issue>",
+  "issue_description": "<Descrição detalhada da issue que captura o objetivo e escopo do trabalho>",
+  "generated_branch_suffix": "<sufixo da branch em formato de slug, sem espaços ou caracteres especiais>",
   "execution_plan": {{
     "deliverables": [
       {{
-        "name": "<Nome do entregável>",
-        "description": "<Descrição detalhada do entregável>",
-        "dependencies": ["<lista completa de dependências de código ou externas>"],
-        "usage_example": "<exemplo prático de uso do entregável>",
-        "acceptance_criteria": ["<lista objetiva e mensurável de critérios de aceite>"],
+        "name": "<Nome claro e específico do entregável>",
+        "description": "<Descrição detalhada do entregável, incluindo seu propósito e funcionalidade>",
+        "dependencies": ["<lista completa e específica de dependências de código ou externas>"],
+        "usage_example": "<exemplo prático e completo de uso do entregável, preferencialmente com código>",
+        "acceptance_criteria": ["<lista objetiva e mensurável de critérios específicos de aceite>"],
         "troubleshooting": [
           {{
-            "problem": "<possível problema encontrado>",
-            "possible_cause": "<causa provável do problema>",
-            "resolution": "<como resolver o problema>"
+            "problem": "<descrição específica de um possível problema encontrado>",
+            "possible_cause": "<causa provável e específica do problema>",
+            "resolution": "<instruções claras e específicas para resolver o problema>"
           }}
         ],
         "implementation_steps": [
-          "Passo 1 detalhado",
-          "Passo 2 detalhado",
-          "Passo 3 detalhado"
+          "<Passo 1 com instruções detalhadas para implementação>",
+          "<Passo 2 com instruções detalhadas para implementação>",
+          "<Passo 3 com instruções detalhadas para implementação>"
         ]
       }}
     ]
@@ -210,26 +301,58 @@ Você é um planejador técnico experiente. Baseado no prompt do usuário abaixo
 O prompt do usuário é:
 {prompt_text}
 
-Não retorne campos genéricos como 'Descrição breve' ou 'Exemplo concreto'. Use o contexto do projeto para respostas reais. Se necessário, você pode sugerir um prompt mais organizado para melhorar a qualidade das respostas.
+OBSERVAÇÕES IMPORTANTES:
+1. Produza uma resposta completa e de alta qualidade com informações específicas, não genéricas.
+2. Use exemplos de código reais e apropriados para o contexto do projeto.
+3. Forneça dependências específicas com versões (quando aplicável).
+4. Inclua critérios de aceitação mensuráveis e verificáveis.
+5. Os passos de implementação devem ser detalhados o suficiente para guiar o desenvolvimento.
+6. Não use placeholder genéricos como "Descrição breve" ou "Exemplo genérico".
+7. Baseie-se no contexto real do projeto e no histórico de commits para criar um plano realista.
+8. A resposta deve estar em formato JSON válido sem qualquer texto adicional.
 """
 
         response = client.chat.completions.create(
             model="gpt-4",
             messages=[
-                {"role": "system", "content": "Você é um assistente que retorna apenas JSON e nada mais."},
+                {"role": "system", "content": "Você é um assistente técnico que gera planos de execução detalhados em formato JSON. Sua resposta deve conter APENAS o JSON sem texto introdutório ou explicativo."},
                 {"role": "user", "content": suggestion_prompt}
             ],
-            max_tokens=1500,
+            max_tokens=2000,
             temperature=0.2
         )
         content = response.choices[0].message.content
 
-        if any(x in content.lower() for x in ["descrição breve", "dependência a", "passo inicial"]):
+        # Limpa qualquer texto que não seja JSON
+        content = content.strip()
+        if content.startswith("```json"):
+            content = content[7:]
+        if content.endswith("```"):
+            content = content[:-3]
+        content = content.strip()
+
+        # Verifica se a resposta contém conteúdo genérico
+        generic_terms = ["descrição breve", "dependência a", "passo inicial", "exemplo genérico", 
+                        "título da issue", "descrição da issue", "nome do entregável", 
+                        "lista de dependências", "possível problema"]
+        
+        if any(term in content.lower() for term in generic_terms):
             self.logger.warning("Resposta genérica detectada, solicitando nova sugestão.")
             return self.get_suggestion_from_openai(openai_token, prompt_text, git_log)
 
-        self.logger.info(f"Sugestão recebida do OpenAI: {content}")
-        return json.loads(content)
+        try:
+            json_content = json.loads(content)
+            # Verifica se execution_plan e deliverables existem
+            if 'execution_plan' not in json_content or 'deliverables' not in json_content['execution_plan'] or not json_content['execution_plan']['deliverables']:
+                self.logger.warning("Resposta sem plano de execução ou entregáveis, solicitando nova sugestão.")
+                return self.get_suggestion_from_openai(openai_token, prompt_text, git_log)
+            
+            self.logger.info(f"Sugestão recebida do OpenAI: {content}")
+            return json_content
+        except json.JSONDecodeError:
+            self.logger.error("Falha ao decodificar JSON da resposta da OpenAI.")
+            # Tenta novamente com uma nova solicitação
+            return self.get_suggestion_from_openai(openai_token, prompt_text, git_log)
 
     def execute_feature_creation(self, prompt_text, execution_plan, openai_token=None):
         self.logger.info("Iniciando processo de criação de feature")
@@ -248,11 +371,11 @@ Não retorne campos genéricos como 'Descrição breve' ou 'Exemplo concreto'. U
 
         self.create_branch(branch_name)
 
-        self.create_pr_plan_file(issue_number, prompt_text, execution_plan, branch_name)
+        self.create_pr_plan_file(issue_number, prompt_text, execution_plan, branch_name, suggestion)
         self.create_pull_request(branch_name, issue_number)
 
         if openai_token:
-            self.notify_openai_agent_sdk(openai_token, issue_number, branch_name)
+            self.notify_openai_agent_sdk(openai_token, issue_number, branch_name, suggestion)
 
         self.logger.info(f"Processo de criação de feature concluído com sucesso para a issue #{issue_number}")
         return issue_number, branch_name
