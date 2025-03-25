@@ -12,7 +12,8 @@ dependencies = [
     "ghapi",
     "python-dotenv",
     "loguru",
-    "requests"
+    "requests",
+    "python-slugify"
 ]
 
 [project.optional-dependencies]
@@ -40,3 +41,7 @@ profile = "black"
 [tool.flake8]
 max-line-length = 88
 extend-ignore = ["E203", "W503"]
+
+[tool.uv]
+venv = ".venv"
+python = "3.10"
