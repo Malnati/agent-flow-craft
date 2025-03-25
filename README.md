@@ -192,3 +192,24 @@ O diretório `docs/pr/` contém planos de execução detalhados para as issues c
 - **Prompt recebido:** O prompt original fornecido pelo usuário.
 - **Plano de execução gerado pela IA:** Um plano detalhado de como a funcionalidade será implementada, incluindo contexto, descrição da solução, alternativas consideradas, checklist técnico de implementação e observações adicionais.
 
+---
+
+## 🛠️ Comandos disponíveis via Makefile
+
+Para facilitar a execução de tarefas comuns no projeto, utilize os comandos abaixo:
+
+| Comando                | Descrição                                                               |
+|------------------------|-------------------------------------------------------------------------|
+| `make install`         | Instala todas as dependências via `uv` utilizando o `pyproject.toml`.   |
+| `make lint`            | Executa verificação de lint nos arquivos Python.                        |
+| `make test`            | Executa todos os testes unitários.                                      |
+| `make update-tree`     | Atualiza automaticamente o arquivo `TREE.md`.                            |
+| `make update-docs`     | Atualiza o índice de documentação dentro da pasta `docs/`.              |
+| `make tag`             | Executa o workflow de auto tagging conforme convenção semântica.        |
+| `make check-assets`    | Valida a presença dos assets obrigatórios nas pastas de documentação.   |
+| `make all`             | Executa lint, testes e atualizações em sequência.                       |
+
+> Para usar, basta rodar:  
+> ```bash
+> make <comando>
+> ```
