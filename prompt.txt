@@ -1,0 +1,1 @@
+Implementar funcionalidade de auto-correção no agente para geração do plano de execução 
