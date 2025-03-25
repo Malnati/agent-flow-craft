@@ -4,24 +4,24 @@ version = "0.1.0"
 description = "Automatização do fluxo de criação de features via agentes e integração com o GitHub e OpenAI."
 authors = [{ name = "Malnati" }]
 dependencies = [
-    "openai",
-    "autogen",
-    "pytest",
-    "unittest2",
-    "uv",
-    "ghapi",
-    "python-dotenv",
-    "loguru",
-    "requests",
-    "python-slugify"
+    "openai>=1.0.0,<2.0.0",
+    "autogen>=0.2.0,<1.0.0",
+    "pytest>=7.0.0,<8.0.0",
+    "unittest2>=1.1.0,<2.0.0",
+    "uv>=0.1.0,<1.0.0",
+    "ghapi>=1.0.0,<2.0.0",
+    "python-dotenv>=1.0.0,<2.0.0",
+    "loguru>=0.7.0,<1.0.0",
+    "requests>=2.28.0,<3.0.0",
+    "python-slugify>=8.0.0,<9.0.0"
 ]
 
 [project.optional-dependencies]
 dev = [
-    "black",
-    "flake8",
-    "isort",
-    "pre-commit"
+    "black>=23.0.0,<24.0.0",
+    "flake8>=6.0.0,<7.0.0",
+    "isort>=5.12.0,<6.0.0",
+    "pre-commit>=3.0.0,<4.0.0"
 ]
 
 [tool.setuptools]
@@ -41,7 +41,3 @@ profile = "black"
 [tool.flake8]
 max-line-length = 88
 extend-ignore = ["E203", "W503"]
-
-[tool.uv]
-venv = ".venv"
-python = "3.10"
