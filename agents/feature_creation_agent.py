@@ -23,22 +23,39 @@ class FeatureCreationAgent(AssistantAgent):
 
     def create_github_issue(self, title, body):
         self.logger.info(f"Criando issue: {title}")
-        
-        result = subprocess.run(
+
+        subprocess.run(
             [
                 'gh', 'issue', 'create',
                 '--repo', f'{self.repo_owner}/{self.repo_name}',
                 '--title', title,
-                '--body', body,
-                '--json', 'number'
+                '--body', body
+            ],
+            check=True, timeout=30
+        )
+
+        # Buscar a issue criada mais recentemente com o título correspondente
+        result = subprocess.run(
+            [
+                'gh', 'issue', 'list',
+                '--repo', f'{self.repo_owner}/{self.repo_name}',
+                '--state', 'open',
+                '--search', title,
+                '--json', 'number,title,createdAt',
+                '--limit', '1'
             ],
             capture_output=True, text=True, check=True, timeout=30
         )
-        issue_data = json.loads(result.stdout)
-        issue_number = issue_data['number']
-        self.logger.info(f"Issue #{issue_number} criada com sucesso")
-        return issue_number
 
+        issues = json.loads(result.stdout)
+        if issues:
+            issue_number = issues[0]['number']
+            self.logger.info(f"Issue #{issue_number} criada e capturada com sucesso")
+            return issue_number
+        else:
+            self.logger.error("Nenhuma issue correspondente encontrada após criação.")
+            raise Exception("Falha ao capturar número da issue.")
+        
     def create_branch(self, branch_name):
         self.logger.info(f"Criando branch: {branch_name}")
         
