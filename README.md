@@ -109,3 +109,112 @@ Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
 ## ⭐ Se esse projeto te ajudar, deixe uma estrela no repositório!
 
 ---
+
+# Contribuindo com o AgentFlowCraft
+
+Muito obrigado por querer contribuir! 🎉 Este projeto busca criar um ecossistema sólido para automação de microtarefas utilizando agentes de IA, com rastreamento completo e avaliação automática de conformidades. Aqui estão as diretrizes para ajudar você a contribuir de maneira eficiente.
+
+---
+
+## 📑 Antes de começar
+- Leia o [README.md](./README.md) para entender os objetivos do projeto, as ferramentas consideradas e a estrutura planejada.
+- Verifique o [roadmap.md](./roadmap.md) para evitar duplicar esforços e alinhar contribuições com as metas do projeto.
+- Certifique-se de que há uma *issue* aberta relacionada ao que você deseja contribuir. Caso não exista, crie uma issue primeiro.
+
+---
+
+## 🚀 Como contribuir
+1. Faça um **fork** do projeto.
+2. Clone o repositório forkado:
+   ```bash
+   git clone https://github.com/seu-usuario/agent-flow-craft.git
+   ```
+3. Crie uma nova branch:
+   ```bash
+   git checkout -b feature/minha-contribuicao
+   ```
+4. Faça suas alterações e documente bem o que foi feito.
+5. Teste localmente, se aplicável.
+6. Faça commit das suas alterações:
+   ```bash
+   git commit -m "Descreva claramente sua contribuição"
+   ```
+7. Push para o seu fork:
+   ```bash
+   git push origin feature/minha-contribuicao
+   ```
+8. Abra um Pull Request detalhado explicando o contexto e o objetivo da sua contribuição.
+
+---
+
+## ✅ Boas práticas
+- Escreva commits claros e descritivos.
+- Prefira commits pequenos e organizados.
+- Mantenha a consistência do código.
+- Adicione comentários e documentação, se necessário.
+- Atualize o `README.md` ou a documentação, caso sua contribuição afete o uso do projeto.
+
+---
+
+## 📝 Padrões de código
+- Utilize Python 3.12+.
+- Sempre siga o padrão PEP8.
+- Nomeie funções e variáveis de forma autoexplicativa.
+- Adicione docstrings quando criar funções ou classes importantes.
+
+---
+
+## 🤝 Código de conduta
+Seja respeitoso e colaborativo. Este projeto preza por um ambiente saudável para todos os contribuidores. Confira nosso [Código de Conduta](./CODE_OF_CONDUCT.md) (a ser adicionado em breve).
+
+---
+
+## 📣 Feedback
+Sugestões e críticas são sempre bem-vindas! Abra uma *issue* ou entre em contato.
+
+---
+
+## ⭐ Muito obrigado por contribuir!
+
+# Roadmap do AgentFlowCraft
+
+Este documento complementa o [README.md](./README.md) e detalha as etapas previstas e desejáveis para a evolução do projeto.
+
+---
+
+## 🗺 Roadmap Atual
+
+- [ ] Definir template universal de agente.
+- [ ] Criar avaliador genérico de conformidade.
+- [ ] Configurar sistema de logs centralizados e rastreamento completo.
+- [ ] Disponibilizar agentes de exemplo com fluxos completos.
+- [ ] Criação de documentação expandida (via `docs/`).
+- [ ] Configuração de templates automatizados para novos agentes.
+- [ ] Desenvolver painel visual de acompanhamento das execuções.
+- [ ] Implementar integração opcional com serviços externos (API OpenAI, Hugging Face, Google Gemini, entre outros).
+- [ ] Realizar testes unitários e integração contínua via GitHub Actions.
+- [ ] Divulgar para a comunidade (GitHub, Reddit, Twitter, dev.to).
+
+---
+
+## 🏗 Estrutura futura desejada
+- Interface web leve para acompanhar logs e loops de correção.
+- Criação de uma CLI oficial para facilitar a geração de novos agentes.
+- Criação de um marketplace de templates de agentes e conformidades.
+
+---
+
+## 📆 Ciclo de release proposto
+- **Lançamentos quinzenais** (ou quando features importantes forem concluídas).
+- Versões com changelog bem documentado.
+- Releases identificados com versão semântica (exemplo: `v1.0.0`).
+
+---
+
+## 📢 Contribuições para o roadmap
+Sugestões são muito bem-vindas!  
+Se você tem ideias para o futuro do AgentFlowCraft, abra uma issue ou discuta via Pull Request.
+
+---
+
+## 🌟 Vamos construir juntos!
