@@ -7,11 +7,7 @@ import logging
 from slugify import slugify
 import re
 
-@tool
-def list_project_files(directory=".", max_depth=2):
-    """
-    Lista recursivamente arquivos em um diretório até um nível máximo de profundidade.
-    """
+def _list_project_files_internal(directory=".", max_depth=2):
     result = []
     for root, dirs, files in os.walk(directory):
         depth = root[len(directory):].count(os.sep)
@@ -23,10 +19,10 @@ def list_project_files(directory=".", max_depth=2):
     return result
 
 @tool
-def read_project_file(file_path, max_lines=100):
-    """
-    Lê até max_lines de um arquivo de texto e retorna como string.
-    """
+def list_project_files():
+    return "Esta ferramenta lista arquivos do projeto, disponível apenas via agente."
+
+def _read_project_file_internal(file_path, max_lines=100):
     lines = []
     with open(file_path, 'r') as file:
         for idx, line in enumerate(file):
@@ -34,6 +30,10 @@ def read_project_file(file_path, max_lines=100):
                 break
             lines.append(line)
     return ''.join(lines)
+
+@tool
+def read_project_file():
+    return "Esta ferramenta lê conteúdos de arquivos, disponível apenas via agente."
 
 class FeatureCreationAgent(AssistantAgent):
     def __init__(self, github_token, repo_owner, repo_name):
@@ -68,7 +68,6 @@ class FeatureCreationAgent(AssistantAgent):
         output = result.stdout.strip()
         self.logger.info(f"Saída da criação da issue: {output}")
 
-        # Extrair o número da issue da URL retornada
         match = re.search(r'/issues/(\d+)', output)
         if match:
             issue_number = int(match.group(1))
@@ -165,11 +164,11 @@ class FeatureCreationAgent(AssistantAgent):
 
     def get_project_context(self, max_lines=50, max_files=10):
         self.logger.info("Coletando contexto do projeto")
-        files = list_project_files(directory=".", max_depth=2)[:max_files]
+        files = _list_project_files_internal(directory=".", max_depth=2)[:max_files]
         context = ""
         for file in files:
             if file.endswith((".py", ".md", ".txt")):
-                content = read_project_file(file, max_lines=max_lines)
+                content = _read_project_file_internal(file, max_lines=max_lines)
                 context += f"\n\n### Arquivo: {file}\n```\n{content}\n```"
         return context
 
