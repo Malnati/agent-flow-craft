@@ -150,6 +150,17 @@ class FeatureCreationAgent(AssistantAgent):
     def get_project_context(self, max_lines=50, max_files=10):
         self.logger.info("Coletando contexto do projeto")
         files = _list_project_files_internal(directory=".", max_depth=2)[:max_files]
+        
+        if not files:
+            raise Exception("Nenhum arquivo encontrado para submissão ao Agent SDK da OpenAI.")
+
+        for file in files:
+            try:
+                size = os.path.getsize(file)
+                self.logger.info(f"Arquivo submetido: {file} (tamanho: {size} bytes)")
+            except Exception as e:
+                self.logger.warning(f"Não foi possível obter o tamanho do arquivo {file}: {str(e)}")
+
         context = ""
         for file in files:
             if file.endswith((".py", ".md", ".txt")):
