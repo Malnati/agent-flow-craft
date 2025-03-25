@@ -1,5 +1,23 @@
 .PHONY: install setup test lint format start-agent update-docs-index clean all
 
+check-env:
+	@if [ -z "$(GITHUB_TOKEN)" ]; then \
+		echo "Erro: Variável de ambiente GITHUB_TOKEN não definida."; \
+		exit 1; \
+	fi
+	@if [ -z "$(GITHUB_OWNER)" ]; then \
+		echo "Erro: Variável de ambiente GITHUB_OWNER não definida."; \
+		exit 1; \
+	fi
+	@if [ -z "$(GITHUB_REPO)" ]; then \
+		echo "Erro: Variável de ambiente GITHUB_REPO não definida."; \
+		exit 1; \
+	fi
+	@if [ -z "$(OPENAI_TOKEN)" ]; then \
+		echo "Erro: Variável de ambiente OPENAI_TOKEN não definida."; \
+		exit 1; \
+	fi
+
 # Instala as dependências do projeto via uv
 install:
 	uv pip install -r requirements.txt
@@ -21,9 +39,14 @@ lint:
 format:
 	black .
 
-# Inicia o agente manualmente
-start-agent:
-	PYTHONPATH=. python scripts/start_feature_agent.py
+# Exemplo de uso:
+# make start-agent prompt="Descrição da feature" execution_plan="Plano detalhado de execução"
+start-agent: check-env
+	@if [ -z "$(prompt)" ] || [ -z "$(execution_plan)" ]; then \
+		echo "Uso: make start-agent prompt=\"<descricao>\" execution_plan=\"<plano de execucao>\""; \
+		exit 1; \
+	fi
+	PYTHONPATH=. python scripts/start_feature_agent.py "$(prompt)" "$(execution_plan)" --token "$(GITHUB_TOKEN)" --owner "$(GITHUB_OWNER)" --repo "$(GITHUB_REPO)" --openai_token "$(OPENAI_TOKEN)"
 
 # Atualiza o índice da documentação automaticamente
 update-docs-index:
