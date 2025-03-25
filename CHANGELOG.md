@@ -15,6 +15,7 @@ Este projeto segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 - Novo método `check_github_auth` para verificar a autenticação do GitHub CLI antes de executar ações
 - Adicionado timeout para comandos de subprocesso para evitar bloqueios
 - Inclusão de logs detalhados para rastreamento de ações do agente
+- Script `run_coverage.py` para gerar relatórios de cobertura de testes
 
 ### Alterado
 - Substituição de timeouts fixos por timeouts dinâmicos nas chamadas de subprocesso
