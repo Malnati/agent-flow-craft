@@ -164,7 +164,7 @@ class FeatureCreationAgent(AssistantAgent):
         project_context = self.get_project_context()
 
         suggestion_prompt = f"""
-Você é um planejador técnico experiente. Baseado no prompt do usuário, histórico de commits e estrutura de arquivos do projeto, gere um JSON estruturado contendo:
+Você é um planejador técnico experiente. Baseado no prompt do usuário abaixo, no histórico de commits e na estrutura de arquivos do projeto, você deve gerar um JSON completo e detalhado contendo:
 
 {{
   "branch_type": "<feat|fix|docs|chore>",
@@ -175,24 +175,31 @@ Você é um planejador técnico experiente. Baseado no prompt do usuário, hist�
     "deliverables": [
       {{
         "name": "<Nome do entregável>",
-        "description": "<Descrição detalhada>",
-        "dependencies": ["<lista de dependências do projeto>"],
-        "usage_example": "<exemplo de uso ou saída>",
-        "acceptance_criteria": ["<lista de critérios de aceite objetivos>"],
+        "description": "<Descrição detalhada do entregável>",
+        "dependencies": ["<lista completa de dependências de código ou externas>"],
+        "usage_example": "<exemplo prático de uso do entregável>",
+        "acceptance_criteria": ["<lista objetiva e mensurável de critérios de aceite>"],
         "troubleshooting": [
           {{
-            "problem": "<problema possível>",
-            "possible_cause": "<causa provável>",
-            "resolution": "<resolução recomendada>"
+            "problem": "<possível problema encontrado>",
+            "possible_cause": "<causa provável do problema>",
+            "resolution": "<como resolver o problema>"
           }}
         ],
-        "implementation_steps": ["<passo-a-passo ordenado para implementação>"]
+        "implementation_steps": [
+          "Passo 1 detalhado",
+          "Passo 2 detalhado",
+          "Passo 3 detalhado"
+        ]
       }}
     ]
   }}
 }}
 
-Se precisar, sugira um prompt de refinamento para organizar melhor a entrada do usuário e gerar uma resposta completa e detalhada, sem placeholders genéricos.
+O prompt do usuário é:
+{prompt_text}
+
+Não retorne campos genéricos como 'Descrição breve' ou 'Exemplo concreto'. Use o contexto do projeto para respostas reais. Se necessário, você pode sugerir um prompt mais organizado para melhorar a qualidade das respostas.
 """
 
         response = client.chat.completions.create(
