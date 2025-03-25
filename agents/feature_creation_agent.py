@@ -53,7 +53,7 @@ class FeatureCreationAgent(AssistantAgent):
         self.logger.info(f"Criando branch: {branch_name}")
         
         subprocess.run(['git', 'checkout', '-b', branch_name], check=True, timeout=30)
-        subprocess.run(['git', 'push', 'origin', branch_name], check=True, timeout=30)
+        subprocess.run(['git', 'push', '--set-upstream', 'origin', branch_name], check=True, timeout=30)
         self.logger.info(f"Branch {branch_name} criada e enviada para o repositório remoto")
 
     def create_pr_plan_file(self, issue_number, prompt_text, execution_plan):
