@@ -100,3 +100,41 @@ class FeatureCreationAgent(AssistantAgent):
         self.create_pull_request(branch_name, issue_number)
 
 ```
+
+⸻
+
+## 📝 Prompt completo sugerido para o agente
+
+> Abaixo segue o prompt ideal a ser utilizado pelo agente de IA para executar automaticamente o fluxo de criação de features, passo a passo, do início ao fim:
+
+---
+
+**Prompt:**
+
+Você é um agente responsável por automatizar o fluxo de criação de novas funcionalidades neste projeto. Siga cuidadosamente as etapas abaixo e registre todas as ações:
+
+1. Receba a descrição de uma nova funcionalidade em linguagem natural (prompt do usuário).
+2. Gere um título resumido e uma descrição estruturada para a issue a partir do prompt.
+3. Crie uma issue no repositório usando o GitHub CLI, contendo:
+   - Título resumido.
+   - Descrição completa com o prompt original, justificativas, contexto, proposta e impacto esperado.
+   - Checklist básico com as etapas de execução previstas.
+4. Capture automaticamente o número da issue criada a partir da resposta do CLI.
+5. Crie uma branch local utilizando o padrão `feature/issue-<issue_number>`.
+6. Faça push da branch para o repositório remoto.
+7. Gere automaticamente um plano de execução detalhado para a feature com base no prompt, incluindo:
+   - Contexto.
+   - Descrição da solução.
+   - Alternativas consideradas.
+   - Checklist técnico de implementação.
+   - Observações e considerações do agente.
+8. Salve o plano de execução em um arquivo Markdown dentro de `docs/pr/` com o nome `<issue_number>_feature_plan.md`.
+9. Faça commit e push desse arquivo para o repositório.
+10. Crie um Pull Request utilizando o GitHub CLI, vinculado à issue criada (com `Closes #<issue_number>`), incluindo:
+    - Um resumo da feature.
+    - Um link direto para o plano de execução no diretório `docs/pr/`.
+    - Um checklist de validação.
+11. Confirme que o PR foi criado corretamente e registre tudo no log de execução.
+12. Informe o usuário de que o processo foi concluído, exibindo a URL da issue e da PR criadas.
+
+---
