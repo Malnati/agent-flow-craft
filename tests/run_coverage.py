@@ -1,31 +1,38 @@
-import unittest
 import os
 import sys
+import unittest
 import coverage
 
+# Adicionar diretório raiz ao PYTHONPATH
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 def run_coverage():
-    # Adicionar o diretório raiz ao PYTHONPATH
-    root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    sys.path.insert(0, root_dir)
-    
+    """
+    Executa os testes com cobertura e gera relatórios.
+    """
+    # Configurar o coverage
     cov = coverage.Coverage(
-        source=['agents', 'tests'],
-        omit=['*/site-packages/*', 'tests/run_coverage.py']
+        source=['agents'],
+        omit=['*/venv/*', '*/env/*', '*/tests/temp/*', '*/tests/fixtures/*'],
     )
+    
+    # Iniciar a cobertura
     cov.start()
-
-    # Executa todos os testes
-    tests = unittest.TestLoader().discover('./tests')
+    
+    # Executar os testes
+    tests = unittest.TestLoader().discover('.')
     unittest.TextTestRunner(verbosity=2).run(tests)
-
+    
+    # Parar a cobertura
     cov.stop()
-    cov.save()
+    
+    # Gerar relatório
     print("\nRelatório de cobertura:")
     cov.report()
-
-    # Gerar relatório HTML na pasta coverage_html_report
+    
+    # Gerar relatório HTML
     cov.html_report(directory='coverage_html_report')
     print("\nRelatório HTML de cobertura gerado na pasta 'coverage_html_report'.")
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     run_coverage()

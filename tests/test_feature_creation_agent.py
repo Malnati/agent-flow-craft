@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import patch, MagicMock
 import logging
 import os
+import subprocess
 from agents.feature_creation_agent import FeatureCreationAgent
 
 class TestFeatureCreationAgent(unittest.TestCase):
@@ -141,5 +142,32 @@ class TestFeatureCreationAgent(unittest.TestCase):
         self.auth_patcher = patch.object(FeatureCreationAgent, 'check_github_auth')
         self.mock_auth = self.auth_patcher.start()
 
-if __name__ == '__main__':
+    @patch('subprocess.run')
+    def test_check_github_auth_failure(self, mock_run):
+        agent = FeatureCreationAgent('token', 'owner', 'repo')
+        
+        # Como o método check_github_auth já foi chamado no __init__, vamos redefini-lo
+        # e depois chamar novamente para testar
+        self.auth_patcher.stop()
+        
+        mock_run.reset_mock()
+        # Simular falha na autenticação
+        mock_run.side_effect = subprocess.CalledProcessError(1, ['gh', 'auth', 'status'])
+        
+        # Verificar se a exceção é lançada
+        with self.assertRaises(subprocess.CalledProcessError):
+            agent.check_github_auth()
+        
+        mock_run.assert_called_once_with(['gh', 'auth', 'status'], check=True, capture_output=True, timeout=15)
+        self.logger_mock.info.assert_any_call("Verificando autenticação do GitHub CLI...")
+        self.logger_mock.error.assert_called_once_with("Falha na autenticação do GitHub CLI. Execute 'gh auth login' para autenticar.")
+        
+        # Reinicia o patch para não afetar outros testes
+        self.auth_patcher = patch.object(FeatureCreationAgent, 'check_github_auth')
+        self.mock_auth = self.auth_patcher.start()
+
+def run_tests():
     unittest.main()
+
+if __name__ == '__main__':
+    run_tests()
