@@ -4,6 +4,7 @@ import json
 import os
 import logging
 from slugify import slugify
+import re
 
 class FeatureCreationAgent(AssistantAgent):
     def __init__(self, github_token, repo_owner, repo_name):
@@ -126,23 +127,26 @@ class FeatureCreationAgent(AssistantAgent):
         E o seguinte histórico de commits da branch main:
         {git_log}
 
-        Com base nessas informações, sugira:
-        1. O tipo da branch (feat, fix, docs ou chore)
-        2. Um título curto (até 50 caracteres) para a issue
-        3. Uma descrição detalhada para a issue
+        Com base nessas informações, retorne uma resposta JSON contendo os seguintes campos:
+        {{
+            "branch_type": <feat|fix|docs|chore>,
+            "issue_title": "<Título curto da issue>",
+            "issue_description": "<Descrição detalhada da issue>",
+            "generated_branch_suffix": "<sufixo da branch (slug)>"
+        }}
         """
 
         response = client.chat.completions.create(
             model="gpt-4",
             messages=[
-                {"role": "system", "content": "Você é um assistente que auxilia a nomear branches, títulos e descrições de issues baseado no histórico do repositório e solicitações do usuário."},
+                {"role": "system", "content": "Você é um assistente que retorna respostas no formato JSON sem texto adicional."},
                 {"role": "user", "content": suggestion_prompt}
             ],
             max_tokens=500
         )
         content = response.choices[0].message.content
         self.logger.info(f"Sugestão recebida do OpenAI: {content}")
-        return content
+        return json.loads(content)
 
     def execute_feature_creation(self, prompt_text, execution_plan, openai_token=None):
         self.logger.info("Iniciando processo de criação de feature")
@@ -150,18 +154,13 @@ class FeatureCreationAgent(AssistantAgent):
         git_log = self.get_git_main_log()
         suggestion = self.get_suggestion_from_openai(openai_token, prompt_text, git_log)
 
-        branch_type_match = re.search(r'O tipo da branch:\s*(\w+)', suggestion)
-        branch_type = branch_type_match.group(1) if branch_type_match else "feat"
-
-        title_match = re.search(r'Título curto para a issue:\s*"?(.+?)"?$', suggestion, re.MULTILINE)
-        issue_title = title_match.group(1) if title_match else prompt_text.split('.')[0][:50]
-
-        description_match = re.search(r'Descrição detalhada para a issue:\s*(.+)', suggestion, re.DOTALL)
-        issue_description = description_match.group(1) if description_match else prompt_text
+        branch_type = suggestion["branch_type"]
+        issue_title = suggestion["issue_title"]
+        issue_description = suggestion["issue_description"]
+        generated_branch_suffix = suggestion["generated_branch_suffix"]
 
         issue_number = self.create_github_issue(issue_title, issue_description)
 
-        generated_branch_suffix = slugify(issue_title)[:30]
         branch_name = f'{branch_type}/{issue_number}/{generated_branch_suffix}'
 
         self.create_branch(branch_name)
