@@ -12,6 +12,7 @@
 [![Validação de YAML](https://github.com/Malnati/agent-flow-craft/actions/workflows/check-yaml.yml/badge.svg)](https://github.com/Malnati/agent-flow-craft/actions/workflows/check-yaml.yml)
 [![Atualização do TREE.md](https://github.com/Malnati/agent-flow-craft/actions/workflows/update-tree.yml/badge.svg)](https://github.com/Malnati/agent-flow-craft/actions/workflows/update3.yml)
 [![Auto Tagging](https://github.com/Malnati/agent-flow-craft/actions/workflows/auto-tag.yml/badge.svg)](https://github.com/Malnati/agent-flow-craft/actions/workflows/auto-tag.yml)
+[![Atualizar índice da documentação](https://github.com/Malnati/agent-flow-craft/actions/workflows/update-docs-index.yml/badge.svg)](https://github.com/Malnati/agent-flow-craft/actions/workflows/update-docs-index.yml)
 [![Changelog](https://img.shields.io/badge/changelog-visualizar-blue)](CHANGELOG.md)
 
 ---
@@ -81,6 +82,7 @@ agent-flow-craft/
 ├── LICENSE
 └── roadmap.md
 ```
+> A estrutura acima é gerada e mantida automaticamente no arquivo [TREE.md](./TREE.md).
 
 ---
 
@@ -111,6 +113,13 @@ O projeto oferece templates prontos para:
 - Relato de bugs: [Bug Report Template](.github/ISSUE_TEMPLATE/bug_report.md)
 - Sugestões de novas funcionalidades: [Feature Request Template](.github/ISSUE_TEMPLATE/feature_request.md)
 - Pull Requests: [Pull Request Template](.github/PULL_REQUEST_TEMPLATE.md)
+
+## 📂 Documentação interna
+
+- [📚 Documentação principal (docs/README.md)](docs/README.md)
+- O diretório `docs/pr/` contém os planos de execução gerados automaticamente a cada PR criado pelos agentes.
+- O índice dos planos de execução é atualizado automaticamente via workflow do GitHub Actions.
+- A estrutura do projeto é mantida atualizada no arquivo [TREE.md](./TREE.md).
 
 ---
 
@@ -144,4 +153,4 @@ Se você gosta do projeto, ⭐ favorite o repositório, compartilhe com colegas 
 ---
 
 ## 📅 Última atualização deste README
-Este arquivo foi atualizado pela última vez em: **25 de março de 2025**.
+*Última atualização: 26 de março de 2025*
