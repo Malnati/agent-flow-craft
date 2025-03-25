@@ -30,6 +30,8 @@ def main():
     parser.add_argument("--token", type=str, help="GitHub token", default=os.environ.get("GITHUB_TOKEN"))
     parser.add_argument("--owner", type=str, help="Repository owner (obrigatório).")
     parser.add_argument("--repo", type=str, help="Repository name (obrigatório).")
+    parser.add_argument("--openai_token", type=str, help="Token da OpenAI para notificação opcional.")
+
     args = parser.parse_args()
     
     if not args.token:
@@ -46,7 +48,8 @@ def main():
     try:
         agent = FeatureCreationAgent(args.token, args.owner, args.repo)
         logger.info("Executando feature creation agent")
-        agent.execute_feature_creation(args.prompt, args.execution_plan)
+        agent.execute_feature_creation(args.prompt, args.execution_plan, openai_token=args.openai_token)
+
         logger.info("Processo de criação de feature concluído com sucesso")
     except Exception as e:
         logger.error(f"Erro durante a execução: {str(e)}")

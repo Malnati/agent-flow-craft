@@ -3,6 +3,7 @@ import subprocess
 import json
 import os
 import logging
+import re
 
 class FeatureCreationAgent(AssistantAgent):
     def __init__(self, github_token, repo_owner, repo_name):
@@ -23,12 +24,29 @@ class FeatureCreationAgent(AssistantAgent):
 
     def create_github_issue(self, title, body):
         self.logger.info(f"Criando issue: {title}")
-        
+
         result = subprocess.run(
             [
                 'gh', 'issue', 'create',
                 '--repo', f'{self.repo_owner}/{self.repo_name}',
                 '--title', title,
+                '--body', body
+            ],
+            capture_output=True, text=True, check=True, timeout=30
+        )
+
+        output = result.stdout.strip()
+        self.logger.info(f"Saída da criação da issue: {output}")
+
+        # Extrair o número da issue da URL retornada
+        match = re.search(r'/issues/(\d+)', output)
+        if match:
+            issue_number = int(match.group(1))
+            self.logger.info(f"Issue #{issue_number} criada e capturada com sucesso")
+            return issue_number
+        else:
+            self.logger.error("Falha ao extrair número da issue a partir da saída.")
+            raise Exception("Falha ao capturar número da issue.")
                 '--body', body,
                 '--json', 'number'
             ],
@@ -46,7 +64,7 @@ class FeatureCreationAgent(AssistantAgent):
         subprocess.run(['git', 'push', 'origin', branch_name], check=True, timeout=30)
         self.logger.info(f"Branch {branch_name} criada e enviada para o repositório remoto")
 
-    def create_pr_plan_file(self, issue_number, prompt_text, execution_plan):
+    def create_pr_plan_file(self, issue_number, prompt_text, execution_plan, branch_name):
         self.logger.info(f"Criando arquivo de plano para PR da issue #{issue_number}")
         
         file_name = f'docs/pr/{issue_number}_feature_plan.md'
@@ -74,7 +92,33 @@ class FeatureCreationAgent(AssistantAgent):
         ], check=True, timeout=30)
         self.logger.info(f"Pull request criado com sucesso para a issue #{issue_number}")
 
-    def execute_feature_creation(self, prompt_text, execution_plan):
+    def notify_openai_agent_sdk(self, openai_token, issue_number, branch_name):
+        self.logger.info("Notificando o Agent SDK da OpenAI...")
+        import openai
+
+        client = openai.OpenAI(api_key=openai_token)
+
+        message_content = f"""
+        Uma nova feature foi criada:
+        - Número da Issue: {issue_number}
+        - Nome da branch: {branch_name}
+        - Link da PR: https://github.com/{self.repo_owner}/{self.repo_name}/pull/new/{branch_name}
+        """
+
+        try:
+            response = client.chat.completions.create(
+                model="gpt-4",
+                messages=[
+                    {"role": "system", "content": "Você é um assistente de monitoramento de fluxo de desenvolvimento."},
+                    {"role": "user", "content": message_content}
+                ],
+                max_tokens=50
+            )
+            self.logger.info(f"Notificação enviada para o Agent SDK da OpenAI: {response.choices[0].message.content}")
+        except Exception as e:
+            self.logger.error(f"Falha ao notificar o Agent SDK da OpenAI: {str(e)}")
+
+    def execute_feature_creation(self, prompt_text, execution_plan, openai_token=None):
         self.logger.info("Iniciando processo de criação de feature")
         
         issue_title = prompt_text.split('.')[0][:50]
@@ -84,8 +128,16 @@ class FeatureCreationAgent(AssistantAgent):
         branch_name = f'feature/issue-{issue_number}'
         
         self.create_branch(branch_name)
+
+        self.create_pr_plan_file(issue_number, prompt_text, execution_plan, branch_name)
+        self.create_pull_request(branch_name, issue_number)
+
+        if openai_token:
+            self.notify_openai_agent_sdk(openai_token, issue_number, branch_name)
+
         self.create_pr_plan_file(issue_number, prompt_text, execution_plan)
         self.create_pull_request(branch_name, issue_number)
+
         
         self.logger.info(f"Processo de criação de feature concluído com sucesso para a issue #{issue_number}")
         return issue_number, branch_name
