@@ -26,7 +26,7 @@ class TestFeatureCreationAgent(unittest.TestCase):
 
     @patch('subprocess.run')
     def test_create_github_issue(self, mock_run):
-        mock_run.return_value.stdout = '{"number": 123}'
+        mock_run.return_value.stdout = 'https://github.com/Malnati/agent-flow-craft/issues/123\n'
         agent = FeatureCreationAgent('token', 'owner', 'repo')
         
         # Reset o mock para ignorar a chamada do check_github_auth
@@ -50,7 +50,7 @@ class TestFeatureCreationAgent(unittest.TestCase):
         agent.create_branch('feature/test-branch')
         self.assertEqual(mock_run.call_count, 2)
         mock_run.assert_any_call(['git', 'checkout', '-b', 'feature/test-branch'], check=True, timeout=30)
-        mock_run.assert_any_call(['git', 'push', 'origin', 'feature/test-branch'], check=True, timeout=30)
+        mock_run.assert_any_call(['git', 'push', '--set-upstream', 'origin', 'feature/test-branch'], check=True, timeout=30)
         
         # Verificar se os logs foram chamados
         self.logger_mock.info.assert_any_call("Criando branch: feature/test-branch")
@@ -66,7 +66,7 @@ class TestFeatureCreationAgent(unittest.TestCase):
             # Reset o mock para ignorar a chamada do check_github_auth
             mock_run.reset_mock()
             
-            agent.create_pr_plan_file(123, 'Test prompt', 'Test execution plan')
+            agent.create_pr_plan_file(123, 'Test prompt', 'Test execution plan', 'feature/test-branch')
             
         self.assertEqual(mock_run.call_count, 3)
         mock_run.assert_any_call(['git', 'add', 'docs/pr/123_feature_plan.md'], check=True, timeout=30)
@@ -100,25 +100,30 @@ class TestFeatureCreationAgent(unittest.TestCase):
         self.logger_mock.info.assert_any_call("Criando pull request para a issue #123 da branch feature/test-branch")
         self.logger_mock.info.assert_any_call("Pull request criado com sucesso para a issue #123")
 
+    @patch.object(FeatureCreationAgent, 'get_suggestion_from_openai')
     @patch.object(FeatureCreationAgent, 'create_github_issue', return_value=123)
     @patch.object(FeatureCreationAgent, 'create_branch')
     @patch.object(FeatureCreationAgent, 'create_pr_plan_file')
     @patch.object(FeatureCreationAgent, 'create_pull_request')
-    def test_execute_feature_creation(self, mock_create_pull_request, mock_create_pr_plan_file, mock_create_branch, mock_create_github_issue):
+    def test_execute_feature_creation(self, mock_create_pull_request, mock_create_pr_plan_file, mock_create_branch, mock_create_github_issue, mock_openai_suggestion):
+        mock_openai_suggestion.return_value = {
+            'branch_type': 'feat',
+            'issue_title': 'Test Issue Title',
+            'issue_description': 'Test Issue Description',
+            'generated_branch_suffix': 'test-branch-suffix'
+        }
         agent = FeatureCreationAgent('token', 'owner', 'repo')
-        issue_number, branch_name = agent.execute_feature_creation('Test prompt', 'Test execution plan')
+        issue_number, branch_name = agent.execute_feature_creation('Test prompt', 'Test execution plan', 'fake_openai_token')
         
         self.assertEqual(issue_number, 123)
-        self.assertEqual(branch_name, 'feature/issue-123')
+        self.assertEqual(branch_name, 'feat/123/test-branch-suffix')
         
-        mock_create_github_issue.assert_called_once_with('Test prompt', 'Test prompt')
-        mock_create_branch.assert_called_once_with('feature/issue-123')
-        mock_create_pr_plan_file.assert_called_once_with(123, 'Test prompt', 'Test execution plan')
-        mock_create_pull_request.assert_called_once_with('feature/issue-123', 123)
+        mock_create_github_issue.assert_called_once_with('Test Issue Title', 'Test Issue Description')
+        mock_create_branch.assert_called_once_with('feat/123/test-branch-suffix')
+        mock_create_pr_plan_file.assert_called_once_with(123, 'Test prompt', 'Test execution plan', 'feat/123/test-branch-suffix')
+        mock_create_pull_request.assert_called_once_with('feat/123/test-branch-suffix', 123)
         
         # Verificar se os logs foram chamados
-        self.logger_mock.info.assert_any_call("Iniciando processo de criação de feature")
-        self.logger_mock.info.assert_any_call("Título da issue: Test prompt")
         self.logger_mock.info.assert_any_call("Processo de criação de feature concluído com sucesso para a issue #123")
 
     @patch('subprocess.run')

@@ -1,3 +1,10 @@
+.PHONY: install setup test lint format start-agent update-docs-index clean all
+
+# Instala as dependências do projeto via uv
+install:
+	uv pip install -r requirements.txt
+	uv pip install -e .[dev]
+
 # Instala as dependências do projeto em modo de desenvolvimento
 setup:
 	uv pip install -e .[dev]
@@ -25,3 +32,6 @@ update-docs-index:
 # Limpa todos os arquivos __pycache__
 clean:
 	find . -type d -name "__pycache__" -exec rm -r {} +
+
+# Executa lint, test, formatação e atualização de docs
+all: lint test format update-docs-index
