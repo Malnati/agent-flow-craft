@@ -207,13 +207,13 @@ class FeatureCreationAgent(AssistantAgent):
                     for i, step in enumerate(deliverable['implementation_steps'][:3]):  # Limita a 3 passos
                         message_content += f"  * {step}\n"
 
-        message_content += "\n\nPor favor, verifique se o plano de execução está completo e adequado para esta feature."
+        message_content += "\n\nPor favor, verifique se o plano de execução está completo e adequado para esta feature. Responda exclusivamente em português."
 
         try:
             response = client.chat.completions.create(
                 model="gpt-4",
                 messages=[
-                    {"role": "system", "content": "Você é um assistente de monitoramento de fluxo de desenvolvimento que analisa planos de execução e sugere melhorias quando necessário."},
+                    {"role": "system", "content": "Você é um assistente de monitoramento de fluxo de desenvolvimento que analisa planos de execução e sugere melhorias quando necessário. RESPONDA EXCLUSIVAMENTE EM PORTUGUÊS DO BRASIL."},
                     {"role": "user", "content": message_content}
                 ],
                 max_tokens=150
@@ -260,6 +260,8 @@ class FeatureCreationAgent(AssistantAgent):
         suggestion_prompt = f"""
 Você é um planejador técnico experiente especializado em desenvolvimento de software. Baseado no prompt do usuário abaixo, no histórico de commits e na estrutura de arquivos do projeto, você deve gerar um JSON completo e detalhado.
 
+IMPORTANTE: TODAS AS SUAS RESPOSTAS DEVEM SER EM PORTUGUÊS DO BRASIL. NÃO USE INGLÊS EM NENHUMA PARTE DA SUA RESPOSTA.
+
 Histórico de commits recentes:
 {git_log}
 
@@ -270,28 +272,28 @@ Você deve gerar um JSON completo e detalhado contendo:
 
 {{
   "branch_type": "<feat|fix|docs|chore>", 
-  "issue_title": "<Título curto e descritivo da issue>",
-  "issue_description": "<Descrição detalhada da issue que captura o objetivo e escopo do trabalho>",
+  "issue_title": "<Título curto e descritivo da issue em português>",
+  "issue_description": "<Descrição detalhada da issue que captura o objetivo e escopo do trabalho em português>",
   "generated_branch_suffix": "<sufixo da branch em formato de slug, sem espaços ou caracteres especiais>",
   "execution_plan": {{
     "deliverables": [
       {{
-        "name": "<Nome claro e específico do entregável>",
-        "description": "<Descrição detalhada do entregável, incluindo seu propósito e funcionalidade>",
+        "name": "<Nome claro e específico do entregável em português>",
+        "description": "<Descrição detalhada do entregável, incluindo seu propósito e funcionalidade em português>",
         "dependencies": ["<lista completa e específica de dependências de código ou externas>"],
         "usage_example": "<exemplo prático e completo de uso do entregável, preferencialmente com código>",
-        "acceptance_criteria": ["<lista objetiva e mensurável de critérios específicos de aceite>"],
+        "acceptance_criteria": ["<lista objetiva e mensurável de critérios específicos de aceite em português>"],
         "troubleshooting": [
           {{
-            "problem": "<descrição específica de um possível problema encontrado>",
-            "possible_cause": "<causa provável e específica do problema>",
-            "resolution": "<instruções claras e específicas para resolver o problema>"
+            "problem": "<descrição específica de um possível problema encontrado em português>",
+            "possible_cause": "<causa provável e específica do problema em português>",
+            "resolution": "<instruções claras e específicas para resolver o problema em português>"
           }}
         ],
         "implementation_steps": [
-          "<Passo 1 com instruções detalhadas para implementação>",
-          "<Passo 2 com instruções detalhadas para implementação>",
-          "<Passo 3 com instruções detalhadas para implementação>"
+          "<Passo 1 com instruções detalhadas para implementação em português>",
+          "<Passo 2 com instruções detalhadas para implementação em português>",
+          "<Passo 3 com instruções detalhadas para implementação em português>"
         ]
       }}
     ]
@@ -310,12 +312,13 @@ OBSERVAÇÕES IMPORTANTES:
 6. Não use placeholder genéricos como "Descrição breve" ou "Exemplo genérico".
 7. Baseie-se no contexto real do projeto e no histórico de commits para criar um plano realista.
 8. A resposta deve estar em formato JSON válido sem qualquer texto adicional.
+9. TODA A RESPOSTA DEVE SER EM PORTUGUÊS DO BRASIL, INCLUSIVE OS VALORES DOS CAMPOS DO JSON.
 """
 
         response = client.chat.completions.create(
             model="gpt-4",
             messages=[
-                {"role": "system", "content": "Você é um assistente técnico que gera planos de execução detalhados em formato JSON. Sua resposta deve conter APENAS o JSON sem texto introdutório ou explicativo."},
+                {"role": "system", "content": "Você é um assistente técnico que gera planos de execução detalhados em formato JSON. Sua resposta deve conter APENAS o JSON sem texto introdutório ou explicativo. VOCÊ DEVE RESPONDER EXCLUSIVAMENTE EM PORTUGUÊS DO BRASIL."},
                 {"role": "user", "content": suggestion_prompt}
             ],
             max_tokens=2000,
