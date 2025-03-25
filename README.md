@@ -46,6 +46,18 @@ Abaixo, a lista de ferramentas consideradas durante a análise para compor o eco
 
 **Decisões atuais**: já está definido o uso do **UV**, do **Cursor** como IDE e do **Aider** para o fluxo de desenvolvimento assistido. As demais ferramentas ainda estão em avaliação, com forte tendência de escolha pelo **LangChain** ou pelo **Microsoft AutoGen**, a depender de testes adicionais.
 
+📊 Comparativo de Popularidade e Atividade (dados coletados em 24 de março de 2025)
+
+| Ferramenta      | Estrelas (⭐) | Contribuidores | Commits/Semana (últimos 6 meses) |
+|-----------------|--------------|----------------|----------------------------------|
+| **LangChain**   | ~104.000     | 3.529          | ~75                              |
+| **LangFlow**    | ~52.800      | 262            | ~85                              |
+| **AutoGen (MS)**| ~42.100      | 483            | ~80                              |
+| **CrewAI**      | ~29.000      | 229            | ~30                              |
+| **Agno**        | ~21.800      | 139            | ~40                              |
+
+> **Conclusão**: Os dados mostram que o **LangChain** é atualmente a ferramenta mais popular e ativa, com uma grande comunidade de desenvolvedores e ritmo elevado de commits. O **AutoGen**, da Microsoft, apresenta também um excelente nível de atividade e conta com a confiança e tradição da empresa no suporte a longo prazo. No momento (24 de março de 2025), a decisão entre LangChain e AutoGen ainda não foi tomada. Entretanto, a tendência é optar pelo **AutoGen**, justamente pela segurança que a Microsoft oferece quanto à continuidade e manutenção das ferramentas, além da documentação robusta. O **LangChain** permanece como uma forte alternativa, destacando-se pela popularidade e adoção comunitária.
+
 ---
 
 ## 📂 Estrutura planejada do repositório
