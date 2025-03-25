@@ -47,6 +47,15 @@ class FeatureCreationAgent(AssistantAgent):
         else:
             self.logger.error("Falha ao extrair número da issue a partir da saída.")
             raise Exception("Falha ao capturar número da issue.")
+                '--body', body,
+                '--json', 'number'
+            ],
+            capture_output=True, text=True, check=True, timeout=30
+        )
+        issue_data = json.loads(result.stdout)
+        issue_number = issue_data['number']
+        self.logger.info(f"Issue #{issue_number} criada com sucesso")
+        return issue_number
 
     def create_branch(self, branch_name):
         self.logger.info(f"Criando branch: {branch_name}")
@@ -68,7 +77,7 @@ class FeatureCreationAgent(AssistantAgent):
         
         subprocess.run(['git', 'add', file_name], check=True, timeout=30)
         subprocess.run(['git', 'commit', '-m', f'Add PR plan file for issue #{issue_number}'], check=True, timeout=30)
-        subprocess.run(['git', 'push', '--set-upstream', 'origin', branch_name], check=True, timeout=30)
+        subprocess.run(['git', 'push'], check=True, timeout=30)
         self.logger.info(f"Arquivo de plano de PR criado e enviado para o repositório remoto")
 
     def create_pull_request(self, branch_name, issue_number):
@@ -119,11 +128,16 @@ class FeatureCreationAgent(AssistantAgent):
         branch_name = f'feature/issue-{issue_number}'
         
         self.create_branch(branch_name)
+
         self.create_pr_plan_file(issue_number, prompt_text, execution_plan, branch_name)
         self.create_pull_request(branch_name, issue_number)
 
         if openai_token:
             self.notify_openai_agent_sdk(openai_token, issue_number, branch_name)
+
+        self.create_pr_plan_file(issue_number, prompt_text, execution_plan)
+        self.create_pull_request(branch_name, issue_number)
+
         
         self.logger.info(f"Processo de criação de feature concluído com sucesso para a issue #{issue_number}")
         return issue_number, branch_name
