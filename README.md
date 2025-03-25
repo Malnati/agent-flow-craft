@@ -190,7 +190,68 @@ python scripts/start_feature_agent.py "Descrição da nova funcionalidade" "Plan
 O diretório `docs/pr/` contém planos de execução detalhados para as issues criadas e pull requests abertos pelo agente de criação de features. Cada arquivo neste diretório segue o formato `<issue_number>_feature_plan.md` e inclui:
 
 - **Prompt recebido:** O prompt original fornecido pelo usuário.
-- **Plano de execução gerado pela IA:** Um plano detalhado de como a funcionalidade será implementada, incluindo contexto, descrição da solução, alternativas consideradas, checklist técnico de implementação e observações adicionais.
+- **Plano de execução gerado pela IA:** Um plano detalhado com informações estruturadas sobre a implementação da feature.
+
+#### Estrutura do Plano de Execução
+
+Cada plano de execução contém uma ou mais entregáveis, e para cada entregável são detalhados:
+
+1. **Nome e Descrição:** Identificação clara e descrição detalhada do propósito do entregável.
+2. **Dependências:** Lista completa de dependências técnicas (bibliotecas, serviços, etc.) necessárias.
+3. **Exemplo de Uso:** Exemplo prático, geralmente com código, de como o entregável será utilizado.
+4. **Critérios de Aceitação:** Lista objetiva e mensurável de critérios para validar o entregável.
+5. **Resolução de Problemas:** Possíveis problemas que podem ocorrer, suas causas e resoluções.
+6. **Passos de Implementação:** Lista sequencial e detalhada de passos para implementar o entregável.
+
+Exemplo de um entregável em um plano de execução:
+
+```markdown
+### Entregável 1: Gerador de Plano de Execução
+
+**Descrição:** Módulo responsável por gerar planos de execução detalhados a partir do prompt do usuário e do contexto do projeto.
+
+**Dependências:**
+- pyautogen>=0.2.0
+- openai>=1.0.0
+- gitpython>=3.1.30
+
+**Exemplo de uso:**
+```python
+# Cria um gerador de plano
+gerador = GeradorPlanoExecucao(openai_token="sk-xxx")
+
+# Gera o plano a partir do prompt e contexto
+plano = gerador.gerar_plano(
+    prompt="Implementar sistema de autenticação",
+    contexto_projeto=obter_contexto_projeto()
+)
+
+# Salva o plano em um arquivo
+plano.salvar("docs/pr/42_feature_plan.md")
+```
+
+**Critérios de aceitação:**
+- O plano gerado deve incluir todos os elementos obrigatórios (nome, descrição, dependências, etc.)
+- O plano deve ser específico ao contexto do projeto
+- O plano deve ser gerado em menos de 30 segundos
+- O formato do plano deve seguir o padrão Markdown definido
+
+**Resolução de problemas:**
+- Problema: API da OpenAI retorna erro
+  - Causa possível: Token inválido ou expirado
+  - Resolução: Verificar e renovar o token de acesso
+
+**Passos de implementação:**
+1. Criar a classe GeradorPlanoExecucao
+2. Implementar método para obter contexto do projeto (arquivos, histórico git)
+3. Implementar integração com a API da OpenAI
+4. Desenvolver prompt template para gerar o plano
+5. Implementar parser para converter a resposta da API em estrutura de dados
+6. Criar método para exportar o plano em formato Markdown
+7. Implementar tratamento de erros e retentativas
+```
+
+Este formato estruturado ajuda a garantir que todos os planos de execução tenham informações completas e úteis para a implementação.
 
 ---
 
