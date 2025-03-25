@@ -35,3 +35,18 @@ Casos de comportamento abusivo, de assédio ou inaceitável podem ser reportados
 Para dúvidas ou denúncias, utilize o canal de issues ou entre em contato pelo e-mail: **contato@agentflowcraft.dev** (a ser definido).
 
 ## 🙌 Obrigado por ajudar a manter este ambiente acolhedor e colaborativo!
+
+---
+
+## 🌐 Comunidade e Recursos
+
+[![Contribua!](https://img.shields.io/badge/contribua-%F0%9F%91%8D-blue)](./CONTRIBUTING.md)
+[![Código de Conduta](https://img.shields.io/badge/c%C3%B3digo%20de%20conduta-respeite%20as%20regras-orange)](./CODE_OF_CONDUCT.md)
+[![Roadmap](https://img.shields.io/badge/roadmap-planejamento-green)](./roadmap.md)
+[![Suporte](https://img.shields.io/badge/suporte-ajuda-important)](./SUPPORT.md)
+[![Relatar problema](https://img.shields.io/badge/issues-reportar%20problema-lightgrey)](../../issues)
+
+---
+
+## 💡 Contribua com a comunidade
+Se você gosta do projeto, ⭐ favorite o repositório, compartilhe com colegas e participe das discussões e melhorias!
