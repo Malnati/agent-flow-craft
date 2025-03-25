@@ -11,6 +11,7 @@
 [![Verificação de Markdown](https://github.com/Malnati/agent-flow-craft/actions/workflows/check-markdown.yml/badge.svg)](https://github.com/Malnati/agent-flow-craft/actions/workflows/check-markdown.yml)
 [![Validação de YAML](https://github.com/Malnati/agent-flow-craft/actions/workflows/check-yaml.yml/badge.svg)](https://github.com/Malnati/agent-flow-craft/actions/workflows/check-yaml.yml)
 [![Atualização do TREE.md](https://github.com/Malnati/agent-flow-craft/actions/workflows/update-tree.yml/badge.svg)](https://github.com/Malnati/agent-flow-craft/actions/workflows/update3.yml)
+[![Auto Tagging](https://github.com/Malnati/agent-flow-craft/actions/workflows/auto-tag.yml/badge.svg)](https://github.com/Malnati/agent-flow-craft/actions/workflows/auto-tag.yml)
 
 ---
 
@@ -142,4 +143,4 @@ Se você gosta do projeto, ⭐ favorite o repositório, compartilhe com colegas 
 ---
 
 ## 📅 Última atualização deste README
-Este arquivo foi atualizado pela última vez em: **24 de março de 2025**.
+Este arquivo foi atualizado pela última vez em: **25 de março de 2025**.
