@@ -163,40 +163,57 @@ class FeatureCreationAgent(AssistantAgent):
         )
         return result.stdout.strip()
 
+    def get_project_context(self, max_lines=50, max_files=10):
+        self.logger.info("Coletando contexto do projeto")
+        files = list_project_files(directory=".", max_depth=2)[:max_files]
+        context = ""
+        for file in files:
+            if file.endswith((".py", ".md", ".txt")):
+                content = read_project_file(file, max_lines=max_lines)
+                context += f"\n\n### Arquivo: {file}\n```\n{content}\n```"
+        return context
+
     def get_suggestion_from_openai(self, openai_token, prompt_text, git_log):
         import openai
         client = openai.OpenAI(api_key=openai_token)
 
+        project_context = self.get_project_context()
+
         suggestion_prompt = f"""
-        Considere o seguinte prompt de usuário para criação de feature: "{prompt_text}"
-        E o seguinte histórico de commits da branch main:
+        Você é um planejador técnico. Gere um plano real, específico e sem placeholders.
+
+        Prompt do usuário: "{prompt_text}"
+        Histórico de commits da main:
         {git_log}
 
-        E você pode utilizar ferramentas para:
-        - Listar arquivos do projeto
-        - Ler conteúdos dos arquivos
-        - Obter histórico de commits
+        Estrutura e arquivos do projeto:
+        {project_context}
 
-        Use essas ferramentas antes de gerar o plano, caso necessário.
-
-        Com base nessas informações, retorne uma resposta JSON contendo os seguintes campos:
+        Responda somente com um JSON contendo:
         {{
-            "branch_type": <feat|fix|docs|chore>,
+            "branch_type": "<feat|fix|docs|chore>",
             "issue_title": "<Título curto da issue>",
             "issue_description": "<Descrição detalhada da issue>",
-            "generated_branch_suffix": "<sufixo da branch (slug)>"
+            "generated_branch_suffix": "<sufixo da branch (slug)>",
+            "execution_plan": "<plano detalhado seguindo entregáveis, exemplos reais, critérios objetivos e troubleshooting específico>"
         }}
         """
 
         response = client.chat.completions.create(
             model="gpt-4",
             messages=[
-                {"role": "system", "content": "Você é um assistente que retorna respostas no formato JSON sem texto adicional."},
+                {"role": "system", "content": "Você é um assistente que retorna apenas JSON e nada mais."},
                 {"role": "user", "content": suggestion_prompt}
             ],
-            max_tokens=500
+            max_tokens=1500,
+            temperature=0.2
         )
         content = response.choices[0].message.content
+
+        if any(x in content.lower() for x in ["descrição breve", "dependência a", "passo inicial"]):
+            self.logger.warning("Resposta genérica detectada, solicitando nova sugestão.")
+            return self.get_suggestion_from_openai(openai_token, prompt_text, git_log)
+
         self.logger.info(f"Sugestão recebida do OpenAI: {content}")
         return json.loads(content)
 
