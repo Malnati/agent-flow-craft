@@ -2,7 +2,6 @@ import unittest
 from unittest.mock import patch, MagicMock
 import logging
 import os
-import time
 from agents.feature_creation_agent import FeatureCreationAgent
 
 class TestFeatureCreationAgent(unittest.TestCase):
@@ -12,22 +11,26 @@ class TestFeatureCreationAgent(unittest.TestCase):
         self.logger_mock = MagicMock(spec=logging.Logger)
         logging.getLogger = MagicMock(return_value=self.logger_mock)
         
-        # Mockando time.sleep para não atrasar os testes
-        self.sleep_patcher = patch('time.sleep')
-        self.mock_sleep = self.sleep_patcher.start()
-        
         # Mockando os.makedirs para não criar diretórios durante os testes
         self.makedirs_patcher = patch('os.makedirs')
         self.mock_makedirs = self.makedirs_patcher.start()
+        
+        # Patch para o método check_github_auth
+        self.auth_patcher = patch.object(FeatureCreationAgent, 'check_github_auth')
+        self.mock_auth = self.auth_patcher.start()
 
     def tearDown(self):
-        self.sleep_patcher.stop()
         self.makedirs_patcher.stop()
+        self.auth_patcher.stop()
 
     @patch('subprocess.run')
     def test_create_github_issue(self, mock_run):
         mock_run.return_value.stdout = '{"number": 123}'
         agent = FeatureCreationAgent('token', 'owner', 'repo')
+        
+        # Reset o mock para ignorar a chamada do check_github_auth
+        mock_run.reset_mock()
+        
         issue_number = agent.create_github_issue('Test Issue', 'This is a test issue.')
         self.assertEqual(issue_number, 123)
         mock_run.assert_called_once()
@@ -35,24 +38,22 @@ class TestFeatureCreationAgent(unittest.TestCase):
         # Verificar se os logs foram chamados
         self.logger_mock.info.assert_any_call("Criando issue: Test Issue")
         self.logger_mock.info.assert_any_call("Issue #123 criada com sucesso")
-        
-        # Verificar se o timeout foi chamado
-        self.mock_sleep.assert_called_with(1)
 
     @patch('subprocess.run')
     def test_create_branch(self, mock_run):
         agent = FeatureCreationAgent('token', 'owner', 'repo')
+        
+        # Reset o mock para ignorar a chamada do check_github_auth
+        mock_run.reset_mock()
+        
         agent.create_branch('feature/test-branch')
         self.assertEqual(mock_run.call_count, 2)
-        mock_run.assert_any_call(['git', 'checkout', '-b', 'feature/test-branch'], check=True)
-        mock_run.assert_any_call(['git', 'push', 'origin', 'feature/test-branch'], check=True)
+        mock_run.assert_any_call(['git', 'checkout', '-b', 'feature/test-branch'], check=True, timeout=30)
+        mock_run.assert_any_call(['git', 'push', 'origin', 'feature/test-branch'], check=True, timeout=30)
         
         # Verificar se os logs foram chamados
         self.logger_mock.info.assert_any_call("Criando branch: feature/test-branch")
         self.logger_mock.info.assert_any_call("Branch feature/test-branch criada e enviada para o repositório remoto")
-        
-        # Verificar se os timeouts foram chamados
-        self.assertEqual(self.mock_sleep.call_count, 2)
 
     @patch('subprocess.run')
     def test_create_pr_plan_file(self, mock_run):
@@ -60,12 +61,16 @@ class TestFeatureCreationAgent(unittest.TestCase):
         open_mock = unittest.mock.mock_open()
         with patch('builtins.open', open_mock):
             agent = FeatureCreationAgent('token', 'owner', 'repo')
+            
+            # Reset o mock para ignorar a chamada do check_github_auth
+            mock_run.reset_mock()
+            
             agent.create_pr_plan_file(123, 'Test prompt', 'Test execution plan')
             
         self.assertEqual(mock_run.call_count, 3)
-        mock_run.assert_any_call(['git', 'add', 'docs/pr/123_feature_plan.md'], check=True)
-        mock_run.assert_any_call(['git', 'commit', '-m', 'Add PR plan file for issue #123'], check=True)
-        mock_run.assert_any_call(['git', 'push'], check=True)
+        mock_run.assert_any_call(['git', 'add', 'docs/pr/123_feature_plan.md'], check=True, timeout=30)
+        mock_run.assert_any_call(['git', 'commit', '-m', 'Add PR plan file for issue #123'], check=True, timeout=30)
+        mock_run.assert_any_call(['git', 'push'], check=True, timeout=30)
         
         # Verificar se os logs foram chamados
         self.logger_mock.info.assert_any_call("Criando arquivo de plano para PR da issue #123")
@@ -73,13 +78,14 @@ class TestFeatureCreationAgent(unittest.TestCase):
         
         # Verificar se os diretórios foram criados
         self.mock_makedirs.assert_called_once_with(os.path.dirname('docs/pr/123_feature_plan.md'), exist_ok=True)
-        
-        # Verificar se os timeouts foram chamados
-        self.assertEqual(self.mock_sleep.call_count, 3)
 
     @patch('subprocess.run')
     def test_create_pull_request(self, mock_run):
         agent = FeatureCreationAgent('token', 'owner', 'repo')
+        
+        # Reset o mock para ignorar a chamada do check_github_auth
+        mock_run.reset_mock()
+        
         agent.create_pull_request('feature/test-branch', 123)
         mock_run.assert_called_once_with([
             'gh', 'pr', 'create',
@@ -87,14 +93,11 @@ class TestFeatureCreationAgent(unittest.TestCase):
             '--head', 'feature/test-branch',
             '--title', f'Automated PR for issue #123',
             '--body', f'This PR closes issue #123 and includes the execution plan in `docs/pr/123_feature_plan.md`.'
-        ], check=True)
+        ], check=True, timeout=30)
         
         # Verificar se os logs foram chamados
         self.logger_mock.info.assert_any_call("Criando pull request para a issue #123 da branch feature/test-branch")
         self.logger_mock.info.assert_any_call("Pull request criado com sucesso para a issue #123")
-        
-        # Verificar se o timeout foi chamado
-        self.mock_sleep.assert_called_with(1)
 
     @patch.object(FeatureCreationAgent, 'create_github_issue', return_value=123)
     @patch.object(FeatureCreationAgent, 'create_branch')
@@ -116,6 +119,27 @@ class TestFeatureCreationAgent(unittest.TestCase):
         self.logger_mock.info.assert_any_call("Iniciando processo de criação de feature")
         self.logger_mock.info.assert_any_call("Título da issue: Test prompt")
         self.logger_mock.info.assert_any_call("Processo de criação de feature concluído com sucesso para a issue #123")
+
+    @patch('subprocess.run')
+    def test_check_github_auth(self, mock_run):
+        agent = FeatureCreationAgent('token', 'owner', 'repo')
+        
+        # Como o método check_github_auth já foi chamado no __init__, vamos redefini-lo
+        # e depois chamar novamente para testar
+        self.auth_patcher.stop()
+        
+        mock_run.reset_mock()
+        mock_run.return_value.returncode = 0
+        
+        agent.check_github_auth()
+        
+        mock_run.assert_called_once_with(['gh', 'auth', 'status'], check=True, capture_output=True, timeout=15)
+        self.logger_mock.info.assert_any_call("Verificando autenticação do GitHub CLI...")
+        self.logger_mock.info.assert_any_call("Autenticação do GitHub verificada com sucesso.")
+        
+        # Reinicia o patch para não afetar outros testes
+        self.auth_patcher = patch.object(FeatureCreationAgent, 'check_github_auth')
+        self.mock_auth = self.auth_patcher.start()
 
 if __name__ == '__main__':
     unittest.main()
