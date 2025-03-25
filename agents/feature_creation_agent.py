@@ -4,6 +4,7 @@ import json
 import os
 import logging
 import re
+import time
 
 class FeatureCreationAgent(AssistantAgent):
     def __init__(self, github_token, repo_owner, repo_name):
@@ -53,8 +54,23 @@ class FeatureCreationAgent(AssistantAgent):
         self.logger.info(f"Criando branch: {branch_name}")
         
         subprocess.run(['git', 'checkout', '-b', branch_name], check=True, timeout=30)
+        
+        self.wait_for_git_lock_release()
+        
         subprocess.run(['git', 'push', '--set-upstream', 'origin', branch_name], check=True, timeout=30)
         self.logger.info(f"Branch {branch_name} criada e enviada para o repositório remoto")
+
+    def wait_for_git_lock_release(self):
+        lock_path = '.git/config.lock'
+        retries = 5
+        for attempt in range(retries):
+            if os.path.exists(lock_path):
+                self.logger.warning(f"Arquivo de lock do git encontrado ({lock_path}). Aguardando liberação...")
+                time.sleep(1)
+            else:
+                return
+        if os.path.exists(lock_path):
+            raise Exception(f"Arquivo de lock do git ({lock_path}) ainda existe após {retries} tentativas.")
 
     def create_pr_plan_file(self, issue_number, prompt_text, execution_plan):
         self.logger.info(f"Criando arquivo de plano para PR da issue #{issue_number}")
