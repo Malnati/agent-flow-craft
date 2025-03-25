@@ -1,0 +1,42 @@
+[project]
+name = "agent-flow-craft"
+version = "0.1.0"
+description = "Automatização do fluxo de criação de features via agentes e integração com o GitHub e OpenAI."
+authors = [{ name = "Malnati" }]
+dependencies = [
+    "openai",
+    "autogen",
+    "pytest",
+    "unittest2",
+    "uv",
+    "ghapi",
+    "python-dotenv",
+    "loguru",
+    "requests"
+]
+
+[project.optional-dependencies]
+dev = [
+    "black",
+    "flake8",
+    "isort",
+    "pre-commit"
+]
+
+[tool.setuptools]
+packages = ["agents", "scripts", "tests"]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 88
+target-version = ['py310']
+
+[tool.isort]
+profile = "black"
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "W503"]
