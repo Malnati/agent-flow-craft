@@ -1,10 +1,39 @@
 from autogen import AssistantAgent
+from autogen.tools import tool
 import subprocess
 import json
 import os
 import logging
 from slugify import slugify
 import re
+
+@tool
+def list_project_files(directory=".", max_depth=2):
+    """
+    Lista recursivamente arquivos em um diretório até um nível máximo de profundidade.
+    """
+    result = []
+    for root, dirs, files in os.walk(directory):
+        depth = root[len(directory):].count(os.sep)
+        if depth < max_depth:
+            for file in files:
+                result.append(os.path.join(root, file))
+        else:
+            dirs.clear()
+    return result
+
+@tool
+def read_project_file(file_path, max_lines=100):
+    """
+    Lê até max_lines de um arquivo de texto e retorna como string.
+    """
+    lines = []
+    with open(file_path, 'r') as file:
+        for idx, line in enumerate(file):
+            if idx >= max_lines:
+                break
+            lines.append(line)
+    return ''.join(lines)
 
 class FeatureCreationAgent(AssistantAgent):
     def __init__(self, github_token, repo_owner, repo_name):
@@ -65,7 +94,23 @@ class FeatureCreationAgent(AssistantAgent):
         with open(file_name, 'w') as f:
             f.write(f'# Plano de execução para a issue #{issue_number}\n\n')
             f.write(f'**Prompt recebido:** {prompt_text}\n\n')
-            f.write(f'**Plano de execução gerado pela IA:**\n{execution_plan}\n')
+            f.write('**Plano de execução gerado automaticamente:**\n\n')
+            f.write('## Entregáveis:\n\n')
+            f.write('- **Entregável 1:** Descrição breve\n')
+            f.write('  - **Dependências:**\n    - Dependência A\n    - Dependência B\n')
+            f.write('  - **Exemplo:**\n    - Exemplo concreto de uso\n')
+            f.write('  - **Critérios de aceite:**\n    - Critério 1\n    - Critério 2\n')
+            f.write('  - **Troubleshooting:**\n    - Possível falha e como corrigir\n')
+            f.write('  - **Passo-a-passo:**\n    1. Passo inicial\n    2. Passo seguinte\n\n')
+            f.write('- **Entregável 2:** Descrição breve\n')
+            f.write('  - **Dependências:**\n    - Dependência X\n')
+            f.write('  - **Exemplo:**\n    - Exemplo de saída esperada\n')
+            f.write('  - **Critérios de aceite:**\n    - Checklist de validação\n')
+            f.write('  - **Troubleshooting:**\n    - Erros comuns e resolução\n')
+            f.write('  - **Passo-a-passo:**\n    1. Passo inicial\n    2. Passo seguinte\n\n')
+            f.write('## Observações Finais:\n')
+            f.write('- O agente deve consultar o histórico de commits e arquivos do projeto para enriquecer o plano.\n')
+            f.write('- Todos os exemplos devem estar alinhados ao codebase atual.\n')
         
         subprocess.run(['git', 'add', file_name], check=True, timeout=30)
         subprocess.run(['git', 'commit', '-m', f'Add PR plan file for issue #{issue_number}'], check=True, timeout=30)
@@ -126,6 +171,13 @@ class FeatureCreationAgent(AssistantAgent):
         Considere o seguinte prompt de usuário para criação de feature: "{prompt_text}"
         E o seguinte histórico de commits da branch main:
         {git_log}
+
+        E você pode utilizar ferramentas para:
+        - Listar arquivos do projeto
+        - Ler conteúdos dos arquivos
+        - Obter histórico de commits
+
+        Use essas ferramentas antes de gerar o plano, caso necessário.
 
         Com base nessas informações, retorne uma resposta JSON contendo os seguintes campos:
         {{
