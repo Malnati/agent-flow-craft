@@ -379,3 +379,80 @@ OBSERVAÇÕES IMPORTANTES:
 
         self.logger.info(f"Processo de criação de feature concluído com sucesso para a issue #{issue_number}")
         return issue_number, branch_name
+
+    def request_plan_correction(self, prompt, current_plan, validation_result, openai_token):
+        """
+        Solicita correção do plano de execução ao Agent SDK da OpenAI
+        
+        Args:
+            prompt (str): Prompt original do usuário
+            current_plan (str): Plano atual incompleto
+            validation_result (dict): Resultado da validação com detalhes dos itens ausentes
+            openai_token (str): Token da API da OpenAI
+            
+        Returns:
+            str: Plano corrigido
+        """
+        self.logger.info("Solicitando correção do plano via Agent SDK da OpenAI")
+        
+        # Preparar a mensagem detalhada para o Agent SDK
+        missing_items_formatted = "\n".join([f"- {item}" for item in validation_result.get("missing_items", [])])
+        
+        # Adicionar detalhes por entregável se disponíveis
+        detalhes_entregaveis = ""
+        if "detalhes_por_entregavel" in validation_result:
+            for entregavel in validation_result["detalhes_por_entregavel"]:
+                if entregavel["itens_ausentes"]:
+                    detalhes_entregaveis += f"\n### Para o entregável '{entregavel['nome']}':\n"
+                    detalhes_entregaveis += "\n".join([f"- Falta {item}" for item in entregavel["itens_ausentes"]])
+        
+        # Criar o prompt de correção
+        correction_prompt = f"""
+# Solicitação de Correção de Plano de Execução
+
+## Prompt original:
+{prompt}
+
+## Plano atual com problemas:
+{current_plan}
+
+## Itens ausentes:
+{missing_items_formatted}
+
+## Detalhes por entregável:
+{detalhes_entregaveis}
+
+## Instruções:
+1. Corrija o plano de execução incluindo os itens ausentes.
+2. Certifique-se de que o plano de execução atenda a todos os requisitos necessários.
+3. Inclua detalhes específicos para cada entregável, se necessário.
+4. Forneça dependências específicas com versões (quando aplicável).
+5. Inclua critérios de aceitação mensuráveis e verificáveis.
+6. Os passos de implementação devem ser detalhados o suficiente para guiar o desenvolvimento.
+7. Não use placeholder genéricos como "Descrição breve" ou "Exemplo genérico".
+8. Baseie-se no contexto real do projeto e no histórico de commits para criar um plano realista.
+9. A resposta deve estar em formato JSON válido sem qualquer texto adicional.
+"""
+        
+        try:
+            from openai import OpenAI
+            
+            client = OpenAI(api_key=openai_token)
+            
+            response = client.chat.completions.create(
+                model="gpt-4",  # ou outro modelo apropriado
+                messages=[
+                    {"role": "system", "content": "Você é um assistente especializado em criar planos de execução de features de software."},
+                    {"role": "user", "content": correction_prompt}
+                ],
+                temperature=0.7,
+                max_tokens=4000
+            )
+            
+            corrected_plan = response.choices[0].message.content
+            self.logger.info("Plano corrigido recebido com sucesso")
+            return corrected_plan
+            
+        except Exception as e:
+            self.logger.error(f"Erro ao comunicar com o Agent SDK: {str(e)}")
+            raise
