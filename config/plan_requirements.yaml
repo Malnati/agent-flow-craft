@@ -1,0 +1,56 @@
+# Requisitos para planos de execução
+formato_plano:
+  titulo: obrigatório
+  prompt_recebido: obrigatório
+  plano_execucao: obrigatório
+
+requisitos_entregaveis:
+  - nome: "Nome claro e específico"
+    obrigatorio: true
+  - descricao: "Descrição detalhada incluindo propósito e funcionalidade"
+    obrigatorio: true
+  - dependencias: "Lista de dependências necessárias (bibliotecas, serviços, etc.)"
+    obrigatorio: true
+  - exemplo_uso: "Exemplo prático de como usar o entregável"
+    obrigatorio: true
+  - criterios_aceitacao: "Lista de critérios mensuráveis para validar o entregável"
+    obrigatorio: true
+  - resolucao_problemas: "Possíveis problemas, causas e soluções"
+    obrigatorio: true
+  - passos_implementacao: "Lista detalhada de passos para implementar o entregável"
+    obrigatorio: true
+
+formato_exemplo:
+  titulo: "Plano de execução para a issue #42"
+  prompt: "Criar um sistema de autenticação"
+  entregaveis:
+    - nome: "Sistema de Autenticação OAuth2"
+      descricao: "Sistema de autenticação usando OAuth2 para integração com serviços externos."
+      dependencias:
+        - "oauth2-client v2.1.0"
+        - "jsonwebtoken v8.5.1"
+        - "secure-storage v1.2.0"
+      exemplo_uso: |
+        const auth = new OAuth2Auth(config);
+        const token = await auth.authenticate(user, password);
+      criterios_aceitacao:
+        - "Autenticação com Google e GitHub funciona corretamente"
+        - "Tokens são armazenados de forma segura"
+        - "Sistema de refresh token implementado"
+      resolucao_problemas:
+        - problema: "Token expirado"
+          causa: "Tempo de expiração muito curto"
+          resolucao: "Implementar refresh automático de token"
+      passos_implementacao:
+        - "Configurar cliente OAuth2"
+        - "Implementar endpoints de autenticação"
+        - "Criar sistema de armazenamento seguro de tokens"
+        - "Implementar mecanismo de refresh token"
+        - "Testar integrações com provedores"
+
+mensagens:
+  validacao_inicio: "Iniciando validação do plano de execução"
+  validacao_sucesso: "Plano de execução válido"
+  validacao_falha: "Plano de execução inválido"
+  item_ausente: "Item '{item}' ausente no entregável '{entregavel}'"
+  correcao_solicitada: "Solicitando correção do plano" 
