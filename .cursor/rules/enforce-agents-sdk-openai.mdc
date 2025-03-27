@@ -1,0 +1,122 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+
+# Regras para OpenAI SDK
+
+## Estrutura de Diretórios
+```
+<some dir>/
+├── agents/
+│   ├── base_agent.py
+│   └── specialized_agent.py
+├── guardrails/
+│   ├── validators/
+│   └── safety_layer.py
+├── handoffs/
+│   ├── human_handoff.py
+│   └── escalation_rules.py
+└── tools/
+    ├── custom_tools.py
+    └── toolkit_manager.py
+```
+
+## Padrões Obrigatórios
+
+### 1. **Agents**
+- Herdar sempre de `OpenAIAssistant` ou `BaseAgent`
+- Implementar:  
+  ```python
+  class MyAgent(OpenAIAssistant):
+      def __init__(self):
+          self.system_prompt = """[Prompt claro com objetivos]"""
+          self.tools = [tool1, tool2]  # Lista de Tools registradas
+
+      @function_call
+      def process_request(self, input: str) -> str:
+          """Documentar exemplos de inputs/outputs no docstring"""
+  ```
+- **Regras**:  
+  - Anotar tipos com `TypedDict` para inputs complexos  
+  - Loggar interações via `logger.debug(f"Agent {self.__class__.__name__} received: {input}")`
+
+### 2. **Guardrails**
+- Implementar como decoradores ou middlewares:  
+  ```python
+  def content_filter(max_risk: float = 0.7):
+      def wrapper(func):
+          @wraps(func)
+          def inner(*args, **kwargs):
+              if detect_risk(args[0]) > max_risk:
+                  raise GuardrailBlocked("Conteúdo inseguro")
+              return func(*args, **kwargs)
+          return inner
+      return wrapper
+  ```
+- **Regras**:  
+  - Validar inputs/outputs com `Pydantic`  
+  - Sempre incluir métricas de rejeição (`metrics.counter("guardrail/blocked")`)
+
+### 3. **Handoffs**
+- Modelar como máquina de estados:  
+  ```python
+  class HandoffProtocol:
+      STATES = ["AI", "HUMAN", "ESCALATED"]
+
+      def __init__(self):
+          self.state = "AI"
+  
+      def escalate(self, reason: str):
+          logger.warning(f"Escalando para humano: {reason}")
+          self.state = "HUMAN"
+  ```
+- **Regras**:  
+  - Interface clara para frontend (`get_handoff_ui()`)
+  - Timeout padrão de 5min para respostas humanas
+
+### 4. **Tools**
+- Seguir padrão do OpenAI Function Calling:  
+  ```python
+  @tool
+  def search_database(query: Annotated[str, "Consulta SQL"]) -> list[dict]:
+      """
+      Exemplo:
+          >>> search_database("SELECT * FROM users LIMIT 10")
+          [{"id": 1, "name": "John"}, ...]
+      """
+      # Implementação...
+  ```
+
+  ## Geral
+
+- **Regras**:  
+  - Documentar exemplos no docstring  
+  - Prefixar nomes com domínio (`finance/`, `customer/`)  
+  - Validação de inputs via `inspect.signature()`
+
+
+1. **Geração de Código**:  
+   - Priorizar:  
+     - Tipagem estática (Python 3.10+)  
+     - Documentação no estilo Google Docstrings  
+     - Compatibilidade com OpenAI SDK
+
+2. **Edições Existentes**:  
+   - Refatorar código atual para:  
+     - Adicionar suporte a Tools em Agents existentes  
+     - Implementar Guardrails básicos (toxicity, PII)  
+     - Inserir pontos de Handoff onde há `TODO:human_review`  
+
+3. **Validações Automáticas**:  
+   - Bloquear geração se:  
+     - Tools não tiverem docstring exemplos  
+     - Agents não registrarem métricas  
+     - Guardrails exporem dados sensíveis  
+
+4. **Exemplos Práticos**:  
+   - Gerar um Agent `CustomerSupportAgent` com:  
+     - 2 Tools (search_kb, escalate_ticket)  
+     - Guardrail para dados PCI  
+     - Protocolo de Handoff automático"  
