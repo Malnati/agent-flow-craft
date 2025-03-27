@@ -3,10 +3,25 @@
 Este guia explica como empacotar, implantar e usar o AgentFlow MCP com o Cursor IDE.
 
 ## Índice
-1. [Empacotamento e Implantação](#empacotamento-e-implantação)
-2. [Configuração](#configuração)
-3. [Uso no Cursor](#uso-no-cursor)
-4. [Comandos Disponíveis](#comandos-disponíveis)
+1. [Instalação Rápida](#instalação-rápida)
+2. [Empacotamento e Implantação](#empacotamento-e-implantação)
+3. [Configuração](#configuração)
+4. [Uso no Cursor](#uso-no-cursor)
+5. [Comandos Disponíveis](#comandos-disponíveis)
+
+## Instalação Rápida
+
+Para uma instalação rápida e simplificada:
+
+```bash
+# Método 1: Usando o script de instalação
+./scripts/install_mcp.sh
+
+# Método 2: Usando o make
+make install-simple-mcp
+```
+
+Após a instalação, configure suas credenciais em `~/.cursor/mcp.json` e reinicie o Cursor.
 
 ## Empacotamento e Implantação
 
@@ -16,7 +31,7 @@ Para empacotar e criar um instalador:
 
 ```bash
 # Instala dependências de desenvolvimento
-make install
+pip install -e .[dev]
 
 # Empacota para o diretório de saída
 make pack --out=./mcp_package
@@ -55,7 +70,7 @@ Após a instalação, edite o arquivo de configuração em `~/.cursor/mcp.json`:
       "name": "AgentFlow MCP",
       "type": "stdio",
       "config": {
-        "command": "mcp_agent",
+        "command": "~/.cursor/mcp_agent.py",
         "env": {
           "LOG_LEVEL": "DEBUG",
           "GITHUB_TOKEN": "seu_token_github",
@@ -117,9 +132,9 @@ Verifica se o MCP está funcionando corretamente.
 
 Se encontrar problemas:
 
-1. Verifique os logs em `~/.cursor/logs/mcp.log`
+1. Verifique os logs em `~/.cursor/mcp_agent.log`
 2. Confirme se os tokens de acesso estão corretos
-3. Verifique se o comando `mcp_agent` está disponível no PATH
+3. Verifique se o script tem permissão de execução
 4. Reinicie o Cursor IDE
 
 Para mais informações, consulte a [documentação oficial do Cursor](https://cursor.sh/docs/plugins/mcp). 

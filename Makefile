@@ -131,4 +131,55 @@ install-cursor:
 	@pip install -e . --target=$(HOME)/.cursor/mcp/agent_platform
 	@echo "Configurando arquivo MCP..."
 	@cp -f .cursor/config.json $(HOME)/.cursor/mcp.json
-	@echo "Instalação concluída! Reinicie o Cursor para usar o MCP." 
+	@echo "Configurando permissões de execução..."
+	@chmod +x $(HOME)/.cursor/mcp/agent_platform/mcp_agent
+	@echo "Instalação concluída! Reinicie o Cursor para usar o MCP."
+
+# Instalar script MCP direto (versão simplificada)
+install-simple-mcp:
+	@echo "Instalando MCP simplificado..."
+	@mkdir -p $(HOME)/.cursor
+	@cp -f scripts/mcp_agent.py $(HOME)/.cursor/
+	@chmod +x $(HOME)/.cursor/mcp_agent.py
+	@echo "Configurando arquivo MCP..."
+	@cat > $(HOME)/.cursor/mcp.json << 'EOF'
+{
+  "mcpServers": {
+    "local": {
+      "name": "AgentFlow MCP",
+      "type": "stdio",
+      "config": {
+        "command": "$(HOME)/.cursor/mcp_agent.py",
+        "env": {
+          "LOG_LEVEL": "DEBUG",
+          "GITHUB_TOKEN": "seu_token_github",
+          "OPENAI_API_KEY": "seu_token_openai",
+          "GITHUB_OWNER": "seu_usuario_github",
+          "GITHUB_REPO": "seu_repositorio"
+        },
+        "timeout": 30
+      }
+    }
+  },
+  "mcp_default_server": "local",
+  "mcp_plugins": {
+    "feature_creator": {
+      "name": "Feature Creator",
+      "description": "Cria novas features usando o MCP local",
+      "server": "local",
+      "commands": {
+        "create_feature": {
+          "description": "Cria uma nova feature no projeto",
+          "parameters": {
+            "prompt": {
+              "type": "string",
+              "description": "Descrição da feature a ser criada"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+EOF
+	@echo "Instalação concluída! Reinicie o Cursor para usar o MCP simplificado." 
