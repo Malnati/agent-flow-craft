@@ -79,7 +79,7 @@ class FeatureCreationAgent(AssistantAgent):
         self.logger.info(f"INÍCIO - FeatureCreationAgent.__init__ | Parâmetros: owner={repo_owner}, repo={repo_name}")
         
         try:
-            super().__init__()
+            super().__init__(name="FeatureCreationAgent")
             self.github_token = github_token
             self.repo_owner = repo_owner
             self.repo_name = repo_name
@@ -303,12 +303,14 @@ class FeatureCreationAgent(AssistantAgent):
             Seu papel: Você é um especialista em desenvolvimento de software e deve sugerir melhorias
             para a feature proposta a seguir, considerando as melhores práticas e o contexto do projeto.
             
-            Responda em formato JSON com os seguintes campos (apenas JSON, sem textos adicionais):
-            - branch_type: tipo de branch (feat, fix, docs, chore, etc)
-            - issue_title: título claro e conciso para a issue
-            - issue_description: descrição detalhada sobre o que deve ser implementado
-            - generated_branch_suffix: sufixo para o nome da branch (usar kebab-case)
-            - execution_plan: objeto contendo entregáveis de implementação
+            Retorne sua resposta no seguinte formato JSON (sem texto adicional):
+            {{
+                "branch_type": "tipo de branch (feat, fix, docs, chore, etc)",
+                "issue_title": "título claro e conciso para a issue",
+                "issue_description": "descrição detalhada sobre o que deve ser implementado",
+                "generated_branch_suffix": "sufixo para o nome da branch (usar kebab-case)",
+                "execution_plan": "objeto contendo entregáveis de implementação"
+            }}
             """
             
             response = client.chat.completions.create(
@@ -317,7 +319,6 @@ class FeatureCreationAgent(AssistantAgent):
                     {"role": "system", "content": context},
                     {"role": "user", "content": prompt_text}
                 ],
-                response_format={"type": "json_object"},
                 temperature=0.7,
                 max_tokens=4000
             )
@@ -326,7 +327,9 @@ class FeatureCreationAgent(AssistantAgent):
             logger.info(f"Sugestão recebida do OpenAI: {suggestion[:100]}...")
             logger.debug(f"Sugestão completa: {suggestion}")
             
-            return suggestion
+            # Garantir que a resposta é um JSON válido
+            return json.loads(suggestion)
+            
         except Exception as e:
             logger.error(f"FALHA - get_suggestion_from_openai | Erro: {str(e)}", exc_info=True)
             raise
@@ -351,7 +354,8 @@ class FeatureCreationAgent(AssistantAgent):
                 git_log
             )
             
-            suggestion = json.loads(suggestion_json)
+            # Não precisamos usar json.loads aqui pois suggestion_json já é um dict
+            suggestion = suggestion_json  # Removido o json.loads()
             
             # Extrair informações da sugestão
             branch_type = suggestion.get('branch_type', 'feat')
