@@ -2,16 +2,20 @@ import json
 import os
 import yaml
 from openai import OpenAI
+from agent_platform.core.logger import get_logger, log_execution
+import logging
 
 class PlanValidator:
     """Classe responsável por validar planos de execução usando modelos de IA mais econômicos"""
     
-    def __init__(self, logger):
-        self.logger = logger
+    def __init__(self, logger=None):
+        # Usar o logger passado ou criar um novo
+        self.logger = logger or get_logger(__name__)
         self.model_name = "gpt-3.5-turbo"  # Modelo mais econômico
         self.requirements_file = "configs/agents/plan_requirements.yaml"
         self.requirements = self._load_requirements()
     
+    @log_execution(level=logging.DEBUG)
     def _load_requirements(self):
         try:
             with open(self.requirements_file, 'r', encoding='utf-8') as f:
@@ -20,6 +24,7 @@ class PlanValidator:
             self.logger.error(f"Erro ao carregar requisitos: {str(e)}")
             return {}
     
+    @log_execution
     def validate(self, plan_content, openai_token=None):
         """
         Valida se o plano de execução atende a todos os requisitos usando um modelo de IA
@@ -43,6 +48,9 @@ class PlanValidator:
             client = OpenAI(api_key=openai_token)
             prompt = self._create_validation_prompt(plan_content)
             
+            # Log de debug com conteúdo seguro (sem expor tokens)
+            self.logger.debug(f"Enviando prompt com {len(prompt)} caracteres")
+            
             response = client.chat.completions.create(
                 model=self.model_name,
                 messages=[
@@ -58,10 +66,16 @@ class PlanValidator:
             is_valid = validation_result.get("is_valid", False)
             status = "valido" if is_valid else "invalido"
             self.logger.info(f"Validacao concluida: plano {status}")
+            
+            # Log detalhado para debugging
+            if not is_valid:
+                missing = validation_result.get("missing_items", [])
+                self.logger.warning(f"Plano inválido. Itens ausentes: {missing}")
+            
             return validation_result
             
         except Exception as e:
-            self.logger.error(f"Erro durante validacao: {str(e)}")
+            self.logger.error(f"Erro durante validacao: {str(e)}", exc_info=True)
             return {
                 "is_valid": False,
                 "missing_items": [f"Erro durante validacao: {str(e)}"]

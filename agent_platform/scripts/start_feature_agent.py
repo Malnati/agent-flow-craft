@@ -5,6 +5,7 @@ import yaml
 from datetime import datetime
 import sys
 from pathlib import Path
+import time
 
 # Adicionar o diretório base ao path para permitir importações
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -12,23 +13,18 @@ sys.path.insert(0, str(BASE_DIR))
 
 from apps.agent_manager.agents.feature_creation_agent import FeatureCreationAgent
 from apps.agent_manager.agents.plan_validator import PlanValidator
+from agent_platform.core.logger import setup_logging, get_logger, log_execution
 
-def setup_logging():
-    log_dir = "logs"
-    os.makedirs(log_dir, exist_ok=True)
-    
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    log_file = os.path.join(log_dir, f"feature_agent_{timestamp}.log")
-    
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        handlers=[
-            logging.FileHandler(log_file),
-            logging.StreamHandler()
-        ]
-    )
-    return logging.getLogger("feature_agent")
+def setup_logging_for_feature_agent():
+    """Configuração específica de logs para o agente de feature"""
+    timestamp = time.strftime("%Y%m%d_%H%M%S")
+    log_file = f"feature_agent_{timestamp}.log"
+    # Configura o logger raiz
+    logger = setup_logging("feature_agent", log_file)
+    return logger
+
+# Configurar logging
+logger = setup_logging_for_feature_agent()
 
 def ensure_config_files():
     """Garante que os arquivos de configuração existam"""
@@ -54,9 +50,11 @@ def ensure_config_files():
         
         with open(req_file, 'w', encoding='utf-8') as f:
             yaml.dump(default_requirements, f, default_flow_style=False, allow_unicode=True)
+    logger.debug("Verificando arquivos de configuração")
 
+@log_execution
 def main():
-    logger = setup_logging()
+    logger = setup_logging_for_feature_agent()
     ensure_config_files()
     
     parser = argparse.ArgumentParser(description="Execute the feature creation process.")
@@ -70,8 +68,15 @@ def main():
     parser.add_argument("--max_attempts", type=int, help="Número máximo de tentativas", default=3)
     parser.add_argument("--config", type=str, help="Arquivo de configuração", 
                         default="config/plan_requirements.yaml")
+    parser.add_argument("--verbose", action="store_true", help="Ativa modo verbose")
     
     args = parser.parse_args()
+    
+    # Configurar nível de log a partir dos argumentos
+    if args.verbose:
+        # Definir nível de log para DEBUG
+        logger.setLevel(logging.DEBUG)
+        logger.debug("Modo verbose ativado - nível de log definido para DEBUG")
     
     if not args.token:
         logger.error("GitHub token não encontrado. Defina a variável GITHUB_TOKEN ou use --token")
@@ -135,6 +140,7 @@ def main():
     except Exception as e:
         logger.error(f"Erro durante a execução: {str(e)}")
 
+@log_execution
 def request_plan_correction(prompt, current_plan, validation_result, openai_token, config_file):
     """Solicita correção do plano usando a API da OpenAI e os requisitos do arquivo YAML"""
     from openai import OpenAI
@@ -204,4 +210,11 @@ def request_plan_correction(prompt, current_plan, validation_result, openai_toke
     return response.choices[0].message.content
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        logger.warning("Processo interrompido pelo usuário")
+        sys.exit(0)
+    except Exception as e:
+        logger.critical(f"Erro fatal durante execução: {str(e)}", exc_info=True)
+        sys.exit(1)
