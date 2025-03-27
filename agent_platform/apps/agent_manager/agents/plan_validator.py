@@ -113,5 +113,12 @@ class PlanValidator:
     
     def _extract_deliverables(self, plan_content):
         """
-        Ext
-</rewritten_file> 
+        Extrai os entregáveis do plano de execução
+        
+        Args:
+            plan_content (str): Conteúdo do plano de execução
+            
+        Returns:
+            list: Lista de entregáveis encontrados
+        """
+        # restante do código da função... 
