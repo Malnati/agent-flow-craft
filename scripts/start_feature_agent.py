@@ -3,8 +3,15 @@ import logging
 import os
 import yaml
 from datetime import datetime
-from agents.feature_creation_agent import FeatureCreationAgent
-from agents.plan_validator import PlanValidator
+import sys
+from pathlib import Path
+
+# Adicionar o diretório base ao path para permitir importações
+BASE_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(BASE_DIR))
+
+from agent_platform.core.agent_factory import AgentFactory
+from apps.agent_manager.agents.plan_validator import PlanValidator
 
 def setup_logging():
     log_dir = "logs"
@@ -62,7 +69,7 @@ def main():
                         default=os.environ.get("OPENAI_API_KEY"))
     parser.add_argument("--max_attempts", type=int, help="Número máximo de tentativas", default=3)
     parser.add_argument("--config", type=str, help="Arquivo de configuração", 
-                        default="config/plan_requirements.yaml")
+                        default="configs/agents/plan_requirements.yaml")
     
     args = parser.parse_args()
     
@@ -78,7 +85,7 @@ def main():
     logger.info(f"Prompt: {args.prompt}")
     
     try:
-        agent = FeatureCreationAgent(args.token, args.owner, args.repo)
+        agent = AgentFactory.create_feature_agent(args.token, args.owner, args.repo)
         validator = PlanValidator(logger)
         
         # Loop de auto-correção

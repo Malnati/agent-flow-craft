@@ -26,7 +26,13 @@ dev = [
 ]
 
 [tool.setuptools]
-packages = ["agents", "scripts", "tests"]
+packages = [
+    "agent_platform",
+    "apps",
+    "configs",
+    "scripts",
+    "tests"
+]
 
 [build-system]
 requires = ["setuptools", "wheel"]

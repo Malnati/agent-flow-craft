@@ -3,7 +3,14 @@ from unittest.mock import patch, MagicMock
 import logging
 import os
 import subprocess
-from agents.feature_creation_agent import FeatureCreationAgent
+import sys
+from pathlib import Path
+
+# Adicionar o diretório base ao path para permitir importações
+BASE_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(BASE_DIR))
+
+from apps.agent_manager.agents.feature_creation_agent import FeatureCreationAgent
 
 class TestFeatureCreationAgent(unittest.TestCase):
 

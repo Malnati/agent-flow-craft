@@ -1,0 +1,33 @@
+# Ambientes virtuais
+venv/
+env/
+.env
+
+# Arquivos Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Distribuição / empacotamento
+dist/
+build/
+*.egg-info/
+
+# Logs
+run/logs/
+
+# Sessões de agentes
+run/agents/sessions/
+
+# Arquivos gerados
+docs/TREE.md
+coverage_html_report/
+.coverage
+
+# IDEs e editores
+.idea/
+.vscode/
+*.swp
+*.swo

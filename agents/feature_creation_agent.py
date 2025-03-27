@@ -6,6 +6,8 @@ import os
 import logging
 from slugify import slugify
 import re
+from apps.agent_manager.agents.plan_validator import PlanValidator
+from agent_platform.settings import agents as agent_settings
 
 def _list_project_files_internal(directory=".", max_depth=2):
     result = []
@@ -459,3 +461,7 @@ OBSERVAÇÕES IMPORTANTES:
         except Exception as e:
             self.logger.error(f"Erro ao comunicar com o Agent SDK: {str(e)}")
             raise
+
+# Quando precisar acessar configurações:
+log_dir = agent_settings.LOG_DIR
+config_path = os.path.join(agent_settings.AGENT_CONFIG_PATH, 'plan_requirements.yaml')
