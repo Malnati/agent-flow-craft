@@ -15,81 +15,98 @@ from apps.agent_manager.agents.feature_creation_agent import FeatureCreationAgen
 from apps.agent_manager.agents.plan_validator import PlanValidator
 from agent_platform.core.logger import setup_logging, get_logger, log_execution
 
+@log_execution
 def setup_logging_for_feature_agent():
     """Configuração específica de logs para o agente de feature"""
-    timestamp = time.strftime("%Y%m%d_%H%M%S")
-    log_file = f"feature_agent_{timestamp}.log"
-    # Configura o logger raiz
-    logger = setup_logging("feature_agent", log_file)
-    return logger
+    logger = get_logger(__name__)
+    logger.info("INÍCIO - setup_logging_for_feature_agent")
+    
+    try:
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
+        log_file = f"feature_agent_{timestamp}.log"
+        logger = setup_logging("feature_agent", log_file)
+        logger.info("SUCESSO - Logger configurado")
+        return logger
+    except Exception as e:
+        logger.error(f"FALHA - setup_logging_for_feature_agent | Erro: {str(e)}", exc_info=True)
+        raise
 
 # Configurar logging
 logger = setup_logging_for_feature_agent()
 
+@log_execution
 def ensure_config_files():
     """Garante que os arquivos de configuração existam"""
-    config_dir = "config"
-    os.makedirs(config_dir, exist_ok=True)
+    logger = get_logger(__name__)
+    logger.info("INÍCIO - ensure_config_files")
     
-    # Caminho para o arquivo de requisitos
-    req_file = os.path.join(config_dir, "plan_requirements.yaml")
-    
-    # Se o arquivo não existir, cria com valores padrão
-    if not os.path.exists(req_file):
-        default_requirements = {
-            "requisitos_entregaveis": [
-                {"nome": "Nome claro e específico", "obrigatorio": True},
-                {"descricao": "Descrição detalhada", "obrigatorio": True},
-                {"dependencias": "Lista de dependências necessárias", "obrigatorio": True},
-                {"exemplo_uso": "Exemplo prático de uso", "obrigatorio": True},
-                {"criterios_aceitacao": "Critérios mensuráveis", "obrigatorio": True},
-                {"resolucao_problemas": "Problemas e soluções", "obrigatorio": True},
-                {"passos_implementacao": "Passos detalhados", "obrigatorio": True}
-            ]
-        }
+    try:
+        config_dir = "config"
+        os.makedirs(config_dir, exist_ok=True)
+        logger.debug(f"Diretório criado/verificado: {config_dir}")
         
-        with open(req_file, 'w', encoding='utf-8') as f:
-            yaml.dump(default_requirements, f, default_flow_style=False, allow_unicode=True)
-    logger.debug("Verificando arquivos de configuração")
+        req_file = os.path.join(config_dir, "plan_requirements.yaml")
+        if not os.path.exists(req_file):
+            default_requirements = {
+                "requisitos_entregaveis": [
+                    {"nome": "Nome claro e específico", "obrigatorio": True},
+                    {"descricao": "Descrição detalhada", "obrigatorio": True},
+                    {"dependencias": "Lista de dependências necessárias", "obrigatorio": True},
+                    {"exemplo_uso": "Exemplo prático de uso", "obrigatorio": True},
+                    {"criterios_aceitacao": "Critérios mensuráveis", "obrigatorio": True},
+                    {"resolucao_problemas": "Problemas e soluções", "obrigatorio": True},
+                    {"passos_implementacao": "Passos detalhados", "obrigatorio": True}
+                ]
+            }
+            
+            with open(req_file, 'w', encoding='utf-8') as f:
+                yaml.dump(default_requirements, f, default_flow_style=False, allow_unicode=True)
+            logger.info(f"SUCESSO - Arquivo de requisitos criado: {req_file}")
+        else:
+            logger.debug(f"Arquivo de requisitos já existe: {req_file}")
+            
+    except Exception as e:
+        logger.error(f"FALHA - ensure_config_files | Erro: {str(e)}", exc_info=True)
+        raise
 
 @log_execution
 def main():
-    logger = setup_logging_for_feature_agent()
-    ensure_config_files()
-    
-    parser = argparse.ArgumentParser(description="Execute the feature creation process.")
-    parser.add_argument("prompt", type=str, help="The user prompt for feature creation.")
-    parser.add_argument("execution_plan", type=str, help="The execution plan for the feature.")
-    parser.add_argument("--token", type=str, help="GitHub token", default=os.environ.get("GITHUB_TOKEN"))
-    parser.add_argument("--owner", type=str, help="Repository owner (obrigatório).")
-    parser.add_argument("--repo", type=str, help="Repository name (obrigatório).")
-    parser.add_argument("--openai_token", type=str, help="Token da OpenAI", 
-                        default=os.environ.get("OPENAI_API_KEY"))
-    parser.add_argument("--max_attempts", type=int, help="Número máximo de tentativas", default=3)
-    parser.add_argument("--config", type=str, help="Arquivo de configuração", 
-                        default="config/plan_requirements.yaml")
-    parser.add_argument("--verbose", action="store_true", help="Ativa modo verbose")
-    
-    args = parser.parse_args()
-    
-    # Configurar nível de log a partir dos argumentos
-    if args.verbose:
-        # Definir nível de log para DEBUG
-        logger.setLevel(logging.DEBUG)
-        logger.debug("Modo verbose ativado - nível de log definido para DEBUG")
-    
-    if not args.token:
-        logger.error("GitHub token não encontrado. Defina a variável GITHUB_TOKEN ou use --token")
-        return
-
-    if not args.owner or not args.repo:
-        logger.error("Os argumentos --owner e --repo são obrigatórios")
-        return
-    
-    logger.info("Iniciando processo de criação de feature")
-    logger.info(f"Prompt: {args.prompt}")
+    """Função principal do script"""
+    logger = get_logger(__name__)
+    logger.info("INÍCIO - main")
     
     try:
+        ensure_config_files()
+        
+        parser = argparse.ArgumentParser(description="Execute the feature creation process.")
+        parser.add_argument("prompt", type=str, help="The user prompt for feature creation.")
+        parser.add_argument("execution_plan", type=str, help="The execution plan for the feature.")
+        parser.add_argument("--token", type=str, help="GitHub token", default=os.environ.get("GITHUB_TOKEN"))
+        parser.add_argument("--owner", type=str, help="Repository owner (obrigatório).")
+        parser.add_argument("--repo", type=str, help="Repository name (obrigatório).")
+        parser.add_argument("--openai_token", type=str, help="Token da OpenAI", 
+                            default=os.environ.get("OPENAI_API_KEY"))
+        parser.add_argument("--max_attempts", type=int, help="Número máximo de tentativas", default=3)
+        parser.add_argument("--config", type=str, help="Arquivo de configuração", 
+                            default="config/plan_requirements.yaml")
+        parser.add_argument("--verbose", action="store_true", help="Ativa modo verbose")
+        
+        args = parser.parse_args()
+        
+        if args.verbose:
+            logger.setLevel(logging.DEBUG)
+            logger.debug("Modo verbose ativado")
+        
+        if not args.token:
+            logger.error("FALHA - Token GitHub ausente")
+            return
+            
+        if not args.owner or not args.repo:
+            logger.error("FALHA - Parâmetros owner/repo ausentes")
+            return
+        
+        logger.info(f"Iniciando processo | Prompt: {args.prompt[:100]}...")
+        
         agent = FeatureCreationAgent(args.token, args.owner, args.repo)
         validator = PlanValidator(logger)
         
@@ -138,7 +155,8 @@ def main():
         logger.info("Processo de criação de feature concluído")
         
     except Exception as e:
-        logger.error(f"Erro durante a execução: {str(e)}")
+        logger.error(f"FALHA - main | Erro: {str(e)}", exc_info=True)
+        raise
 
 @log_execution
 def request_plan_correction(prompt, current_plan, validation_result, openai_token, config_file):
