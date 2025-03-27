@@ -1,11 +1,11 @@
 name: Atualizar índice da documentação
 
 on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
   push:
-    branches: [ "main" ]
-    paths:
-      - 'docs/pr/**'
-      - 'scripts/generate_docs_index.py'
+    branches:
+      - '**'  # Executa em qualquer branch
 
 jobs:
   update-docs-index:
@@ -13,19 +13,44 @@ jobs:
     steps:
       - name: Clonar o repositório
         uses: actions/checkout@v3
-
-      - name: Instalar Python e dependências
-        uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
+          fetch-depth: 0  # Clona todo o histórico para garantir acesso completo
+
+      - name: Instalar UV
+        run: |
+          curl -Ls https://astral.sh/uv/install.sh | sh
+          export PATH="/root/.cargo/bin:$PATH"
+
+      - name: Configurar ambiente Python
+        run: |
+          uv venv
+          uv pip install pyyaml
 
       - name: Executar script para gerar índice
-        run: python scripts/generate_docs_index.py
+        run: |
+          python scripts/generate_docs_index.py --output docs/README.md
+        
+      - name: Verificar alterações
+        id: verify_changes
+        run: |
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "changes=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Commit e push de atualização
+        if: steps.verify_changes.outputs.changes == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add docs/README.md
-          git commit -m "Atualiza índice automático de documentação após alteração em docs/pr" || echo "Nenhuma alteração"
-          git push
+          git commit -m "docs: atualiza índice de documentação automaticamente"
+          
+          # Se for PR fechado, faz push para a branch destino
+          if [[ "${{ github.event_name }}" == "pull_request" && "${{ github.event.action }}" == "closed" ]]; then
+            git push origin HEAD:${{ github.event.pull_request.base.ref }}
+          else
+            # Caso contrário, faz push para a branch atual
+            git push
+          fi
