@@ -9,6 +9,8 @@ import re
 import time
 from pathlib import Path
 from agent_platform.core.logger import get_logger, log_execution
+import yaml
+from agent_platform.apps.agent_manager.agents.local_agent_runner import LocalAgentRunner, AgentConfig
 
 def _list_project_files_internal(directory=".", max_depth=2):
     logger = logging.getLogger(__name__)
@@ -435,3 +437,28 @@ class FeatureCreationAgent(AssistantAgent):
             raise
         finally:
             logger.info("FIM - request_plan_correction")
+
+    @log_execution
+    def initialize_local_agents(self):
+        """Inicializa agentes locais definidos no YAML"""
+        self.logger.info("INÍCIO - initialize_local_agents")
+        
+        try:
+            config_path = Path(".cursor/agents/mcp_local.yaml")
+            if not config_path.exists():
+                self.logger.warning("Arquivo de configuração de agentes locais não encontrado")
+                return
+                
+            with open(config_path) as f:
+                config = yaml.safe_load(f)
+                
+            self.local_agents = {}
+            for agent_config in config.get("local_agents", []):
+                agent = LocalAgentRunner(AgentConfig(**agent_config))
+                self.local_agents[agent_config["name"]] = agent
+                
+            self.logger.info(f"SUCESSO - {len(self.local_agents)} agentes locais inicializados")
+            
+        except Exception as e:
+            self.logger.error(f"FALHA - initialize_local_agents | Erro: {str(e)}", exc_info=True)
+            raise
