@@ -11,6 +11,9 @@ from pathlib import Path
 from agent_platform.core.logger import get_logger, log_execution
 import yaml
 from agent_platform.apps.agent_manager.agents.local_agent_runner import LocalAgentRunner, AgentConfig
+import asyncio
+
+logging.basicConfig(level=logging.DEBUG)
 
 def _list_project_files_internal(directory=".", max_depth=2):
     logger = logging.getLogger(__name__)
@@ -462,3 +465,26 @@ class FeatureCreationAgent(AssistantAgent):
         except Exception as e:
             self.logger.error(f"FALHA - initialize_local_agents | Erro: {str(e)}", exc_info=True)
             raise
+
+async def main():
+    # Inicialização
+    agent = FeatureCreationAgent(
+        github_token="seu_token_github",
+        repo_owner="seu_usuario",
+        repo_name="seu_repositorio"
+    )
+    
+    try:
+        # Inicializar agentes MCP
+        agent.initialize_local_agents()
+        
+        # Usar os agentes
+        await criar_nova_feature()
+        
+    finally:
+        # Cleanup
+        for local_agent in agent.local_agents.values():
+            await local_agent.stop()
+
+if __name__ == "__main__":
+    asyncio.run(main())
