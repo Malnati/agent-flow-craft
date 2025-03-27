@@ -1,0 +1,1 @@
+from .development import *  # Importar configurações de desenvolvimento por padrão 
