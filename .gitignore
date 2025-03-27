@@ -182,3 +182,7 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 draft.txt
+
+# MCP Configuration
+.cursor/agents/mcp_local.yaml
+.cursor/mcp.json
