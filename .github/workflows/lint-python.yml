@@ -2,9 +2,13 @@ name: Lint Python Code
 
 on:
   push:
+    branches:
+      - '(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)/[0-9]+/lint'
     paths:
       - '**.py'
   pull_request:
+    branches:
+      - '(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)/[0-9]+/lint'
     paths:
       - '**.py'
 
@@ -12,14 +16,30 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
+      - name: Extrair informações da branch
+        id: branch-info
+        run: |
+          branch_name="${GITHUB_REF#refs/heads/}"
+          echo "Branch atual: $branch_name"
+          if [[ $branch_name =~ ^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)/[0-9]+/lint$ ]]; then
+            echo "branch_match=true" >> $GITHUB_OUTPUT
+            echo "Branch corresponde ao padrão solicitado"
+          else
+            echo "branch_match=false" >> $GITHUB_OUTPUT
+            echo "Branch não corresponde ao padrão solicitado"
+          fi
+
       - name: Clonar o repositório
+        if: steps.branch-info.outputs.branch_match == 'true'
         uses: actions/checkout@v3
 
       - name: Instalar dependências
+        if: steps.branch-info.outputs.branch_match == 'true'
         run: |
           python -m pip install --upgrade pip
           pip install flake8
 
       - name: Rodar flake8
+        if: steps.branch-info.outputs.branch_match == 'true'
         run: |
           flake8 agents/ scripts/ evaluators/ --max-line-length=120 --exclude=__init__.py
