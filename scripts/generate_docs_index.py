@@ -1,11 +1,11 @@
 import os
 import tempfile
 import shutil
+import argparse
 
 def generate_index():
     """Gera o índice de documentação baseado nos arquivos em docs/pr."""
     pr_dir = os.path.join("docs", "pr")
-    readme_path = os.path.join("docs", "README.md")
     
     # Verifica se o diretório existe
     if not os.path.exists(pr_dir):
@@ -29,15 +29,34 @@ def generate_index():
 
     return "\n".join(index_lines)
 
-def update_readme():
-    """Atualiza o README.md com o novo índice."""
-    readme_path = os.path.join("docs", "README.md")
+def update_readme(output_path=None):
+    """
+    Atualiza o README.md com o novo índice.
+    
+    Args:
+        output_path (str): Caminho para o arquivo de saída. 
+                          Se não especificado, usa docs/README.md
+    """
+    if output_path is None:
+        output_path = os.path.join("docs", "README.md")
+    
     marker = "<!-- A lista abaixo será gerada automaticamente -->"
     
     try:
-        # Lê o conteúdo atual
-        with open(readme_path, "r", encoding="utf-8") as f:
-            content = f.read()
+        # Verifica se o diretório de saída existe
+        output_dir = os.path.dirname(output_path)
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+            print(f"Diretório {output_dir} criado.")
+        
+        # Lê o conteúdo atual se o arquivo existir
+        if os.path.exists(output_path):
+            with open(output_path, "r", encoding="utf-8") as f:
+                content = f.read()
+        else:
+            # Se o arquivo não existir, cria um conteúdo padrão
+            content = "# Documentação\n\n### Planos de execução:\n" + marker + "\n"
+            print(f"Arquivo {output_path} não encontrado. Criando novo arquivo.")
 
         # Divide no marcador
         if marker in content:
@@ -51,20 +70,25 @@ def update_readme():
             )
 
             # Escreve o novo conteúdo
-            with open(readme_path, "w", encoding="utf-8") as f:
+            with open(output_path, "w", encoding="utf-8") as f:
                 f.write(new_content)
             
-            print("docs/README.md atualizado com sucesso.")
+            print(f"Arquivo {output_path} atualizado com sucesso.")
             return True
         else:
-            print(f"Marcador '{marker}' não encontrado em {readme_path}")
+            print(f"Marcador '{marker}' não encontrado em {output_path}")
             return False
     except Exception as e:
-        print(f"Erro ao atualizar README: {str(e)}")
+        print(f"Erro ao atualizar documento: {str(e)}")
         return False
 
-def test_update_docs():
-    """Função de teste para verificar a geração de índice em ambiente controlado."""
+def test_update_docs(output_path=None):
+    """
+    Função de teste para verificar a geração de índice em ambiente controlado.
+    
+    Args:
+        output_path (str): Caminho para o arquivo de saída de teste
+    """
     print("Iniciando teste de atualização de documentos...")
     
     # Criar ambiente de teste
@@ -77,9 +101,17 @@ def test_update_docs():
         test_pr_dir = os.path.join(test_docs_dir, "pr")
         os.makedirs(test_pr_dir)
         
+        # Definir caminho de teste
+        if output_path:
+            test_output_path = os.path.join(temp_dir, output_path)
+            test_output_dir = os.path.dirname(test_output_path)
+            if not os.path.exists(test_output_dir):
+                os.makedirs(test_output_dir)
+        else:
+            test_output_path = os.path.join(test_docs_dir, "README.md")
+        
         # Criar arquivo README de teste
-        test_readme_path = os.path.join(test_docs_dir, "README.md")
-        with open(test_readme_path, "w", encoding="utf-8") as f:
+        with open(test_output_path, "w", encoding="utf-8") as f:
             f.write("# Test README\n\n### Planos de execução:\n<!-- A lista abaixo será gerada automaticamente -->\n")
         
         # Criar alguns arquivos de teste em pr/
@@ -98,14 +130,14 @@ def test_update_docs():
         os.symlink(test_docs_dir, real_docs_dir)
         
         # Executa atualização
-        result = update_readme()
+        result = update_readme(output_path)
         
         # Verifica se o arquivo foi atualizado
         if result:
-            with open(test_readme_path, "r", encoding="utf-8") as f:
+            with open(test_output_path, "r", encoding="utf-8") as f:
                 updated_content = f.read()
                 
-            print("\nConteúdo do README atualizado:")
+            print("\nConteúdo do arquivo atualizado:")
             print("="*40)
             print(updated_content)
             print("="*40)
@@ -113,11 +145,11 @@ def test_update_docs():
             # Verifica se os nomes dos arquivos aparecem no conteúdo
             all_files_included = all(file.replace(".md", "") in updated_content for file in test_files)
             if all_files_included:
-                print("\n✅ Teste PASSOU: Todos os arquivos foram incluídos no índice!")
+                print(f"\n✅ Teste PASSOU: Todos os arquivos foram incluídos no índice em {output_path}!")
             else:
-                print("\n❌ Teste FALHOU: Nem todos os arquivos foram incluídos no índice.")
+                print(f"\n❌ Teste FALHOU: Nem todos os arquivos foram incluídos no índice em {output_path}.")
         else:
-            print("\n❌ Teste FALHOU: Atualização do README retornou False.")
+            print(f"\n❌ Teste FALHOU: Atualização do arquivo {output_path} retornou False.")
     
     finally:
         # Restaura diretórios originais
@@ -132,7 +164,27 @@ def test_update_docs():
         print(f"Diretório temporário removido: {temp_dir}")
         print("Teste concluído.")
 
+def main():
+    """Função principal que processa os argumentos da linha de comando."""
+    parser = argparse.ArgumentParser(description="Atualiza o índice de documentação.")
+    parser.add_argument(
+        "--output", "-o", 
+        type=str, 
+        default=os.path.join("docs", "README.md"),
+        help="Caminho para o arquivo de saída (default: docs/README.md)"
+    )
+    parser.add_argument(
+        "--test", "-t", 
+        action="store_true", 
+        help="Executa o teste em vez da atualização real"
+    )
+    
+    args = parser.parse_args()
+    
+    if args.test:
+        test_update_docs(args.output)
+    else:
+        update_readme(args.output)
+
 if __name__ == "__main__":
-    test_update_docs()  # Executa o teste
-    # Para produção, comente a linha acima e descomente a linha abaixo:
-    # update_readme()
+    main()
