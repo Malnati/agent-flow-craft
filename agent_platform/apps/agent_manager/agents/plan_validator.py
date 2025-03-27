@@ -9,7 +9,7 @@ class PlanValidator:
     def __init__(self, logger):
         self.logger = logger
         self.model_name = "gpt-3.5-turbo"  # Modelo mais econômico
-        self.requirements_file = os.path.join("config", "plan_requirements.yaml")
+        self.requirements_file = "configs/agents/plan_requirements.yaml"
         self.requirements = self._load_requirements()
     
     def _load_requirements(self):
@@ -113,5 +113,12 @@ class PlanValidator:
     
     def _extract_deliverables(self, plan_content):
         """
-        Ext
-</rewritten_file> 
+        Extrai os entregáveis do plano de execução
+        
+        Args:
+            plan_content (str): Conteúdo do plano de execução
+            
+        Returns:
+            list: Lista de entregáveis encontrados
+        """
+        # restante do código da função... 
