@@ -2,37 +2,58 @@ import os
 import sys
 import unittest
 import coverage
+from agent_platform.core.logger import get_logger, log_execution
 
-# Adicionar diretório raiz ao PYTHONPATH
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+logger = get_logger(__name__)
 
+@log_execution
 def run_coverage():
     """
     Executa os testes com cobertura e gera relatórios.
     """
-    # Configurar o coverage
-    cov = coverage.Coverage(
-        source=['agents'],
-        omit=['*/venv/*', '*/env/*', '*/tests/temp/*', '*/tests/fixtures/*'],
-    )
+    logger.info("INÍCIO - run_coverage | Iniciando análise de cobertura")
     
-    # Iniciar a cobertura
-    cov.start()
-    
-    # Executar os testes
-    tests = unittest.TestLoader().discover('.')
-    unittest.TextTestRunner(verbosity=2).run(tests)
-    
-    # Parar a cobertura
-    cov.stop()
-    
-    # Gerar relatório
-    print("\nRelatório de cobertura:")
-    cov.report()
-    
-    # Gerar relatório HTML
-    cov.html_report(directory='coverage_html_report')
-    print("\nRelatório HTML de cobertura gerado na pasta 'coverage_html_report'.")
+    try:
+        # Configurar o coverage
+        cov = coverage.Coverage(
+            source=['agents'],
+            omit=['*/venv/*', '*/env/*', '*/tests/temp/*', '*/tests/fixtures/*'],
+        )
+        
+        logger.debug("Coverage configurado | Source: agents")
+        
+        # Iniciar a cobertura
+        cov.start()
+        logger.info("Análise de cobertura iniciada")
+        
+        # Executar os testes
+        tests = unittest.TestLoader().discover('.')
+        result = unittest.TextTestRunner(verbosity=2).run(tests)
+        
+        logger.info(f"Execução dos testes concluída | Sucesso: {result.wasSuccessful()}")
+        
+        # Parar a cobertura
+        cov.stop()
+        
+        # Gerar relatório
+        logger.info("Gerando relatório de cobertura")
+        coverage_percentage = cov.report()
+        logger.info(f"SUCESSO - Cobertura total: {coverage_percentage:.2f}%")
+        
+        # Gerar relatório HTML
+        cov.html_report(directory='coverage_html_report')
+        logger.info("SUCESSO - Relatório HTML gerado em 'coverage_html_report'")
+        
+        return result.wasSuccessful()
+        
+    except Exception as e:
+        logger.error(f"FALHA - run_coverage | Erro: {str(e)}", exc_info=True)
+        raise
 
 if __name__ == "__main__":
-    run_coverage()
+    try:
+        success = run_coverage()
+        sys.exit(0 if success else 1)
+    except Exception as e:
+        logger.critical(f"FALHA CRÍTICA - Erro na execução principal: {str(e)}", exc_info=True)
+        sys.exit(1)
