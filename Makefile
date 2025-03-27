@@ -1,4 +1,4 @@
-.PHONY: pack deploy clean install test
+.PHONY: pack deploy clean install test undeploy
 
 VERSION := $(shell python3 -c "import time; print(time.strftime('%Y.%m.%d'))")
 BUILD_DIR := ./dist
@@ -11,6 +11,7 @@ help:
 	@echo "  make clean                    Remove arquivos temporários e de build"
 	@echo "  make install                  Instala o projeto no ambiente atual"
 	@echo "  make test                     Executa os testes do projeto"
+	@echo "  make undeploy                 Remove o MCP do Cursor IDE"
 
 # Empacotar o projeto
 pack:
@@ -182,4 +183,12 @@ install-simple-mcp:
   }
 }
 EOF
-	@echo "Instalação concluída! Reinicie o Cursor para usar o MCP simplificado." 
+	@echo "Instalação concluída! Reinicie o Cursor para usar o MCP simplificado."
+
+# Remover o MCP do Cursor
+undeploy:
+	@echo "Removendo MCP do Cursor IDE..."
+	@rm -f $(HOME)/.cursor/mcp.json
+	@rm -f $(HOME)/.cursor/mcp_agent.py
+	@rm -rf $(HOME)/.cursor/mcp/agent_platform
+	@echo "MCP removido com sucesso!" 

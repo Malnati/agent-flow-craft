@@ -8,6 +8,8 @@ Este guia explica como empacotar, implantar e usar o AgentFlow MCP com o Cursor 
 3. [Configuração](#configuração)
 4. [Uso no Cursor](#uso-no-cursor)
 5. [Comandos Disponíveis](#comandos-disponíveis)
+6. [Desinstalação](#desinstalação)
+7. [Solução de Problemas](#solução-de-problemas)
 
 ## Instalação Rápida
 
@@ -127,6 +129,20 @@ Requisitos:
 ### Heartbeat
 
 Verifica se o MCP está funcionando corretamente.
+
+## Desinstalação
+
+Para remover o MCP do Cursor IDE:
+
+```bash
+# Método 1: Usando o script
+./scripts/uninstall_mcp.sh
+
+# Método 2: Usando o make
+make undeploy
+```
+
+Após a desinstalação, reinicie o Cursor para aplicar as alterações.
 
 ## Solução de Problemas
 
