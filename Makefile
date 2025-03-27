@@ -15,107 +15,45 @@ help:
 
 # Empacotar o projeto
 pack:
-	@if [ -z "$(out)" ]; then \
-		echo "Erro: Especifique o diretório de saída com --out=DIRECTORY"; \
-		exit 1; \
-	fi
-	@echo "Empacotando projeto para $(out)..."
+ifndef out
+	$(error Por favor especifique um diretório de saída: make pack out=DIRECTORY)
+endif
+	@echo "Empacotando projeto MCP na versão $(VERSION)..."
+	@mkdir -p $(BUILD_DIR)
 	@mkdir -p $(out)
-	@rm -rf build/ dist/ *.egg-info/
-	@python3 setup.py sdist bdist_wheel
-	@cp dist/*.whl $(out)/agent_platform-$(VERSION)-py3-none-any.whl
-	@cp -r agent_platform $(out)/agent_platform
-	@echo "Copiando arquivo de configuração MCP..."
-	@mkdir -p $(out)/config
-	@echo '{' > $(out)/config/mcp.json
-	@echo '  "mcpServers": {' >> $(out)/config/mcp.json
-	@echo '    "local": {' >> $(out)/config/mcp.json
-	@echo '      "name": "AgentFlow MCP",' >> $(out)/config/mcp.json
-	@echo '      "type": "stdio",' >> $(out)/config/mcp.json
-	@echo '      "config": {' >> $(out)/config/mcp.json
-	@echo '        "command": "mcp_agent",' >> $(out)/config/mcp.json
-	@echo '        "env": {' >> $(out)/config/mcp.json
-	@echo '          "LOG_LEVEL": "DEBUG",' >> $(out)/config/mcp.json
-	@echo '          "GITHUB_TOKEN": "seu_token_github",' >> $(out)/config/mcp.json
-	@echo '          "OPENAI_API_KEY": "seu_token_openai",' >> $(out)/config/mcp.json
-	@echo '          "GITHUB_OWNER": "seu_usuario_github",' >> $(out)/config/mcp.json
-	@echo '          "GITHUB_REPO": "seu_repositorio"' >> $(out)/config/mcp.json
-	@echo '        },' >> $(out)/config/mcp.json
-	@echo '        "timeout": 30' >> $(out)/config/mcp.json
-	@echo '      }' >> $(out)/config/mcp.json
-	@echo '    }' >> $(out)/config/mcp.json
-	@echo '  },' >> $(out)/config/mcp.json
-	@echo '  "mcp_default_server": "local",' >> $(out)/config/mcp.json
-	@echo '  "mcp_plugins": {' >> $(out)/config/mcp.json
-	@echo '    "feature_creator": {' >> $(out)/config/mcp.json
-	@echo '      "name": "Feature Creator",' >> $(out)/config/mcp.json
-	@echo '      "description": "Cria novas features usando o MCP local",' >> $(out)/config/mcp.json
-	@echo '      "server": "local",' >> $(out)/config/mcp.json
-	@echo '      "commands": {' >> $(out)/config/mcp.json
-	@echo '        "create_feature": {' >> $(out)/config/mcp.json
-	@echo '          "description": "Cria uma nova feature no projeto",' >> $(out)/config/mcp.json
-	@echo '          "parameters": {' >> $(out)/config/mcp.json
-	@echo '            "prompt": {' >> $(out)/config/mcp.json
-	@echo '              "type": "string",' >> $(out)/config/mcp.json
-	@echo '              "description": "Descrição da feature a ser criada"' >> $(out)/config/mcp.json
-	@echo '            }' >> $(out)/config/mcp.json
-	@echo '          }' >> $(out)/config/mcp.json
-	@echo '        }' >> $(out)/config/mcp.json
-	@echo '      }' >> $(out)/config/mcp.json
-	@echo '    }' >> $(out)/config/mcp.json
-	@echo '  }' >> $(out)/config/mcp.json
-	@echo '}' >> $(out)/config/mcp.json
-	@echo "Criando script de instalação..."
-	@echo '#!/bin/bash' > $(out)/install.sh
-	@echo 'set -e' >> $(out)/install.sh
-	@echo '' >> $(out)/install.sh
-	@echo 'echo "Instalando AgentFlow MCP v$(VERSION)..."' >> $(out)/install.sh
-	@echo '' >> $(out)/install.sh
-	@echo '# Definir diretório de instalação' >> $(out)/install.sh
-	@echo 'MCP_DIR="$$HOME/.cursor/mcp/agent_platform"' >> $(out)/install.sh
-	@echo 'mkdir -p "$$MCP_DIR"' >> $(out)/install.sh
-	@echo '' >> $(out)/install.sh
-	@echo '# Instalar o pacote' >> $(out)/install.sh
-	@echo 'pip install --target="$$MCP_DIR" ./agent_platform-$(VERSION)-py3-none-any.whl' >> $(out)/install.sh
-	@echo '' >> $(out)/install.sh
-	@echo '# Copiar configuração' >> $(out)/install.sh
-	@echo 'cp -f ./config/mcp.json "$$HOME/.cursor/mcp.json"' >> $(out)/install.sh
-	@echo '' >> $(out)/install.sh
-	@echo 'echo "Instalação concluída! Reinicie o Cursor para usar o MCP."' >> $(out)/install.sh
+	@rm -rf $(BUILD_DIR)/*
+	@python setup.py bdist_wheel
+	@cp -f $(BUILD_DIR)/*.whl $(out)/
+	@cp -f .cursor/config.json $(out)/
+	@echo '#!/bin/bash\npip install *.whl\ncp -f config.json $(HOME)/.cursor/mcp.json\necho "Instalação concluída! Reinicie o Cursor para usar o MCP."' > $(out)/install.sh
 	@chmod +x $(out)/install.sh
-	@echo "Empacotamento concluído em $(out)"
-	@echo "Execute 'cd $(out) && ./install.sh' para instalar"
+	@echo "Empacotamento concluído! Arquivos disponíveis em: $(out)"
 
-# Implantar o projeto
+# Implantar o pacote
 deploy:
-	@if [ -z "$(in)" ] || [ -z "$(out)" ]; then \
-		echo "Erro: Especifique a origem e o destino com --in=FILE --out=DIR"; \
-		exit 1; \
-	fi
-	@echo "Implantando $(in) para $(out)..."
+ifndef in
+	$(error Por favor especifique um arquivo de entrada: make deploy in=FILE out=DIRECTORY)
+endif
+ifndef out
+	$(error Por favor especifique um diretório de saída: make deploy in=FILE out=DIRECTORY)
+endif
+	@echo "Implantando pacote $(in) no diretório $(out)..."
 	@mkdir -p $(out)
-	@if [[ "$(in)" == *.zip ]] || [[ "$(in)" == *.tar.gz ]]; then \
-		echo "Extraindo $(in) para $(out)..."; \
-		if [[ "$(in)" == *.zip ]]; then \
-			unzip -q -o "$(in)" -d "$(out)"; \
-		else \
-			tar -xzf "$(in)" -C "$(out)"; \
-		fi; \
-	elif [[ "$(in)" == *.whl ]]; then \
-		echo "Instalando wheel $(in) para $(out)..."; \
-		pip install --target="$(out)" "$(in)"; \
-	else \
-		echo "Copiando arquivos de $(in) para $(out)..."; \
-		cp -r "$(in)"/* "$(out)"/; \
-	fi
-	@echo "Implantação concluída em $(out)"
-	@echo "Não esqueça de reiniciar o Cursor para aplicar as alterações"
+	@if [[ "$(in)" == *.zip ]]; then unzip -o $(in) -d $(out); \
+	elif [[ "$(in)" == *.tar.gz ]]; then tar -xzf $(in) -C $(out); \
+	elif [[ "$(in)" == *.whl ]]; then pip install $(in) --target=$(out); \
+	else cp -r $(in)/* $(out)/; fi
+	@echo "Implantação concluída!"
 
-# Limpar arquivos temporários
+# Limpar arquivos temporários e de build
 clean:
-	rm -rf build/ dist/ *.egg-info/
-	find . -name "*.pyc" -delete
-	find . -name "__pycache__" -delete
+	@echo "Limpando arquivos temporários e de build..."
+	@rm -rf build/
+	@rm -rf $(BUILD_DIR)/
+	@rm -rf *.egg-info/
+	@find . -type d -name __pycache__ -exec rm -rf {} +
+	@find . -type f -name "*.pyc" -delete
+	@echo "Limpeza concluída!"
 
 # Instalar localmente para desenvolvimento
 install:
@@ -136,54 +74,13 @@ install-cursor:
 	@chmod +x $(HOME)/.cursor/mcp/agent_platform/mcp_agent
 	@echo "Instalação concluída! Reinicie o Cursor para usar o MCP."
 
-# Instalar script MCP direto (versão simplificada)
+# Instalação simplificada do MCP
 install-simple-mcp:
-	@echo "Instalando MCP simplificado..."
-	@mkdir -p $(HOME)/.cursor
-	@cp -f scripts/mcp_agent.py $(HOME)/.cursor/
-	@chmod +x $(HOME)/.cursor/mcp_agent.py
-	@echo "Configurando arquivo MCP..."
-	@cat > $(HOME)/.cursor/mcp.json << 'EOF'
-{
-  "mcpServers": {
-    "local": {
-      "name": "AgentFlow MCP",
-      "type": "stdio",
-      "config": {
-        "command": "$(HOME)/.cursor/mcp_agent.py",
-        "env": {
-          "LOG_LEVEL": "DEBUG",
-          "GITHUB_TOKEN": "seu_token_github",
-          "OPENAI_API_KEY": "seu_token_openai",
-          "GITHUB_OWNER": "seu_usuario_github",
-          "GITHUB_REPO": "seu_repositorio"
-        },
-        "timeout": 30
-      }
-    }
-  },
-  "mcp_default_server": "local",
-  "mcp_plugins": {
-    "feature_creator": {
-      "name": "Feature Creator",
-      "description": "Cria novas features usando o MCP local",
-      "server": "local",
-      "commands": {
-        "create_feature": {
-          "description": "Cria uma nova feature no projeto",
-          "parameters": {
-            "prompt": {
-              "type": "string",
-              "description": "Descrição da feature a ser criada"
-            }
-          }
-        }
-      }
-    }
-  }
-}
-EOF
-	@echo "Instalação concluída! Reinicie o Cursor para usar o MCP simplificado."
+	@echo "Instalando Simple MCP no Cursor..."
+	@mkdir -p $(HOME)/.cursor/
+	@cp -f .cursor/agents/mcp_agent.py $(HOME)/.cursor/
+	@cp -f .cursor/agents/mcp_simple.json $(HOME)/.cursor/mcp.json
+	@echo "Simple MCP instalado com sucesso! Reinicie o Cursor para utilizá-lo."
 
 # Remover o MCP do Cursor
 undeploy:
