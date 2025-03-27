@@ -20,7 +20,7 @@ check-env:
 
 # Instala as dependências do projeto via uv
 install:
-	uv pip install -r requirements.txt
+	uv pip install -e .
 	uv pip install -e .[dev]
 
 # Instala as dependências do projeto em modo de desenvolvimento
