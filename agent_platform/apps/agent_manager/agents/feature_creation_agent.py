@@ -467,24 +467,109 @@ class FeatureCreationAgent(AssistantAgent):
             raise
 
 async def main():
-    # Inicialização
-    agent = FeatureCreationAgent(
-        github_token="seu_token_github",
-        repo_owner="seu_usuario",
-        repo_name="seu_repositorio"
-    )
+    """Ponto de entrada para o MCP Server do Cursor"""
+    logger = get_logger(__name__)
+    logger.info("INÍCIO - MCP Server")
     
     try:
-        # Inicializar agentes MCP
-        agent.initialize_local_agents()
+        # Ler configuração do stdin
+        import sys
+        import json
         
-        # Usar os agentes
-        await criar_nova_feature()
+        logger.info("Aguardando comandos do Cursor...")
         
+        while True:
+            # Ler linha do stdin
+            line = sys.stdin.readline().strip()
+            if not line:
+                continue
+                
+            # Processar comando
+            try:
+                command = json.loads(line)
+                message_id = command.get("message_id", "unknown")
+                cmd_type = command.get("command", "unknown")
+                payload = command.get("payload", {})
+                
+                logger.info(f"Comando recebido: {cmd_type} | ID: {message_id}")
+                
+                if cmd_type == "create_feature":
+                    # Extrair parâmetros
+                    prompt_text = payload.get("prompt", "")
+                    github_token = os.environ.get("GITHUB_TOKEN", "")
+                    openai_token = os.environ.get("OPENAI_API_KEY", "")
+                    
+                    # Inicializar agente
+                    agent = FeatureCreationAgent(
+                        github_token=github_token,
+                        repo_owner=os.environ.get("GITHUB_OWNER", ""),
+                        repo_name=os.environ.get("GITHUB_REPO", "")
+                    )
+                    
+                    # Criar plano de execução inicial
+                    execution_plan = {
+                        "steps": [
+                            "1. Análise inicial do código",
+                            "2. Implementação da feature",
+                            "3. Testes unitários",
+                            "4. Documentação"
+                        ]
+                    }
+                    
+                    # Executar criação da feature
+                    issue_number, branch_name = await agent.execute_feature_creation(
+                        prompt_text=prompt_text,
+                        execution_plan=execution_plan,
+                        openai_token=openai_token
+                    )
+                    
+                    # Enviar resposta
+                    response = {
+                        "message_id": message_id,
+                        "status": "success",
+                        "result": {
+                            "issue_number": issue_number,
+                            "branch_name": branch_name
+                        }
+                    }
+                    
+                elif cmd_type == "heartbeat":
+                    # Responder heartbeat
+                    response = {
+                        "message_id": message_id,
+                        "status": "alive",
+                        "result": {
+                            "timestamp": time.time()
+                        }
+                    }
+                    
+                else:
+                    # Comando desconhecido
+                    response = {
+                        "message_id": message_id,
+                        "status": "error",
+                        "error": f"Comando desconhecido: {cmd_type}"
+                    }
+                    
+                # Enviar resposta
+                sys.stdout.write(json.dumps(response) + "\n")
+                sys.stdout.flush()
+                
+            except Exception as e:
+                # Erro ao processar comando
+                error_response = {
+                    "message_id": command.get("message_id", "unknown"),
+                    "status": "error",
+                    "error": str(e)
+                }
+                sys.stdout.write(json.dumps(error_response) + "\n")
+                sys.stdout.flush()
+                logger.error(f"FALHA - Processamento de comando | Erro: {str(e)}", exc_info=True)
+                
+    except Exception as e:
+        logger.error(f"FALHA - MCP Server | Erro: {str(e)}", exc_info=True)
     finally:
-        # Cleanup
-        for local_agent in agent.local_agents.values():
-            await local_agent.stop()
+        logger.info("FIM - MCP Server")
 
 if __name__ == "__main__":
     asyncio.run(main())

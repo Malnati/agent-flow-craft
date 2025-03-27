@@ -12,4 +12,11 @@ local_agents:
     command: python3 -m mcp_agents.database
     env:
       LOG_LEVEL: INFO
-      DB_POOL_SIZE: "5" 
+      DB_POOL_SIZE: "5"
+
+  - name: feature_creator
+    command: python3 -m agent_platform.apps.agent_manager.agents.feature_creation_agent
+    env:
+      LOG_LEVEL: DEBUG
+      GITHUB_TOKEN: "seu_token_github"
+      OPENAI_API_KEY: "seu_token_openai" 
