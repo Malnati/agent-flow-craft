@@ -4,11 +4,14 @@ import logging
 import os
 import subprocess
 from agents.feature_creation_agent import FeatureCreationAgent
+from agent_platform.core.logger import get_logger, log_execution
+
+logger = get_logger(__name__)
 
 class TestFeatureCreationAgent(unittest.TestCase):
 
     def setUp(self):
-        # Configurar o logger para os testes
+        logger.info("INÍCIO - setUp | Configurando ambiente de teste")
         self.logger_mock = MagicMock(spec=logging.Logger)
         logging.getLogger = MagicMock(return_value=self.logger_mock)
         
@@ -19,26 +22,39 @@ class TestFeatureCreationAgent(unittest.TestCase):
         # Patch para o método check_github_auth
         self.auth_patcher = patch.object(FeatureCreationAgent, 'check_github_auth')
         self.mock_auth = self.auth_patcher.start()
+        logger.info("SUCESSO - Ambiente de teste configurado")
 
     def tearDown(self):
+        logger.info("INÍCIO - tearDown | Limpando ambiente de teste")
         self.makedirs_patcher.stop()
         self.auth_patcher.stop()
+        logger.info("SUCESSO - Ambiente de teste limpo")
 
+    @log_execution
     @patch('subprocess.run')
     def test_create_github_issue(self, mock_run):
-        mock_run.return_value.stdout = 'https://github.com/Malnati/agent-flow-craft/issues/123\n'
-        agent = FeatureCreationAgent('token', 'owner', 'repo')
+        """Testa a criação de issues no GitHub"""
+        logger.info("INÍCIO - test_create_github_issue")
         
-        # Reset o mock para ignorar a chamada do check_github_auth
-        mock_run.reset_mock()
-        
-        issue_number = agent.create_github_issue('Test Issue', 'This is a test issue.')
-        self.assertEqual(issue_number, 123)
-        mock_run.assert_called_once()
-        
-        # Verificar se os logs foram chamados
-        self.logger_mock.info.assert_any_call("Criando issue: Test Issue")
-        self.logger_mock.info.assert_any_call("Issue #123 criada e capturada com sucesso")
+        try:
+            mock_run.return_value.stdout = 'https://github.com/owner/repo/issues/123\n'
+            agent = FeatureCreationAgent('token', 'owner', 'repo')
+            
+            # Reset o mock para ignorar a chamada do check_github_auth
+            mock_run.reset_mock()
+            
+            issue_number = agent.create_github_issue('Test Issue', 'Test body')
+            
+            self.assertEqual(issue_number, 123)
+            mock_run.assert_called_once()
+            
+            # Verificar se os logs foram chamados
+            self.logger_mock.info.assert_any_call("Criando issue: Test Issue")
+            self.logger_mock.info.assert_any_call("Issue #123 criada e capturada com sucesso")
+            logger.info("SUCESSO - Teste de criação de issue concluído")
+        except Exception as e:
+            logger.error(f"FALHA - test_create_github_issue | Erro: {str(e)}", exc_info=True)
+            raise
 
     @patch('subprocess.run')
     def test_create_branch(self, mock_run):

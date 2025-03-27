@@ -2,46 +2,49 @@ import json
 import os
 import yaml
 from openai import OpenAI
+from agent_platform.core.logger import get_logger, log_execution
+import logging
 
 class PlanValidator:
     """Classe responsável por validar planos de execução usando modelos de IA mais econômicos"""
     
-    def __init__(self, logger):
-        self.logger = logger
-        self.model_name = "gpt-3.5-turbo"  # Modelo mais econômico
+    def __init__(self, logger=None):
+        self.logger = logger or get_logger(__name__)
+        self.logger.info("INÍCIO - PlanValidator.__init__")
+        self.model_name = "gpt-3.5-turbo"
         self.requirements_file = "configs/agents/plan_requirements.yaml"
         self.requirements = self._load_requirements()
+        self.logger.info("SUCESSO - PlanValidator inicializado")
     
+    @log_execution(level=logging.DEBUG)
     def _load_requirements(self):
+        """Carrega os requisitos do arquivo YAML"""
+        self.logger.info(f"INÍCIO - _load_requirements | Arquivo: {self.requirements_file}")
+        
         try:
             with open(self.requirements_file, 'r', encoding='utf-8') as f:
-                return yaml.safe_load(f)
+                requirements = yaml.safe_load(f)
+                self.logger.debug(f"Requisitos carregados: {len(requirements) if requirements else 0} itens")
+                return requirements
         except Exception as e:
-            self.logger.error(f"Erro ao carregar requisitos: {str(e)}")
+            self.logger.error(f"FALHA - _load_requirements | Erro: {str(e)}", exc_info=True)
             return {}
     
+    @log_execution
     def validate(self, plan_content, openai_token=None):
-        """
-        Valida se o plano de execução atende a todos os requisitos usando um modelo de IA
-        
-        Args:
-            plan_content (str): Conteúdo do plano de execução
-            openai_token (str): Token da API da OpenAI
-            
-        Returns:
-            dict: Resultado da validação com status e itens ausentes
-        """
-        self.logger.info("Iniciando validacao do plano")
-        
-        if not openai_token:
-            openai_token = os.environ.get("OPENAI_API_KEY")
-            if not openai_token:
-                self.logger.error("Token da OpenAI nao fornecido")
-                return {"is_valid": False, "missing_items": ["Token da OpenAI ausente"]}
+        """Valida o plano de execução"""
+        self.logger.info("INÍCIO - validate")
         
         try:
+            if not openai_token:
+                openai_token = os.environ.get("OPENAI_API_KEY")
+                if not openai_token:
+                    self.logger.error("FALHA - validate | Token OpenAI ausente")
+                    return {"is_valid": False, "missing_items": ["Token da OpenAI ausente"]}
+            
             client = OpenAI(api_key=openai_token)
             prompt = self._create_validation_prompt(plan_content)
+            self.logger.debug(f"Prompt gerado com {len(prompt)} caracteres")
             
             response = client.chat.completions.create(
                 model=self.model_name,
@@ -56,15 +59,20 @@ class PlanValidator:
             
             validation_result = json.loads(response.choices[0].message.content)
             is_valid = validation_result.get("is_valid", False)
-            status = "valido" if is_valid else "invalido"
-            self.logger.info(f"Validacao concluida: plano {status}")
+            status = "válido" if is_valid else "inválido"
+            
+            self.logger.info(f"SUCESSO - validate | Status: plano {status}")
+            if not is_valid:
+                missing = validation_result.get("missing_items", [])
+                self.logger.warning(f"ALERTA - Plano inválido | Itens ausentes: {missing}")
+            
             return validation_result
             
         except Exception as e:
-            self.logger.error(f"Erro durante validacao: {str(e)}")
+            self.logger.error(f"FALHA - validate | Erro: {str(e)}", exc_info=True)
             return {
                 "is_valid": False,
-                "missing_items": [f"Erro durante validacao: {str(e)}"]
+                "missing_items": [f"Erro durante validação: {str(e)}"]
             }
     
     def _create_validation_prompt(self, plan_content):

@@ -2,33 +2,49 @@ import os
 import tempfile
 import shutil
 import argparse
+from agent_platform.core.logger import get_logger, log_execution
 
+logger = get_logger(__name__)
+
+@log_execution
 def generate_index():
     """Gera o índice de documentação baseado nos arquivos em docs/pr."""
-    pr_dir = os.path.join("docs", "pr")
+    logger.info("INÍCIO - generate_index")
     
-    # Verifica se o diretório existe
-    if not os.path.exists(pr_dir):
-        os.makedirs(pr_dir)
-        print(f"Diretório {pr_dir} criado.")
+    try:
+        pr_dir = os.path.join("docs", "pr")
+        
+        # Verifica se o diretório existe
+        if not os.path.exists(pr_dir):
+            os.makedirs(pr_dir)
+            logger.info(f"SUCESSO - Diretório criado: {pr_dir}")
 
-    # Lista e ordena os arquivos
-    pr_files = []
-    if os.path.exists(pr_dir):
-        pr_files = sorted([f for f in os.listdir(pr_dir) if f.endswith(".md")])
+        # Lista e ordena os arquivos
+        pr_files = []
+        if os.path.exists(pr_dir):
+            pr_files = sorted([f for f in os.listdir(pr_dir) if f.endswith(".md")])
+            logger.debug(f"Arquivos encontrados: {len(pr_files)}")
 
-    # Gera as linhas do índice
-    index_lines = []
-    for file in pr_files:
-        name = file.replace("_", " ").replace(".md", "").capitalize()
-        index_lines.append(f"- [{name}](pr/{file})")
+        # Gera as linhas do índice
+        index_lines = []
+        for file in pr_files:
+            name = file.replace("_", " ").replace(".md", "").capitalize()
+            index_lines.append(f"- [{name}](pr/{file})")
+            logger.debug(f"Adicionada entrada para: {name}")
 
-    # Se não houver arquivos, adiciona uma mensagem
-    if not index_lines:
-        index_lines.append("- *Nenhum plano de execução disponível no momento.*")
+        # Se não houver arquivos, adiciona uma mensagem
+        if not index_lines:
+            logger.warning("ALERTA - Nenhum plano de execução encontrado")
+            index_lines.append("- *Nenhum plano de execução disponível no momento.*")
 
-    return "\n".join(index_lines)
+        logger.info("SUCESSO - Índice gerado")
+        return "\n".join(index_lines)
+        
+    except Exception as e:
+        logger.error(f"FALHA - generate_index | Erro: {str(e)}", exc_info=True)
+        raise
 
+@log_execution
 def update_readme(output_path=None):
     """
     Atualiza o README.md com o novo índice.
@@ -37,26 +53,30 @@ def update_readme(output_path=None):
         output_path (str): Caminho para o arquivo de saída. 
                           Se não especificado, usa docs/README.md
     """
-    if output_path is None:
-        output_path = os.path.join("docs", "README.md")
-    
-    marker = "<!-- A lista abaixo será gerada automaticamente -->"
+    logger.info(f"INÍCIO - update_readme | Output: {output_path}")
     
     try:
+        if output_path is None:
+            output_path = os.path.join("docs", "README.md")
+            logger.debug(f"Usando caminho padrão: {output_path}")
+        
+        marker = "<!-- A lista abaixo será gerada automaticamente -->"
+        
         # Verifica se o diretório de saída existe
         output_dir = os.path.dirname(output_path)
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-            print(f"Diretório {output_dir} criado.")
+            logger.info(f"SUCESSO - Diretório criado: {output_dir}")
         
         # Lê o conteúdo atual se o arquivo existir
         if os.path.exists(output_path):
             with open(output_path, "r", encoding="utf-8") as f:
                 content = f.read()
+            logger.debug(f"Arquivo existente lido: {len(content)} bytes")
         else:
             # Se o arquivo não existir, cria um conteúdo padrão
             content = "# Documentação\n\n### Planos de execução:\n" + marker + "\n"
-            print(f"Arquivo {output_path} não encontrado. Criando novo arquivo.")
+            logger.info("SUCESSO - Novo arquivo criado com conteúdo padrão")
 
         # Divide no marcador
         if marker in content:
@@ -73,13 +93,13 @@ def update_readme(output_path=None):
             with open(output_path, "w", encoding="utf-8") as f:
                 f.write(new_content)
             
-            print(f"Arquivo {output_path} atualizado com sucesso.")
+            logger.info(f"SUCESSO - Arquivo atualizado: {output_path}")
             return True
         else:
-            print(f"Marcador '{marker}' não encontrado em {output_path}")
+            logger.error(f"FALHA - Marcador não encontrado em {output_path}")
             return False
     except Exception as e:
-        print(f"Erro ao atualizar documento: {str(e)}")
+        logger.error(f"FALHA - update_readme | Erro: {str(e)}", exc_info=True)
         return False
 
 def test_update_docs(output_path=None):
@@ -164,27 +184,38 @@ def test_update_docs(output_path=None):
         print(f"Diretório temporário removido: {temp_dir}")
         print("Teste concluído.")
 
+@log_execution
 def main():
     """Função principal que processa os argumentos da linha de comando."""
-    parser = argparse.ArgumentParser(description="Atualiza o índice de documentação.")
-    parser.add_argument(
-        "--output", "-o", 
-        type=str, 
-        default=os.path.join("docs", "README.md"),
-        help="Caminho para o arquivo de saída (default: docs/README.md)"
-    )
-    parser.add_argument(
-        "--test", "-t", 
-        action="store_true", 
-        help="Executa o teste em vez da atualização real"
-    )
+    logger.info("INÍCIO - main")
     
-    args = parser.parse_args()
-    
-    if args.test:
-        test_update_docs(args.output)
-    else:
-        update_readme(args.output)
+    try:
+        parser = argparse.ArgumentParser(description="Atualiza o índice de documentação.")
+        parser.add_argument(
+            "--output", "-o", 
+            type=str, 
+            default=os.path.join("docs", "README.md"),
+            help="Caminho para o arquivo de saída (default: docs/README.md)"
+        )
+        parser.add_argument(
+            "--test", "-t", 
+            action="store_true", 
+            help="Executa o teste em vez da atualização real"
+        )
+        
+        args = parser.parse_args()
+        logger.debug(f"Argumentos processados: output={args.output}, test={args.test}")
+        
+        if args.test:
+            test_update_docs(args.output)
+        else:
+            update_readme(args.output)
+            
+        logger.info("SUCESSO - Processo concluído")
+        
+    except Exception as e:
+        logger.error(f"FALHA - main | Erro: {str(e)}", exc_info=True)
+        raise
 
 if __name__ == "__main__":
     main()
