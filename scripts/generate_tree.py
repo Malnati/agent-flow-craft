@@ -1,6 +1,7 @@
 from rich.console import Console
 from rich.tree import Tree
 import os
+import argparse
 
 def build_tree(directory: str, tree: Tree):
     for entry in sorted(os.listdir(directory)):
@@ -12,18 +13,29 @@ def build_tree(directory: str, tree: Tree):
             tree.add(f"📄 {entry}")
 
 def main():
+    parser = argparse.ArgumentParser(description="Gera árvore de diretórios do projeto")
+    parser.add_argument(
+        "--output",
+        "-o",
+        type=str,
+        default="TREE.md",
+        help="Caminho do arquivo de saída (default: TREE.md)"
+    )
+    args = parser.parse_args()
+
     console = Console(record=True)
     root_tree = Tree("📦 [bold blue]agent-flow-craft[/bold blue]")
     build_tree(".", root_tree)
 
-    output_file = "TREE.md"
-    with open(output_file, "w") as f:
+    os.makedirs(os.path.dirname(args.output), exist_ok=True)
+
+    with open(args.output, "w") as f:
         f.write("# 📂 Estrutura do Projeto\n\n")
         f.write("```\n")
         f.write(console.export_text(root_tree))
         f.write("\n```\n")
 
-    print(f"TREE.md atualizado com sucesso.")
+    print(f"Arquivo {args.output} atualizado com sucesso.")
 
 if __name__ == "__main__":
     main()
