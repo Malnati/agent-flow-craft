@@ -50,7 +50,7 @@ start-agent: check-env
 
 # Atualiza o índice da documentação automaticamente
 update-docs-index:
-	PYTHONPATH=. python scripts/generate_docs_index.py --output docs/README.md
+	PYTHONPATH=. python scripts/generate_docs_index.py
 
 # Limpa todos os arquivos __pycache__
 clean:
