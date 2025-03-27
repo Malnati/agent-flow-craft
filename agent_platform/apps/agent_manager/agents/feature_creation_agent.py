@@ -75,132 +75,109 @@ def read_project_file():
 
 class FeatureCreationAgent(AssistantAgent):
     def __init__(self, github_token, repo_owner, repo_name):
-        logger = get_logger(__name__)
-        logger.info(f"INÍCIO - FeatureCreationAgent.__init__ | Parâmetros: repo_owner={repo_owner}, repo_name={repo_name}")
+        self.logger = get_logger(__name__)
+        self.logger.info(f"INÍCIO - FeatureCreationAgent.__init__ | Parâmetros: owner={repo_owner}, repo={repo_name}")
         
         try:
             super().__init__()
             self.github_token = github_token
             self.repo_owner = repo_owner
             self.repo_name = repo_name
-            self.logger = logging.getLogger("feature_agent")
             self.check_github_auth()
-            logger.debug(f"Agente inicializado para repositório {repo_owner}/{repo_name}")
+            self.logger.info("SUCESSO - FeatureCreationAgent inicializado")
         except Exception as e:
-            logger.error(f"FALHA - FeatureCreationAgent.__init__ | Erro: {str(e)}", exc_info=True)
+            self.logger.error(f"FALHA - FeatureCreationAgent.__init__ | Erro: {str(e)}", exc_info=True)
             raise
-        finally:
-            logger.info("FIM - FeatureCreationAgent.__init__")
 
     @log_execution
     def check_github_auth(self):
-        logger = get_logger(__name__)
-        logger.info("INÍCIO - check_github_auth")
+        """Verifica a autenticação do GitHub CLI"""
+        self.logger.info("INÍCIO - check_github_auth | Verificando autenticação GitHub")
         
         try:
-            logger.info("Verificando autenticação do GitHub CLI...")
-            subprocess.run(['gh', 'auth', 'status'], check=True, capture_output=True, timeout=15)
-            logger.info("Autenticação do GitHub verificada com sucesso.")
+            result = subprocess.run(['gh', 'auth', 'status'], 
+                                 check=True, capture_output=True, timeout=15)
+            self.logger.info("SUCESSO - Autenticação GitHub verificada")
+            return True
         except subprocess.CalledProcessError as e:
-            logger.error("Falha na autenticação do GitHub CLI. Execute 'gh auth login' para autenticar.")
+            self.logger.error("FALHA - check_github_auth | Erro na autenticação do GitHub CLI", exc_info=True)
             raise
         except Exception as e:
-            logger.error(f"FALHA - check_github_auth | Erro: {str(e)}", exc_info=True)
+            self.logger.error(f"FALHA - check_github_auth | Erro inesperado: {str(e)}", exc_info=True)
             raise
-        finally:
-            logger.info("FIM - check_github_auth")
 
     @log_execution
     def create_github_issue(self, title, body):
-        logger = get_logger(__name__)
-        logger.info(f"INÍCIO - create_github_issue | Parâmetros: title={title}")
+        """Cria uma nova issue no GitHub"""
+        self.logger.info(f"INÍCIO - create_github_issue | Title: {title[:100]}...")
         
         try:
-            logger.info(f"Criando issue: {title}")
-            # Executar comando gh para criar issue
             result = subprocess.run(
                 ['gh', 'issue', 'create', '--title', title, '--body', body],
                 check=True, capture_output=True, text=True, timeout=30
             )
             
             issue_url = result.stdout.strip()
-            logger.info(f"Saída da criação da issue: {issue_url}")
-            
-            # Extrair número da issue da URL
-            # Formato: https://github.com/owner/repo/issues/123
             issue_number = int(issue_url.split('/')[-1])
-            logger.info(f"Issue #{issue_number} criada e capturada com sucesso")
+            
+            self.logger.info(f"SUCESSO - Issue #{issue_number} criada")
+            self.logger.debug(f"URL da issue: {issue_url}")
             
             return issue_number
         except Exception as e:
-            logger.error(f"FALHA - create_github_issue | Erro: {str(e)}", exc_info=True)
+            self.logger.error(f"FALHA - create_github_issue | Erro: {str(e)}", exc_info=True)
             raise
-        finally:
-            logger.info("FIM - create_github_issue")
 
     @log_execution
     def create_branch(self, branch_name):
-        logger = get_logger(__name__)
-        logger.info(f"INÍCIO - create_branch | Parâmetros: branch_name={branch_name}")
+        """Cria uma nova branch e faz push para o repositório remoto"""
+        self.logger.info(f"INÍCIO - create_branch | Branch: {branch_name}")
         
         try:
-            logger.info(f"Criando branch: {branch_name}")
-            subprocess.run(['git', 'checkout', '-b', branch_name], check=True, timeout=30)
-            subprocess.run(['git', 'push', '--set-upstream', 'origin', branch_name], check=True, timeout=30)
-            logger.info(f"Branch {branch_name} criada e enviada para o repositório remoto")
+            subprocess.run(['git', 'checkout', '-b', branch_name], 
+                         check=True, timeout=30)
+            subprocess.run(['git', 'push', '--set-upstream', 'origin', branch_name], 
+                         check=True, timeout=30)
+            
+            self.logger.info(f"SUCESSO - Branch {branch_name} criada e enviada")
         except Exception as e:
-            logger.error(f"FALHA - create_branch | Erro: {str(e)}", exc_info=True)
+            self.logger.error(f"FALHA - create_branch | Erro: {str(e)}", exc_info=True)
             raise
-        finally:
-            logger.info("FIM - create_branch")
 
     @log_execution
-    def create_pr_plan_file(self, issue_number, prompt_text, execution_plan, branch_name, suggestion=None):
-        logger = get_logger(__name__)
-        logger.info(f"INÍCIO - create_pr_plan_file | Parâmetros: issue_number={issue_number}, branch_name={branch_name}")
+    def create_pr_plan_file(self, issue_number, prompt_text, execution_plan, branch_name):
+        """Cria arquivo de plano para PR"""
+        self.logger.info(f"INÍCIO - create_pr_plan_file | Issue #{issue_number}")
         
         try:
-            logger.info(f"Criando arquivo de plano para PR da issue #{issue_number}")
-            
-            # Preparar conteúdo do arquivo
             timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+            file_path = f"docs/pr/{issue_number}_feature_plan.md"
             
             content = (
                 f"# Plano de Execução - Issue #{issue_number}\n\n"
                 f"Criado em: {timestamp}\n\n"
                 f"## Prompt Recebido\n\n{prompt_text}\n\n"
                 f"## Plano de Execução\n\n{execution_plan}\n\n"
-            )
-            
-            # Adicionar sugestão se existir
-            if suggestion:
-                content += f"## Sugestões Adicionais\n\n{suggestion}\n\n"
-            
-            # Adicionar metadados e links
-            content += (
                 f"## Metadados\n\n"
                 f"- Issue: #{issue_number}\n"
                 f"- Branch: `{branch_name}`\n"
             )
             
-            # Salvar arquivo
-            file_path = f"docs/pr/{issue_number}_feature_plan.md"
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            self.logger.debug(f"Diretório criado: {os.path.dirname(file_path)}")
             
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(content)
             
-            # Adicionar, commitar e enviar para o repositório
             subprocess.run(['git', 'add', file_path], check=True, timeout=30)
-            subprocess.run(['git', 'commit', '-m', f'Add PR plan file for issue #{issue_number}'], check=True, timeout=30)
+            subprocess.run(['git', 'commit', '-m', f'Add PR plan file for issue #{issue_number}'], 
+                         check=True, timeout=30)
             subprocess.run(['git', 'push'], check=True, timeout=30)
             
-            logger.info("Arquivo de plano de PR criado e enviado para o repositório remoto")
+            self.logger.info(f"SUCESSO - Arquivo de plano criado e enviado: {file_path}")
         except Exception as e:
-            logger.error(f"FALHA - create_pr_plan_file | Erro: {str(e)}", exc_info=True)
+            self.logger.error(f"FALHA - create_pr_plan_file | Erro: {str(e)}", exc_info=True)
             raise
-        finally:
-            logger.info("FIM - create_pr_plan_file")
 
     @log_execution
     def create_pull_request(self, branch_name, issue_number):
@@ -228,37 +205,29 @@ class FeatureCreationAgent(AssistantAgent):
 
     @log_execution
     def notify_openai_agent_sdk(self, openai_token, issue_number, branch_name, suggestion=None):
-        logger = get_logger(__name__)
-        logger.info(f"INÍCIO - notify_openai_agent_sdk | Parâmetros: issue_number={issue_number}, branch_name={branch_name}")
+        """Notifica o Agent SDK da OpenAI sobre a nova feature"""
+        self.logger.info(f"INÍCIO - notify_openai_agent_sdk | Issue #{issue_number}")
         
         try:
-            logger.info("Notificando o Agent SDK da OpenAI...")
-            
-            # Se não houver sugestão, geramos uma
             if not suggestion:
                 git_log = self.get_git_main_log()
-                ctx = self.get_project_context()
-                
                 suggestion = self.get_suggestion_from_openai(
                     openai_token, 
-                    f"Sugestão para melhoria da issue #{issue_number} no branch {branch_name}",
+                    f"Sugestão para issue #{issue_number}",
                     git_log
                 )
             
-            # Truncar sugestão se for muito longa
+            # Truncar sugestão se muito longa
             if len(suggestion) > 500:
-                logger.debug(f"Sugestão truncada de {len(suggestion)} para 500 caracteres")
+                self.logger.debug(f"Sugestão truncada de {len(suggestion)} para 500 caracteres")
                 suggestion = suggestion[:497] + "..."
             
-            logger.info(f"Notificação enviada para o Agent SDK da OpenAI: {suggestion}")
-        except Exception as e:
-            logger.error(f"FALHA - notify_openai_agent_sdk | Erro: {str(e)}", exc_info=True)
-            # Não vamos propagar esta exceção, pois é apenas uma notificação
-            logger.warning("Falha na notificação, mas o processo principal continuará")
-        finally:
-            logger.info("FIM - notify_openai_agent_sdk")
+            self.logger.info("SUCESSO - Notificação enviada para OpenAI Agent SDK")
+            return suggestion
             
-        return suggestion
+        except Exception as e:
+            self.logger.error(f"FALHA - notify_openai_agent_sdk | Erro: {str(e)}", exc_info=True)
+            return None
 
     @log_execution
     def get_git_main_log(self):
@@ -400,7 +369,7 @@ class FeatureCreationAgent(AssistantAgent):
             self.create_branch(branch_name)
             
             # Criar arquivo com plano para PR
-            self.create_pr_plan_file(issue_number, prompt_text, execution_plan, branch_name, suggestion_json)
+            self.create_pr_plan_file(issue_number, prompt_text, execution_plan, branch_name)
             
             # Criar PR
             self.create_pull_request(branch_name, issue_number)
