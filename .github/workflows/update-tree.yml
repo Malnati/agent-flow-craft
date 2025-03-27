@@ -1,12 +1,15 @@
 name: Atualizar estrutura do projeto (TREE.md)
 
 on:
-  push:
+  pull_request:
     branches:
       - main
+    types: [closed]
 
 jobs:
   generate-tree:
+    # Executar apenas quando o PR for merged
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - name: Clonar o repositório
@@ -21,12 +24,12 @@ jobs:
           uv pip install rich
           uv venv
           uv pip install rich
-          uv python scripts/generate_tree.py
+          uv python scripts/generate_tree.py --output docs/TREE.md
 
       - name: Commit e push do arquivo TREE.md
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add TREE.md
-          git commit -m "Atualiza TREE.md automaticamente após push"
+          git add docs/TREE.md
+          git commit -m "docs: atualiza estrutura de diretórios em docs/TREE.md"
           git push
