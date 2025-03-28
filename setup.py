@@ -2,7 +2,15 @@ from setuptools import setup, find_packages
 import subprocess
 import os
 import time
-from slugify import slugify
+import re
+
+# Função simples de slugify que não depende de bibliotecas externas
+def simple_slugify(text, separator=''):
+    # Remover caracteres especiais e converter para minúsculas
+    text = re.sub(r'[^\w\s-]', '', text.lower())
+    # Substituir espaços e hífens por separador
+    text = re.sub(r'[-\s]+', separator, text).strip('-')
+    return text
 
 # Obter a versão de forma dinâmica
 def get_version():
@@ -18,7 +26,7 @@ def get_version():
     
     # Formato PEP 440 compatível: X.Y.Z.devN
     # Não podemos usar +COMMIT_HASH no PyPI, então usamos .devCOMMIT_HASH
-    return f"{base_version}.dev{slugify(commit_hash, separator='')}"
+    return f"{base_version}.dev{simple_slugify(commit_hash, separator='')}"
 
 # Adicionar um número de build único baseado na hora atual para evitar colisões
 # apenas se não estiver usando versão manual

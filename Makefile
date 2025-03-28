@@ -219,7 +219,7 @@ install setup test lint format start-agent update-docs-index publish: print-no-p
 # Verificar a versão que será publicada
 version:
 	@echo "Versão que será publicada:"
-	@$(PYTHON) -c "import subprocess; import time; from slugify import slugify; hash = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('utf-8').strip(); build = time.strftime('%H%M%S'); print(f'{time.strftime(\"%Y.%m.%d\")}.{build}.dev{slugify(hash, separator=\"\")}')"
+	@$(PYTHON) -c "import subprocess; import time; import re; def simple_slugify(text, separator=''): text = re.sub(r'[^\w\s-]', '', text.lower()); text = re.sub(r'[-\s]+', separator, text).strip('-'); return text; hash = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('utf-8').strip(); build = time.strftime('%H%M%S'); print(f'{time.strftime(\"%Y.%m.%d\")}.{build}.dev{simple_slugify(hash, separator=\"\")}')"
 	@echo ""
 	@echo "Formato: MAJOR.MINOR.PATCH.BUILD.devCOMMIT_HASH (PEP 440 compatível)"
 	@echo ""
