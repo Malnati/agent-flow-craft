@@ -10,6 +10,9 @@ on:
 jobs:
   update-docs-index:
     runs-on: ubuntu-latest
+    # Adiciona permissão para escrita no conteúdo do repositório
+    permissions:
+      contents: write
     steps:
       - name: Clonar o repositório
         uses: actions/checkout@v3
@@ -50,6 +53,9 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add docs/README.md
           git commit -m "docs: atualiza índice de documentação automaticamente"
+          
+          # Configura autenticação com o GITHUB_TOKEN
+          git remote set-url origin https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git
           
           # Se for PR fechado, faz push para a branch destino
           if [[ "${{ github.event_name }}" == "pull_request" && "${{ github.event.action }}" == "closed" ]]; then
