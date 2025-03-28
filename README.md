@@ -263,13 +263,18 @@ Para facilitar a execução de tarefas comuns no projeto, utilize os comandos ab
 | `make install`         | Instala todas as dependências via `uv` utilizando o `pyproject.toml`.   |
 | `make lint`            | Executa verificação de lint nos arquivos Python.                        |
 | `make test`            | Executa todos os testes unitários.                                      |
-| `make update-tree`     | Atualiza automaticamente o arquivo `TREE.md`.                            |
+| `make update-tree`     | Atualiza automaticamente o arquivo `TREE.md`.                           |
 | `make update-docs`     | Atualiza o índice de documentação dentro da pasta `docs/`.              |
 | `make tag`             | Executa o workflow de auto tagging conforme convenção semântica.        |
 | `make check-assets`    | Valida a presença dos assets obrigatórios nas pastas de documentação.   |
 | `make all`             | Executa lint, testes e atualizações em sequência.                       |
+| `make start-agent`     | Inicia o agente de criação de features com ambiente Python configurado. |
+| `make create-venv`     | Cria um ambiente virtual Python para o projeto.                         |
 
 > Para usar, basta rodar:  
 > ```bash
-> make <comando>
+> # Exemplo: Inicia o agente de criação de features
+> make start-agent prompt="Descrição da feature" execution_plan="Plano detalhado"
+> 
+> # Os comandos gerenciam automaticamente o ambiente virtual Python
 > ```

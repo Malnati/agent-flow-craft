@@ -1,4 +1,4 @@
-.PHONY: pack deploy clean install test undeploy
+.PHONY: pack deploy clean install test undeploy start-agent agent-platform-commands
 
 VERSION := $(shell python3 -c "import time; print(time.strftime('%Y.%m.%d'))")
 BUILD_DIR := ./dist
@@ -12,6 +12,7 @@ help:
 	@echo "  make install                  Instala o projeto no ambiente atual"
 	@echo "  make test                     Executa os testes do projeto"
 	@echo "  make undeploy                 Remove o MCP do Cursor IDE"
+	@echo "  make start-agent prompt=\"...\" execution_plan=\"...\"  Inicia o agente de criação de features"
 
 # Empacotar o projeto
 pack:
@@ -88,4 +89,23 @@ undeploy:
 	@rm -f $(HOME)/.cursor/mcp.json
 	@rm -f $(HOME)/.cursor/mcp_agent.py
 	@rm -rf $(HOME)/.cursor/mcp/agent_platform
-	@echo "MCP removido com sucesso!" 
+	@echo "MCP removido com sucesso!"
+
+# Comandos da Agent Platform
+# Inicia o agente com os parâmetros fornecidos
+start-agent:
+	@if [ -z "$(prompt)" ] || [ -z "$(execution_plan)" ]; then \
+		echo "Uso: make start-agent prompt=\"<descricao>\" execution_plan=\"<plano de execucao>\""; \
+		exit 1; \
+	fi
+	@echo "Iniciando agente de criação de features..."
+	@cd agent_platform && $(MAKE) start-agent prompt="$(prompt)" execution_plan="$(execution_plan)" \
+		GITHUB_TOKEN="$(GITHUB_TOKEN)" GITHUB_OWNER="$(GITHUB_OWNER)" \
+		GITHUB_REPO="$(GITHUB_REPO)" OPENAI_TOKEN="$(OPENAI_TOKEN)"
+
+# Passa qualquer comando para o Makefile do agent_platform
+agent-platform-commands:
+	@cd agent_platform && $(MAKE) $(MAKECMDGOALS)
+	
+# Alvos que serão redirecionados para o Makefile do agent_platform
+lint format update-docs-index: agent-platform-commands 
