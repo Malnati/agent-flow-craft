@@ -41,7 +41,14 @@ class TestMCPE2E(unittest.TestCase):
     def tearDown(self):
         """Limpeza do ambiente de teste"""
         logger.info("INÍCIO - tearDown | Limpando ambiente de teste")
-        # Se necessário, remover arquivos temporários
+        # Remover arquivos temporários
+        if os.path.exists(self.temp_dir):
+            for root, dirs, files in os.walk(self.temp_dir, topdown=False):
+                for name in files:
+                    os.remove(os.path.join(root, name))
+                for name in dirs:
+                    os.rmdir(os.path.join(root, name))
+            os.rmdir(self.temp_dir)
         logger.info("SUCESSO - Ambiente de teste limpo")
     
     def test_mcp_feature_creation(self):
