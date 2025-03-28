@@ -184,6 +184,26 @@ Exemplo de uso do script CLI:
 python src/scripts/start_feature_agent.py "Descrição da nova funcionalidade" "Plano de execução detalhado"
 ```
 
+### Publicação no PyPI
+
+O projeto inclui um comando para publicação automatizada no Python Package Index (PyPI):
+
+```bash
+# Configurar token do PyPI
+export PyPI_TOKEN=seu_token_aqui
+
+# Publicar no PyPI
+make publish
+```
+
+Para publicar o pacote, você precisa:
+1. Ter uma conta ativa no PyPI (https://pypi.org)
+2. Criar uma chave de API em https://pypi.org/manage/account/token/
+3. Definir a variável de ambiente `PyPI_TOKEN` com sua chave
+4. Executar o comando `make publish`
+
+O comando verificará a presença do token, construirá o pacote e fará o upload para o PyPI automaticamente.
+
 ### Estrutura do diretório `docs/pr/`
 
 O diretório `docs/pr/` contém planos de execução detalhados para as issues criadas e pull requests abertos pelo agente de criação de features. Cada arquivo neste diretório segue o formato `<issue_number>_feature_plan.md` e inclui:

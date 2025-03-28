@@ -1,5 +1,5 @@
 .PHONY: install setup test lint format start-agent update-docs-index clean clean-pycache all create-venv \
-	pack deploy undeploy install-cursor install-simple-mcp help build
+	pack deploy undeploy install-cursor install-simple-mcp help build publish
 
 VERSION := $(shell python3 -c "import time; print(time.strftime('%Y.%m.%d'))")
 BUILD_DIR := ./dist
@@ -30,6 +30,7 @@ help:
 	@echo "  make install-cursor           Instala no diretório MCP do Cursor"
 	@echo "  make install-simple-mcp       Instala Simple MCP no Cursor"
 	@echo "  make undeploy                 Remove o MCP do Cursor IDE"
+	@echo "  make publish                  Publica o projeto no PyPI (requer PyPI_TOKEN)"
 
 # Verifica se ambiente virtual existe e cria se necessário
 create-venv:
@@ -84,6 +85,10 @@ format: create-venv
 
 # Empacota o projeto usando python -m build
 build: create-venv
+	@echo "Limpando diretório de distribuição..."
+	@rm -rf $(BUILD_DIR)
+	@mkdir -p $(BUILD_DIR)
+	@echo "Construindo pacote..."
 	$(ACTIVATE) && $(PYTHON_ENV) python -m build
 
 # Exemplo de uso:
@@ -188,5 +193,20 @@ print-no-pycache-message:
 	@echo "ou defina a variável de ambiente PYTHONDONTWRITEBYTECODE=1"
 	@echo "======================================================="
 
+# Publicar no PyPI
+publish: build
+	@if [ -z "$(PyPI_TOKEN)" ]; then \
+		echo "Erro: Variável de ambiente PyPI_TOKEN não definida."; \
+		echo "Você precisa ter uma conta ativa no PyPI e uma chave de API."; \
+		echo "Obtenha uma chave em https://pypi.org/manage/account/token/ e execute:"; \
+		echo "export PyPI_TOKEN=seu_token_aqui"; \
+		exit 1; \
+	fi
+	@echo "Instalando twine no ambiente virtual..."
+	$(ACTIVATE) && $(PYTHON_ENV) pip install twine
+	@echo "Publicando no PyPI..."
+	$(ACTIVATE) && $(PYTHON_ENV) TWINE_USERNAME=__token__ TWINE_PASSWORD=$(PyPI_TOKEN) python -m twine upload dist/*
+	@echo "Publicação concluída!"
+
 # Adiciona o lembrete a todos os comandos principais
-install setup test lint format start-agent update-docs-index: print-no-pycache-message 
+install setup test lint format start-agent update-docs-index publish: print-no-pycache-message 

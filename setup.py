@@ -15,7 +15,8 @@ setup(
         'dev': [
             'wheel',
             'pytest',
-            'build'
+            'build',
+            'twine'
         ]
     },
     entry_points={
