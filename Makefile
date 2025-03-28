@@ -1,5 +1,5 @@
 .PHONY: install setup test lint format start-agent update-docs-index clean clean-pycache all create-venv \
-	pack deploy undeploy install-cursor install-simple-mcp help build
+	pack deploy undeploy install-cursor install-simple-mcp help build publish version
 
 VERSION := $(shell python3 -c "import time; print(time.strftime('%Y.%m.%d'))")
 BUILD_DIR := ./dist
@@ -30,6 +30,8 @@ help:
 	@echo "  make install-cursor           Instala no diretório MCP do Cursor"
 	@echo "  make install-simple-mcp       Instala Simple MCP no Cursor"
 	@echo "  make undeploy                 Remove o MCP do Cursor IDE"
+	@echo "  make publish                  Publica o projeto no PyPI (requer PyPI_TOKEN)"
+	@echo "  make version                  Mostra a versão que será usada na publicação"
 
 # Verifica se ambiente virtual existe e cria se necessário
 create-venv:
@@ -84,6 +86,10 @@ format: create-venv
 
 # Empacota o projeto usando python -m build
 build: create-venv
+	@echo "Limpando diretório de distribuição..."
+	@rm -rf $(BUILD_DIR)
+	@mkdir -p $(BUILD_DIR)
+	@echo "Construindo pacote..."
 	$(ACTIVATE) && $(PYTHON_ENV) python -m build
 
 # Exemplo de uso:
@@ -188,5 +194,38 @@ print-no-pycache-message:
 	@echo "ou defina a variável de ambiente PYTHONDONTWRITEBYTECODE=1"
 	@echo "======================================================="
 
+# Publicar no PyPI
+publish: build
+	@if [ -z "$(PyPI_TOKEN)" ]; then \
+		echo "Erro: Variável de ambiente PyPI_TOKEN não definida."; \
+		echo "Você precisa ter uma conta ativa no PyPI e uma chave de API."; \
+		echo "Obtenha uma chave em https://pypi.org/manage/account/token/ e execute:"; \
+		echo "export PyPI_TOKEN=seu_token_aqui"; \
+		exit 1; \
+	fi
+	@echo "Instalando twine no ambiente virtual..."
+	$(ACTIVATE) && $(PYTHON_ENV) pip install twine
+	@echo "Publicando no PyPI..."
+	@echo "A versão do pacote será gerada como: YYYY.MM.DD.devN"
+	@echo "Onde N é um número único derivado do timestamp e hash do commit."
+	@echo "Este formato é totalmente compatível com PEP 440 e aceito pelo PyPI."
+	@echo "Se quiser definir uma versão específica, use: VERSION=1.2.3 make publish"
+	$(ACTIVATE) && $(PYTHON_ENV) TWINE_USERNAME=__token__ TWINE_PASSWORD=$(PyPI_TOKEN) python -m twine upload dist/*
+	@echo "Publicação concluída!"
+	@echo "Versão publicada: $(shell python -c "import subprocess; print(subprocess.check_output(['pip', 'show', 'agent_flow_craft']).decode().split('Version: ')[1].split('\\n')[0] if 'agent_flow_craft' in subprocess.check_output(['pip', 'freeze']).decode() else 'Não instalado localmente')")"
+
 # Adiciona o lembrete a todos os comandos principais
-install setup test lint format start-agent update-docs-index: print-no-pycache-message 
+install setup test lint format start-agent update-docs-index publish: print-no-pycache-message 
+
+# Verificar a versão que será publicada
+version:
+	@echo "Versão que será publicada:"
+	@$(PYTHON) -c "import subprocess; import time; import re; def simple_slugify(text, separator=''): text = re.sub(r'[^\w\s-]', '', text.lower()); text = re.sub(r'[-\s]+', separator, text).strip('-'); return text; try: commit_hash = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('utf-8').strip(); hash_num = 0; for i, c in enumerate(commit_hash[:4]): hash_num += ord(c) * (10 ** i); hash_num = hash_num % 1000; except (subprocess.SubprocessError, FileNotFoundError): hash_num = int(time.time()) % 1000; timestamp = time.strftime('%H%M%S'); year_month = time.strftime('%Y.%m'); day = time.strftime('%d'); dev_num = int(timestamp[:4] + str(hash_num).zfill(3)); print(f'{year_month}.{day}.dev{dev_num}')"
+	@echo ""
+	@echo "Formato: MAJOR.MINOR.PATCH.devN (PEP 440 compatível)"
+	@echo "  • MAJOR.MINOR = ano.mês (2025.03)"
+	@echo "  • PATCH = dia (28)"
+	@echo "  • N = número derivado do timestamp e hash do commit (10150123)"
+	@echo ""
+	@echo "Para definir manualmente a versão, use:"
+	@echo "VERSION=1.2.3 make publish    # Será expandido para 1.2.3.devXXXXX" 

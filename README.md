@@ -184,6 +184,53 @@ Exemplo de uso do script CLI:
 python src/scripts/start_feature_agent.py "Descrição da nova funcionalidade" "Plano de execução detalhado"
 ```
 
+### Publicação no PyPI
+
+O projeto inclui um comando para publicação automatizada no Python Package Index (PyPI):
+
+```bash
+# Verificar a versão que será publicada
+make version
+
+# Configurar token do PyPI
+export PyPI_TOKEN=seu_token_aqui
+
+# Publicar no PyPI
+make publish
+
+# Para definir uma versão específica (padrão Semantic Versioning)
+VERSION=1.2.3 make publish
+```
+
+Para publicar o pacote, você precisa:
+1. Ter uma conta ativa no PyPI (https://pypi.org)
+2. Criar uma chave de API em https://pypi.org/manage/account/token/
+3. Definir a variável de ambiente `PyPI_TOKEN` com sua chave
+4. Executar o comando `make publish`
+
+#### Sistema de Versionamento
+
+O sistema de versionamento segue o padrão PEP 440 (compatível com PyPI), com a seguinte estrutura:
+
+```
+MAJOR.MINOR.PATCH.devN
+```
+
+Onde:
+- **MAJOR.MINOR**: Ano e mês (ex: 2025.03)
+- **PATCH**: Dia do mês (ex: 28)
+- **N**: Número único derivado do timestamp e hash do commit (ex: 10150123)
+
+Exemplos:
+- Versão automática: `2025.03.28.dev10150123`
+- Versão manual: `1.2.3.dev10150123` (quando definida via `VERSION=1.2.3 make publish`)
+
+Este formato garante que:
+1. Cada publicação tem uma versão única (evitando o erro "File already exists")
+2. As versões são 100% compatíveis com o PyPI (seguindo estritamente o PEP 440)
+3. Mantém rastreabilidade indireta ao repositório Git (o número contém informações do commit)
+4. As versões automáticas seguem uma lógica temporal (ano.mês.dia)
+
 ### Estrutura do diretório `docs/pr/`
 
 O diretório `docs/pr/` contém planos de execução detalhados para as issues criadas e pull requests abertos pelo agente de criação de features. Cada arquivo neste diretório segue o formato `<issue_number>_feature_plan.md` e inclui:
