@@ -3,6 +3,7 @@ import json
 import uuid
 import subprocess
 import logging
+import time
 from pathlib import Path
 from typing import Dict, Optional
 from dataclasses import dataclass
@@ -28,15 +29,23 @@ class LocalAgentRunner:
             self.reader = None
             self.writer = None
             self.last_heartbeat = 0
-            self._setup_process()
             
-            self.logger.info(f"SUCESSO - Agente {config.name} inicializado")
+            # Não podemos chamar diretamente o método async, então apenas registramos a configuração
+            # O setup real será feito na primeira chamada a um método
+            self.initialized = False
+            self.logger.info(f"SUCESSO - Agente {config.name} configurado (inicialização pendente)")
         except Exception as e:
             self.logger.error(f"FALHA - LocalAgentRunner.__init__ | Erro: {str(e)}", exc_info=True)
             raise
 
+    async def ensure_initialized(self):
+        """Garante que o processo está inicializado"""
+        if not self.initialized:
+            await self._setup_process()
+            self.initialized = True
+
     @log_execution
-    def _setup_process(self):
+    async def _setup_process(self):
         """Inicializa o processo do agente"""
         try:
             self.process = subprocess.Popen(
@@ -55,7 +64,7 @@ class LocalAgentRunner:
             protocol = asyncio.StreamReaderProtocol(self.reader)
             
             # Criar transport para stdout
-            transport, _ = await loop.connect_write_pipe(
+            transport, _ = await loop.connect_read_pipe(
                 lambda: protocol,
                 self.process.stdout
             )
@@ -71,6 +80,8 @@ class LocalAgentRunner:
             # Iniciar heartbeat
             asyncio.create_task(self._heartbeat_loop())
             
+            self.logger.info(f"SUCESSO - Agente {self.config.name} inicializado")
+            
         except Exception as e:
             self.logger.error(f"FALHA - _setup_process | Erro: {str(e)}", exc_info=True)
             raise
@@ -79,6 +90,9 @@ class LocalAgentRunner:
     async def send_command(self, command: str, payload: dict) -> dict:
         """Envia comando para o agente e aguarda resposta"""
         try:
+            # Garantir que o processo está inicializado
+            await self.ensure_initialized()
+            
             message = {
                 "message_id": str(uuid.uuid4()),
                 "command": command,
@@ -129,7 +143,7 @@ class LocalAgentRunner:
             self.logger.warning(f"Reiniciando agente {self.config.name}")
             await self.stop()
             await asyncio.sleep(1)
-            self._setup_process()
+            await self._setup_process()
         except Exception as e:
             self.logger.error(f"FALHA - _handle_failure | Erro: {str(e)}", exc_info=True)
             raise
@@ -151,4 +165,9 @@ class LocalAgentRunner:
             self.logger.info(f"Agente {self.config.name} finalizado")
         except Exception as e:
             self.logger.error(f"FALHA - stop | Erro: {str(e)}", exc_info=True)
-            raise 
+            raise
+            
+    async def _handle_timeout(self):
+        """Gerencia timeouts de comunicação"""
+        self.logger.warning(f"Timeout detectado para o agente {self.config.name}")
+        # Pode implementar estratégias de retry ou circuit breaking aqui 

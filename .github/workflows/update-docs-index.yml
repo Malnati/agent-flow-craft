@@ -28,7 +28,7 @@ jobs:
 
       - name: Executar script para gerar índice
         run: |
-          python scripts/generate_docs_index.py --output docs/README.md
+          python agent_platform/scripts/generate_docs_index.py --output docs/README.md
         
       - name: Verificar alterações
         id: verify_changes

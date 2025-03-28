@@ -42,4 +42,4 @@ jobs:
       - name: Rodar flake8
         if: steps.branch-info.outputs.branch_match == 'true'
         run: |
-          flake8 agents/ scripts/ evaluators/ --max-line-length=120 --exclude=__init__.py
+          flake8 agents/ agent_platform/scripts/ evaluators/ --max-line-length=120 --exclude=__init__.py

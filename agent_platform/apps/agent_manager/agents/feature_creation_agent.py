@@ -10,7 +10,7 @@ import time
 from pathlib import Path
 from agent_platform.core.logger import get_logger, log_execution
 import yaml
-from agent_platform.apps.agent_manager.agents.local_agent_runner import LocalAgentRunner, AgentConfig
+from apps.agent_manager.agents.local_agent_runner import LocalAgentRunner, AgentConfig
 import asyncio
 
 logging.basicConfig(level=logging.DEBUG)
@@ -333,7 +333,26 @@ class FeatureCreationAgent(AssistantAgent):
             logger.debug(f"Sugestão completa: {suggestion}")
             
             # Garantir que a resposta é um JSON válido
-            return json.loads(suggestion)
+            try:
+                return json.loads(suggestion)
+            except json.JSONDecodeError:
+                logger.warning(f"Resposta não é um JSON válido. Criando JSON padrão.")
+                # Criar um JSON padrão como fallback
+                default_json = {
+                    "branch_type": "feat",
+                    "issue_title": f"Feature: {prompt_text[:50]}..." if len(prompt_text) > 50 else f"Feature: {prompt_text}",
+                    "issue_description": suggestion if suggestion else prompt_text,
+                    "generated_branch_suffix": "new-feature",
+                    "execution_plan": {
+                        "steps": [
+                            "1. Análise do código",
+                            "2. Implementação",
+                            "3. Testes",
+                            "4. Documentação"
+                        ]
+                    }
+                }
+                return default_json
             
         except Exception as e:
             logger.error(f"FALHA - get_suggestion_from_openai | Erro: {str(e)}", exc_info=True)
@@ -442,7 +461,7 @@ class FeatureCreationAgent(AssistantAgent):
             logger.info("FIM - request_plan_correction")
 
     @log_execution
-    def initialize_local_agents(self):
+    async def initialize_local_agents(self):
         """Inicializa agentes locais definidos no YAML"""
         self.logger.info("INÍCIO - initialize_local_agents")
         
@@ -483,7 +502,7 @@ async def main():
             
             try:
                 # Inicializar agentes MCP
-                agent.initialize_local_agents()
+                await agent.initialize_local_agents()
                 
                 # Usar os agentes
                 await criar_nova_feature()
