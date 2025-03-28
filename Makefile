@@ -1,5 +1,5 @@
 .PHONY: install setup test lint format start-agent update-docs-index clean clean-pycache all create-venv \
-	pack deploy undeploy install-cursor install-simple-mcp help build publish version version-info find-commit update-changelog compare-versions
+	pack deploy undeploy install-cursor install-simple-mcp help build publish version version-info find-commit update-changelog compare-versions test-mcp-e2e
 
 VERSION := $(shell python3 -c "import time; print(time.strftime('%Y.%m.%d'))")
 BUILD_DIR := ./dist
@@ -36,6 +36,7 @@ help:
 	@echo "  make find-commit version=X.Y.Z.devN   Retorna o hash do commit associado à versão"
 	@echo "  make update-changelog version=X.Y.Z.devN  Atualiza o CHANGELOG.md com informações da versão"
 	@echo "  make compare-versions from=X.Y.Z.devN to=X.Y.Z.devN  Compara as mudanças entre duas versões"
+	@echo "  make test-mcp-e2e              Executa o teste e2e do MCP"
 
 # Verifica se ambiente virtual existe e cria se necessário
 create-venv:
@@ -192,6 +193,15 @@ print-no-pycache-message:
 	@echo "python -B seu_script.py"
 	@echo "ou defina a variável de ambiente PYTHONDONTWRITEBYTECODE=1"
 	@echo "======================================================="
+
+# Executar teste e2e do MCP
+test-mcp-e2e: create-venv
+	@echo "\n🧪 Executando teste e2e para o MCP..."
+	@echo "\n🔧 Configurando ambiente de teste..."
+	$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python src/scripts/setup_mcp_test.py
+	@echo "\n🚀 Executando teste..."
+	$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python src/tests/test_mcp_e2e.py
+	@echo "\n✅ Teste e2e do MCP concluído!"
 
 # Atualizar o CHANGELOG.md com a nova versão
 update-changelog:
