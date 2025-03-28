@@ -57,6 +57,10 @@ lint: create-venv
 format: create-venv
 	$(ACTIVATE) && $(PYTHON_ENV) black .
 
+# Empacota o projeto usando python -m build
+build: create-venv
+	$(ACTIVATE) && $(PYTHON_ENV) python -m build
+
 # Exemplo de uso:
 # make start-agent prompt="Descrição da feature" execution_plan="Plano detalhado de execução"
 start-agent: check-env create-venv
