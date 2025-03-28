@@ -1,20 +1,124 @@
-.PHONY: pack deploy clean clean-pycache install test undeploy start-agent src-commands
+.PHONY: install setup test lint format start-agent update-docs-index clean clean-pycache all create-venv \
+	pack deploy undeploy install-cursor install-simple-mcp help build
 
 VERSION := $(shell python3 -c "import time; print(time.strftime('%Y.%m.%d'))")
 BUILD_DIR := ./dist
+
+# Define variáveis para o ambiente Python
+VENV_DIR := .venv
+PYTHON := python3
+ACTIVATE := . $(VENV_DIR)/bin/activate
 PYTHON_ENV := PYTHONDONTWRITEBYTECODE=1
 
 # Ajuda do Makefile
 help:
 	@echo "Comandos disponíveis:"
-	@echo "  make pack --out=DIRECTORY     Empacota o projeto MCP para o diretório especificado"
-	@echo "  make deploy --in=FILE --out=DIR  Implanta o MCP empacotado no diretório alvo"
+	@echo "  make create-venv              Cria ambiente virtual Python se não existir"
+	@echo "  make install                  Instala o projeto no ambiente virtual"
+	@echo "  make setup                    Instala o projeto em modo de desenvolvimento"
+	@echo "  make test                     Executa os testes do projeto"
+	@echo "  make lint                     Executa análise de lint para verificar estilo de código"
+	@echo "  make format                   Formata o código usando o Black"
+	@echo "  make build                    Empacota o projeto usando python -m build"
 	@echo "  make clean                    Remove arquivos temporários e de build"
 	@echo "  make clean-pycache            Remove apenas os diretórios __pycache__ e arquivos .pyc"
-	@echo "  make install                  Instala o projeto no ambiente atual"
-	@echo "  make test                     Executa os testes do projeto"
-	@echo "  make undeploy                 Remove o MCP do Cursor IDE"
+	@echo "  make all                      Executa lint, test, formatação e atualização de docs"
+	@echo "  make update-docs-index        Atualiza o índice da documentação automaticamente"
 	@echo "  make start-agent prompt=\"...\" execution_plan=\"...\"  Inicia o agente de criação de features"
+	@echo "  make pack --out=DIRECTORY     Empacota o projeto MCP para o diretório especificado"
+	@echo "  make deploy --in=FILE --out=DIR  Implanta o MCP empacotado no diretório alvo"
+	@echo "  make install-cursor           Instala no diretório MCP do Cursor"
+	@echo "  make install-simple-mcp       Instala Simple MCP no Cursor"
+	@echo "  make undeploy                 Remove o MCP do Cursor IDE"
+
+# Verifica se ambiente virtual existe e cria se necessário
+create-venv:
+	@if [ ! -d "$(VENV_DIR)" ]; then \
+		echo "Criando ambiente virtual Python..."; \
+		$(PYTHON) -m venv $(VENV_DIR); \
+		$(ACTIVATE) && pip install --upgrade pip; \
+		$(ACTIVATE) && pip install pyyaml requests click pyautogen openai python-slugify; \
+		echo "export PYTHONDONTWRITEBYTECODE=1" >> $(VENV_DIR)/bin/activate; \
+	else \
+		echo "Ambiente virtual já existe."; \
+		$(ACTIVATE) && pip install -q pyyaml requests click pyautogen openai python-slugify; \
+	fi
+
+check-env:
+	@if [ -z "$(GITHUB_TOKEN)" ]; then \
+		echo "Erro: Variável de ambiente GITHUB_TOKEN não definida."; \
+		exit 1; \
+	fi
+	@if [ -z "$(GITHUB_OWNER)" ]; then \
+		echo "Erro: Variável de ambiente GITHUB_OWNER não definida."; \
+		exit 1; \
+	fi
+	@if [ -z "$(GITHUB_REPO)" ]; then \
+		echo "Erro: Variável de ambiente GITHUB_REPO não definida."; \
+		exit 1; \
+	fi
+	@if [ -z "$(OPENAI_TOKEN)" ]; then \
+		echo "Erro: Variável de ambiente OPENAI_TOKEN não definida."; \
+		exit 1; \
+	fi
+
+# Instala as dependências do projeto via uv
+install: create-venv
+	$(ACTIVATE) && $(PYTHON_ENV) uv pip install -e . && uv pip install -e .[dev]
+
+# Instala as dependências do projeto em modo de desenvolvimento
+setup: create-venv
+	$(ACTIVATE) && $(PYTHON_ENV) uv pip install -e .[dev]
+
+# Executa todos os testes unitários
+test: create-venv
+	$(ACTIVATE) && $(PYTHON_ENV) python -m unittest discover -s tests
+
+# Executa análise de lint para verificar problemas de estilo de código
+lint: create-venv
+	$(ACTIVATE) && $(PYTHON_ENV) flake8 .
+
+# Formata o código usando o Black
+format: create-venv
+	$(ACTIVATE) && $(PYTHON_ENV) black .
+
+# Empacota o projeto usando python -m build
+build: create-venv
+	$(ACTIVATE) && $(PYTHON_ENV) python -m build
+
+# Exemplo de uso:
+# make start-agent prompt="Descrição da feature" execution_plan="Plano detalhado de execução"
+start-agent: check-env create-venv
+	@if [ -z "$(prompt)" ] || [ -z "$(execution_plan)" ]; then \
+		echo "Uso: make start-agent prompt=\"<descricao>\" execution_plan=\"<plano de execucao>\""; \
+		exit 1; \
+	fi
+	$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python src/scripts/start_feature_agent.py "$(prompt)" "$(execution_plan)" --token "$(GITHUB_TOKEN)" --owner "$(GITHUB_OWNER)" --repo "$(GITHUB_REPO)" --openai_token "$(OPENAI_TOKEN)"
+
+# Atualiza o índice da documentação automaticamente
+update-docs-index: create-venv
+	$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python src/scripts/generate_docs_index.py
+
+# Limpa todos os arquivos __pycache__ e .pyc
+clean-pycache:
+	@echo "Removendo arquivos __pycache__ e .pyc..."
+	@find . -type d -name "__pycache__" -exec rm -rf {} +
+	@find . -type f -name "*.pyc" -delete
+	@find . -type f -name "*.pyo" -delete
+	@find . -type f -name "*.pyd" -delete
+	@echo "Limpeza concluída!"
+
+# Limpa todos os arquivos temporários
+clean: clean-pycache
+	@echo "Limpando arquivos temporários e de build..."
+	@find . -type d -name "*.dist-info" -exec rm -rf {} +
+	@find . -type d -name "build" -exec rm -rf {} +
+	@rm -rf $(BUILD_DIR)/
+	@rm -rf *.egg-info/
+	@echo "Limpeza concluída!"
+
+# Executa lint, test, formatação e atualização de docs
+all: lint test format update-docs-index
 
 # Empacotar o projeto
 pack:
@@ -48,31 +152,6 @@ endif
 	else cp -r $(in)/* $(out)/; fi
 	@echo "Implantação concluída!"
 
-# Limpar arquivos temporários e de build
-clean: clean-pycache
-	@echo "Limpando arquivos temporários e de build..."
-	@rm -rf build/
-	@rm -rf $(BUILD_DIR)/
-	@rm -rf *.egg-info/
-	@echo "Limpeza concluída!"
-
-# Limpar apenas os diretórios __pycache__ e arquivos .pyc
-clean-pycache:
-	@echo "Removendo diretórios __pycache__ e arquivos .pyc..."
-	@find . -type d -name "__pycache__" -exec rm -rf {} +
-	@find . -type f -name "*.pyc" -delete
-	@find . -type f -name "*.pyo" -delete
-	@find . -type f -name "*.pyd" -delete
-	@echo "Limpeza concluída!"
-
-# Instalar localmente para desenvolvimento
-install:
-	$(PYTHON_ENV) pip install -e .
-
-# Testar o projeto
-test:
-	$(PYTHON_ENV) pytest
-
 # Instalar no diretório do MCP do Cursor
 install-cursor:
 	@echo "Instalando no diretório MCP do Cursor..."
@@ -100,21 +179,14 @@ undeploy:
 	@rm -rf $(HOME)/.cursor/mcp/src
 	@echo "MCP removido com sucesso!"
 
-# Comandos da Agent Platform
-# Inicia o agente com os parâmetros fornecidos
-start-agent:
-	@if [ -z "$(prompt)" ] || [ -z "$(execution_plan)" ]; then \
-		echo "Uso: make start-agent prompt=\"<descricao>\" execution_plan=\"<plano de execucao>\""; \
-		exit 1; \
-	fi
-	@echo "Iniciando agente de criação de features..."
-	@cd src && $(MAKE) start-agent prompt="$(prompt)" execution_plan="$(execution_plan)" \
-		GITHUB_TOKEN="$(GITHUB_TOKEN)" GITHUB_OWNER="$(GITHUB_OWNER)" \
-		GITHUB_REPO="$(GITHUB_REPO)" OPENAI_TOKEN="$(OPENAI_TOKEN)"
+# Adiciona uma mensagem ao final para lembrar de compilação
+print-no-pycache-message:
+	@echo "======================================================="
+	@echo "LEMBRETE: Arquivos .pyc e diretórios __pycache__ estão desabilitados"
+	@echo "Para executar scripts manualmente, prefira usar:"
+	@echo "python -B seu_script.py"
+	@echo "ou defina a variável de ambiente PYTHONDONTWRITEBYTECODE=1"
+	@echo "======================================================="
 
-# Passa qualquer comando para o Makefile do src
-src-commands:
-	@cd src && $(MAKE) $(MAKECMDGOALS)
-	
-# Alvos que serão redirecionados para o Makefile do src
-lint format update-docs-index: src-commands 
+# Adiciona o lembrete a todos os comandos principais
+install setup test lint format start-agent update-docs-index: print-no-pycache-message 
