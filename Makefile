@@ -1,5 +1,5 @@
 .PHONY: install setup test lint format start-agent update-docs-index clean clean-pycache all create-venv \
-	pack deploy undeploy install-cursor install-simple-mcp help build publish version
+	pack deploy undeploy install-cursor install-simple-mcp help build publish version version-info find-commit update-changelog compare-versions
 
 VERSION := $(shell python3 -c "import time; print(time.strftime('%Y.%m.%d'))")
 BUILD_DIR := ./dist
@@ -32,6 +32,10 @@ help:
 	@echo "  make undeploy                 Remove o MCP do Cursor IDE"
 	@echo "  make publish                  Publica o projeto no PyPI (requer PyPI_TOKEN)"
 	@echo "  make version                  Mostra a versão que será usada na publicação"
+	@echo "  make version-info version=X.Y.Z.devN  Mostra informações da versão especificada"
+	@echo "  make find-commit version=X.Y.Z.devN   Retorna o hash do commit associado à versão"
+	@echo "  make update-changelog version=X.Y.Z.devN  Atualiza o CHANGELOG.md com informações da versão"
+	@echo "  make compare-versions from=X.Y.Z.devN to=X.Y.Z.devN  Compara as mudanças entre duas versões"
 
 # Verifica se ambiente virtual existe e cria se necessário
 create-venv:
@@ -194,7 +198,49 @@ print-no-pycache-message:
 	@echo "ou defina a variável de ambiente PYTHONDONTWRITEBYTECODE=1"
 	@echo "======================================================="
 
-# Publicar no PyPI
+# Atualizar o CHANGELOG.md com a nova versão
+update-changelog:
+	@if [ -z "$(version)" ]; then \
+		echo "Uso: make update-changelog version=X.Y.Z.devN"; \
+		exit 1; \
+	fi
+	@if [ ! -f "version_commits.json" ]; then \
+		echo "Erro: Arquivo de mapeamento version_commits.json não encontrado."; \
+		exit 1; \
+	fi
+	@echo "Atualizando CHANGELOG.md com a versão $(version)..."
+	@$(PYTHON) -c "import json; import os; import time; v='$(version)'; \
+		data = json.load(open('version_commits.json')); \
+		if v not in data: \
+			print('Versão não encontrada no arquivo de mapeamento.'); \
+			exit(1); \
+		commit = data[v]['commit_hash']; \
+		timestamp = data[v]['timestamp']; \
+		changelog_content = ''; \
+		if os.path.exists('CHANGELOG.md'): \
+			with open('CHANGELOG.md', 'r') as f: \
+				changelog_content = f.read(); \
+		if not changelog_content: \
+			changelog_content = '# Changelog\\n\\nTodas as mudanças notáveis do projeto serão documentadas neste arquivo.\\n\\n'; \
+		import subprocess; \
+		try: \
+			commit_msg = subprocess.check_output(['git', 'log', '-1', '--pretty=%B', commit]).decode('utf-8').strip(); \
+		except: \
+			commit_msg = 'Commit message not available'; \
+		entry = f'## {v} ({timestamp.split()[0]})\\n\\n' + \
+				f'**Commit:** {commit}\\n\\n' + \
+				f'**Mensagem de commit:** {commit_msg}\\n\\n' + \
+				f'---\\n\\n'; \
+		if '## ' in changelog_content: \
+			parts = changelog_content.split('## ', 1); \
+			new_content = parts[0] + entry + '## ' + parts[1]; \
+		else: \
+			new_content = changelog_content + entry; \
+		with open('CHANGELOG.md', 'w') as f: \
+			f.write(new_content); \
+		print('CHANGELOG.md atualizado com sucesso.')"
+
+# Publicar no PyPI e atualizar CHANGELOG
 publish: build
 	@if [ -z "$(PyPI_TOKEN)" ]; then \
 		echo "Erro: Variável de ambiente PyPI_TOKEN não definida."; \
@@ -212,7 +258,22 @@ publish: build
 	@echo "Se quiser definir uma versão específica, use: VERSION=1.2.3 make publish"
 	$(ACTIVATE) && $(PYTHON_ENV) TWINE_USERNAME=__token__ TWINE_PASSWORD=$(PyPI_TOKEN) python -m twine upload dist/*
 	@echo "Publicação concluída!"
-	@echo "Versão publicada: $(shell python -c "import subprocess; print(subprocess.check_output(['pip', 'show', 'agent_flow_craft']).decode().split('Version: ')[1].split('\\n')[0] if 'agent_flow_craft' in subprocess.check_output(['pip', 'freeze']).decode() else 'Não instalado localmente')")"
+	@VERSION=$$(python -c "import subprocess; print(subprocess.check_output(['pip', 'show', 'agent_flow_craft']).decode().split('Version: ')[1].split('\\n')[0] if 'agent_flow_craft' in subprocess.check_output(['pip', 'freeze']).decode() else 'Não instalado localmente')")
+	@echo "Versão publicada: $$VERSION"
+	@if [ -f "version_commits.json" ] && [ ! -z "$$VERSION" ]; then \
+		echo ""; \
+		echo "Informações de rastreabilidade:"; \
+		$(PYTHON) -c "import json; import sys; v='$$VERSION'; \
+			data = json.load(open('version_commits.json')); \
+			if v in data: \
+				print(f'  Commit associado: {data[v][\"commit_hash\"]}'); \
+				print(f'  Data/hora do build: {data[v][\"timestamp\"]}'); \
+				print(f'\nPara visualizar as mudanças deste commit, execute:'); \
+				print(f'  git show {data[v][\"commit_hash\"]}'); \
+			else: \
+				print(f'  Versão {v} não encontrada no arquivo de mapeamento.')"; \
+		make update-changelog version=$$VERSION; \
+	fi
 
 # Adiciona o lembrete a todos os comandos principais
 install setup test lint format start-agent update-docs-index publish: print-no-pycache-message 
@@ -228,4 +289,82 @@ version:
 	@echo "  • N = número derivado do timestamp e hash do commit (10150123)"
 	@echo ""
 	@echo "Para definir manualmente a versão, use:"
-	@echo "VERSION=1.2.3 make publish    # Será expandido para 1.2.3.devXXXXX" 
+	@echo "VERSION=1.2.3 make publish    # Será expandido para 1.2.3.devXXXXX"
+
+# Obter informações de uma versão específica (commit hash, etc)
+version-info:
+	@if [ -z "$(version)" ]; then \
+		echo "Uso: make version-info version=X.Y.Z.devN"; \
+		echo "Exemplo: make version-info version=2025.3.28.dev1020131"; \
+		exit 1; \
+	fi
+	@if [ ! -f "version_commits.json" ]; then \
+		echo "Erro: Arquivo de mapeamento version_commits.json não encontrado."; \
+		echo "Este arquivo é gerado durante o build do pacote."; \
+		exit 1; \
+	fi
+	@$(PYTHON) -c "import json; v='$(version)'; \
+		data = json.load(open('version_commits.json')); \
+		if v in data: \
+			print(f'\nInformações da versão {v}:'); \
+			print(f'  Commit hash: {data[v][\"commit_hash\"]}'); \
+			print(f'  Data/hora: {data[v][\"timestamp\"]}'); \
+			print(f'  Build number: {data[v][\"build_number\"]}'); \
+			print(f'\nPara ver as mudanças deste commit:'); \
+			print(f'  git show {data[v][\"commit_hash\"]}'); \
+		else: \
+			print(f'Versão {v} não encontrada no arquivo de mapeamento.')"
+
+# Encontrar o commit associado a uma versão
+find-commit:
+	@if [ -z "$(version)" ]; then \
+		echo "Uso: make find-commit version=X.Y.Z.devN"; \
+		echo "Exemplo: make find-commit version=2025.3.28.dev1020131"; \
+		exit 1; \
+	fi
+	@if [ ! -f "version_commits.json" ]; then \
+		echo "Erro: Arquivo de mapeamento version_commits.json não encontrado."; \
+		echo "Este arquivo é gerado durante o build do pacote."; \
+		exit 1; \
+	fi
+	@$(PYTHON) -c "import json; v='$(version)'; \
+		data = json.load(open('version_commits.json')); \
+		if v in data: \
+			print(data[v]['commit_hash']); \
+		else: \
+			print('NOTFOUND'); \
+			exit(1)"
+
+# Comparar duas versões (mostrar diferenças de commits)
+compare-versions:
+	@if [ -z "$(from)" ] || [ -z "$(to)" ]; then \
+		echo "Uso: make compare-versions from=X.Y.Z.devN to=X.Y.Z.devN"; \
+		echo "Exemplo: make compare-versions from=2025.3.28.dev1020023 to=2025.3.28.dev1020131"; \
+		exit 1; \
+	fi
+	@if [ ! -f "version_commits.json" ]; then \
+		echo "Erro: Arquivo de mapeamento version_commits.json não encontrado."; \
+		exit 1; \
+	fi
+	@$(PYTHON) -c "import json; \
+		from_v='$(from)'; to_v='$(to)'; \
+		data = json.load(open('version_commits.json')); \
+		if from_v not in data: \
+			print(f'Versão inicial {from_v} não encontrada no arquivo de mapeamento.'); \
+			exit(1); \
+		if to_v not in data: \
+			print(f'Versão final {to_v} não encontrada no arquivo de mapeamento.'); \
+			exit(1); \
+		from_commit = data[from_v]['commit_hash']; \
+		to_commit = data[to_v]['commit_hash']; \
+		import subprocess; \
+		print(f'\nMudanças entre {from_v} e {to_v}:\n'); \
+		print(f'Commits: {from_commit}..{to_commit}\n'); \
+		print('Para ver as diferenças entre essas versões, execute:'); \
+		print(f'  git diff {from_commit} {to_commit}\n'); \
+		print('Lista de commits entre as versões:'); \
+		try: \
+			log = subprocess.check_output(['git', 'log', '--oneline', f'{from_commit}..{to_commit}']).decode('utf-8'); \
+			print(log); \
+		except Exception as e: \
+			print(f'Erro ao obter log de commits: {e}')" 

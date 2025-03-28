@@ -3,6 +3,7 @@ import subprocess
 import os
 import time
 import re
+import json
 
 # Função simples de slugify que não depende de bibliotecas externas
 def simple_slugify(text, separator=''):
@@ -31,6 +32,7 @@ def get_version():
     timestamp = time.strftime('%H%M%S')
     
     # Gerar um número baseado no hash do commit
+    commit_hash = None
     try:
         commit_hash = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('utf-8').strip()
         # Converter o hash para um número usando a soma dos códigos ASCII dos primeiros 4 caracteres
@@ -40,12 +42,38 @@ def get_version():
         hash_num = hash_num % 1000  # Limitar a 3 dígitos
     except (subprocess.SubprocessError, FileNotFoundError):
         hash_num = int(time.time()) % 1000
+        commit_hash = "unknown"
     
     # Formato PEP 440 compatível: X.Y.Z.devN (N deve ser um número)
     # Usamos os primeiros dígitos do timestamp + número derivado do hash
     dev_num = int(timestamp[:4] + str(hash_num).zfill(3))
     
-    return f"{base_version}.dev{dev_num}"
+    version = f"{base_version}.dev{dev_num}"
+    
+    # Salvar o mapeamento entre a versão e o commit em um arquivo
+    version_map = {}
+    map_file = "version_commits.json"
+    
+    # Carregar mapeamento existente se o arquivo existir
+    if os.path.exists(map_file):
+        try:
+            with open(map_file, 'r') as f:
+                version_map = json.load(f)
+        except (json.JSONDecodeError, IOError):
+            version_map = {}
+    
+    # Adicionar novo mapeamento
+    version_map[version] = {
+        "commit_hash": commit_hash,
+        "timestamp": time.strftime('%Y-%m-%d %H:%M:%S'),
+        "build_number": dev_num
+    }
+    
+    # Salvar o mapeamento atualizado
+    with open(map_file, 'w') as f:
+        json.dump(version_map, f, indent=2)
+    
+    return version
 
 version = get_version()
 

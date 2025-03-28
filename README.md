@@ -228,8 +228,50 @@ Exemplos:
 Este formato garante que:
 1. Cada publicação tem uma versão única (evitando o erro "File already exists")
 2. As versões são 100% compatíveis com o PyPI (seguindo estritamente o PEP 440)
-3. Mantém rastreabilidade indireta ao repositório Git (o número contém informações do commit)
-4. As versões automáticas seguem uma lógica temporal (ano.mês.dia)
+3. O sistema mantém rastreabilidade através do arquivo `version_commits.json`
+
+#### Rastreabilidade de Versões para Commits
+
+O projeto mantém um registro das associações entre versões publicadas e commits no arquivo `version_commits.json`. Isso permite identificar exatamente qual código-fonte corresponde a cada versão publicada.
+
+Para consultar estas informações, use os comandos:
+
+```bash
+# Ver informações completas de uma versão
+make version-info version=2025.3.28.dev10150123
+
+# Obter apenas o hash do commit de uma versão (útil para scripts)
+make find-commit version=2025.3.28.dev10150123
+
+# Atualizar o CHANGELOG.md com informações da versão
+make update-changelog version=2025.3.28.dev10150123
+
+# Comparar mudanças entre duas versões
+make compare-versions from=2025.3.28.dev1020023 to=2025.3.28.dev1020131
+```
+
+#### Integração com CHANGELOG
+
+O sistema atualiza automaticamente o arquivo `CHANGELOG.md` após cada publicação, registrando:
+- A versão publicada
+- A data de publicação
+- O commit exato associado à versão
+- A mensagem do commit
+
+Isso permite manter um histórico completo e rastreável de todas as versões publicadas. A atualização é feita automaticamente pelo comando `make publish`, mas também pode ser realizada manualmente com `make update-changelog`.
+
+#### Ferramentas de Análise de Versões
+
+O comando `compare-versions` permite visualizar facilmente as diferenças entre duas versões publicadas:
+- Lista todos os commits entre as duas versões
+- Fornece o comando git para ver as diferenças exatas de código
+- Mostra informações de data e hora para cada versão
+
+Estas ferramentas são especialmente úteis para:
+- Localizar exatamente qual versão introduziu uma determinada funcionalidade ou bug
+- Preparar notas de lançamento detalhadas
+- Rastrear a evolução do código entre diferentes versões publicadas
+- Identificar regressões entre versões
 
 ### Estrutura do diretório `docs/pr/`
 
