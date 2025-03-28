@@ -186,3 +186,23 @@ draft.txt
 # MCP Configuration
 .cursor/agents/mcp_local.yaml
 .cursor/mcp.json
+
+# Python bytecode files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/

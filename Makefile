@@ -1,7 +1,8 @@
-.PHONY: pack deploy clean install test undeploy start-agent src-commands
+.PHONY: pack deploy clean clean-pycache install test undeploy start-agent src-commands
 
 VERSION := $(shell python3 -c "import time; print(time.strftime('%Y.%m.%d'))")
 BUILD_DIR := ./dist
+PYTHON_ENV := PYTHONDONTWRITEBYTECODE=1
 
 # Ajuda do Makefile
 help:
@@ -9,6 +10,7 @@ help:
 	@echo "  make pack --out=DIRECTORY     Empacota o projeto MCP para o diretório especificado"
 	@echo "  make deploy --in=FILE --out=DIR  Implanta o MCP empacotado no diretório alvo"
 	@echo "  make clean                    Remove arquivos temporários e de build"
+	@echo "  make clean-pycache            Remove apenas os diretórios __pycache__ e arquivos .pyc"
 	@echo "  make install                  Instala o projeto no ambiente atual"
 	@echo "  make test                     Executa os testes do projeto"
 	@echo "  make undeploy                 Remove o MCP do Cursor IDE"
@@ -47,22 +49,29 @@ endif
 	@echo "Implantação concluída!"
 
 # Limpar arquivos temporários e de build
-clean:
+clean: clean-pycache
 	@echo "Limpando arquivos temporários e de build..."
 	@rm -rf build/
 	@rm -rf $(BUILD_DIR)/
 	@rm -rf *.egg-info/
-	@find . -type d -name __pycache__ -exec rm -rf {} +
+	@echo "Limpeza concluída!"
+
+# Limpar apenas os diretórios __pycache__ e arquivos .pyc
+clean-pycache:
+	@echo "Removendo diretórios __pycache__ e arquivos .pyc..."
+	@find . -type d -name "__pycache__" -exec rm -rf {} +
 	@find . -type f -name "*.pyc" -delete
+	@find . -type f -name "*.pyo" -delete
+	@find . -type f -name "*.pyd" -delete
 	@echo "Limpeza concluída!"
 
 # Instalar localmente para desenvolvimento
 install:
-	pip install -e .
+	$(PYTHON_ENV) pip install -e .
 
 # Testar o projeto
 test:
-	pytest
+	$(PYTHON_ENV) pytest
 
 # Instalar no diretório do MCP do Cursor
 install-cursor:

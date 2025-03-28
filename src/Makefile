@@ -1,9 +1,10 @@
-.PHONY: install setup test lint format start-agent update-docs-index clean all create-venv
+.PHONY: install setup test lint format start-agent update-docs-index clean clean-pycache all create-venv
 
 # Define variáveis para o ambiente Python
 VENV_DIR := .venv
 PYTHON := python3
 ACTIVATE := . $(VENV_DIR)/bin/activate
+PYTHON_ENV := PYTHONDONTWRITEBYTECODE=1
 
 # Verifica se ambiente virtual existe e cria se necessário
 create-venv:
@@ -12,6 +13,7 @@ create-venv:
 		$(PYTHON) -m venv $(VENV_DIR); \
 		$(ACTIVATE) && pip install --upgrade pip; \
 		$(ACTIVATE) && pip install pyyaml requests click pyautogen openai python-slugify; \
+		echo "export PYTHONDONTWRITEBYTECODE=1" >> $(VENV_DIR)/bin/activate; \
 	else \
 		echo "Ambiente virtual já existe."; \
 		$(ACTIVATE) && pip install -q pyyaml requests click pyautogen openai python-slugify; \
@@ -37,23 +39,23 @@ check-env:
 
 # Instala as dependências do projeto via uv
 install: create-venv
-	$(ACTIVATE) && uv pip install -e . && uv pip install -e .[dev]
+	$(ACTIVATE) && $(PYTHON_ENV) uv pip install -e . && uv pip install -e .[dev]
 
 # Instala as dependências do projeto em modo de desenvolvimento
 setup: create-venv
-	$(ACTIVATE) && uv pip install -e .[dev]
+	$(ACTIVATE) && $(PYTHON_ENV) uv pip install -e .[dev]
 
 # Executa todos os testes unitários
 test: create-venv
-	$(ACTIVATE) && python -m unittest discover -s tests
+	$(ACTIVATE) && $(PYTHON_ENV) python -m unittest discover -s tests
 
 # Executa análise de lint para verificar problemas de estilo de código
 lint: create-venv
-	$(ACTIVATE) && flake8 .
+	$(ACTIVATE) && $(PYTHON_ENV) flake8 .
 
 # Formata o código usando o Black
 format: create-venv
-	$(ACTIVATE) && black .
+	$(ACTIVATE) && $(PYTHON_ENV) black .
 
 # Exemplo de uso:
 # make start-agent prompt="Descrição da feature" execution_plan="Plano detalhado de execução"
@@ -62,15 +64,37 @@ start-agent: check-env create-venv
 		echo "Uso: make start-agent prompt=\"<descricao>\" execution_plan=\"<plano de execucao>\""; \
 		exit 1; \
 	fi
-	$(ACTIVATE) && PYTHONPATH=. python scripts/start_feature_agent.py "$(prompt)" "$(execution_plan)" --token "$(GITHUB_TOKEN)" --owner "$(GITHUB_OWNER)" --repo "$(GITHUB_REPO)" --openai_token "$(OPENAI_TOKEN)"
+	$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=. python scripts/start_feature_agent.py "$(prompt)" "$(execution_plan)" --token "$(GITHUB_TOKEN)" --owner "$(GITHUB_OWNER)" --repo "$(GITHUB_REPO)" --openai_token "$(OPENAI_TOKEN)"
 
 # Atualiza o índice da documentação automaticamente
 update-docs-index: create-venv
-	$(ACTIVATE) && PYTHONPATH=. python scripts/generate_docs_index.py
+	$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=. python scripts/generate_docs_index.py
 
-# Limpa todos os arquivos __pycache__
-clean:
-	find . -type d -name "__pycache__" -exec rm -r {} +
+# Limpa todos os arquivos __pycache__ e .pyc
+clean-pycache:
+	@echo "Removendo arquivos __pycache__ e .pyc..."
+	@$(ACTIVATE) && $(PYTHON_ENV) ./scripts/clean_pycache.py
+	@echo "Limpeza concluída!"
+
+# Limpa todos os arquivos temporários
+clean: clean-pycache
+	@echo "Removendo outros arquivos temporários..."
+	@find . -type d -name "*.dist-info" -exec rm -rf {} +
+	@find . -type d -name "build" -exec rm -rf {} +
+	@find . -type d -name "dist" -exec rm -rf {} +
+	@echo "Limpeza concluída!"
 
 # Executa lint, test, formatação e atualização de docs
 all: lint test format update-docs-index
+
+# Adiciona uma mensagem ao final para lembrar de compilação
+print-no-pycache-message:
+	@echo "======================================================="
+	@echo "LEMBRETE: Arquivos .pyc e diretórios __pycache__ estão desabilitados"
+	@echo "Para executar scripts manualmente, prefira usar:"
+	@echo "python -B seu_script.py"
+	@echo "ou defina a variável de ambiente PYTHONDONTWRITEBYTECODE=1"
+	@echo "======================================================="
+
+# Adiciona o lembrete a todos os comandos principais
+install setup test lint format start-agent update-docs-index: print-no-pycache-message
