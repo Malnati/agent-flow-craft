@@ -7,6 +7,7 @@ import os
 import subprocess
 import logging
 import sys
+import json
 from pathlib import Path
 
 # Configurar logging
@@ -42,7 +43,18 @@ def main():
         
         if not src_mcp_agent.exists():
             logger.error(f"Arquivo MCP Agent não encontrado em: {src_mcp_agent}")
-            sys.exit(1)
+            logger.info("Buscando arquivo em localização alternativa...")
+            
+            # Procurar em diretório alternativo relativo ao projeto
+            project_root = Path(__file__).resolve().parent.parent.parent
+            alt_path = project_root / "src" / "scripts" / "mcp_agent.py"
+            
+            if alt_path.exists():
+                logger.info(f"MCP Agent encontrado em: {alt_path}")
+                src_mcp_agent = alt_path
+            else:
+                logger.error("MCP Agent não encontrado em nenhuma localização conhecida")
+                return 1
         
         # Copiar arquivo com permissões de execução
         subprocess.run(
@@ -55,6 +67,14 @@ def main():
         )
         logger.info(f"MCP Agent copiado para: {mcp_agent_path}")
         
+        # Obter variáveis de ambiente (com fallbacks para testes)
+        env_vars = {
+            "GITHUB_TOKEN": os.environ.get("GITHUB_TOKEN", "test-token"),
+            "GITHUB_OWNER": os.environ.get("GITHUB_OWNER", "test-owner"),
+            "GITHUB_REPO": os.environ.get("GITHUB_REPO", "test-repo"),
+            "OPENAI_API_KEY": os.environ.get("OPENAI_API_KEY", "test-openai-key")
+        }
+        
         # Criar configuração do MCP
         mcp_config = {
             "mcpServers": {
@@ -65,10 +85,10 @@ def main():
                         "command": mcp_agent_path,
                         "env": {
                             "LOG_LEVEL": "DEBUG",
-                            "GITHUB_TOKEN": os.environ.get("GITHUB_TOKEN", ""),
-                            "OPENAI_API_KEY": os.environ.get("OPENAI_API_KEY", ""),
-                            "GITHUB_OWNER": os.environ.get("GITHUB_OWNER", ""),
-                            "GITHUB_REPO": os.environ.get("GITHUB_REPO", "")
+                            "GITHUB_TOKEN": env_vars["GITHUB_TOKEN"],
+                            "OPENAI_API_KEY": env_vars["OPENAI_API_KEY"],
+                            "GITHUB_OWNER": env_vars["GITHUB_OWNER"],
+                            "GITHUB_REPO": env_vars["GITHUB_REPO"]
                         },
                         "timeout": 30
                     }
@@ -96,19 +116,18 @@ def main():
         }
         
         # Salvar configuração
-        import json
         with open(mcp_config_path, 'w') as f:
             json.dump(mcp_config, f, indent=2)
         
         logger.info(f"Configuração MCP salva em: {mcp_config_path}")
         
-        # Verificar se existem as variáveis de ambiente necessárias
+        # Verificar se existem as variáveis de ambiente reais (sem fallbacks)
         required_vars = ['GITHUB_TOKEN', 'GITHUB_OWNER', 'GITHUB_REPO', 'OPENAI_API_KEY']
         missing_vars = [var for var in required_vars if not os.environ.get(var)]
         
         if missing_vars:
             logger.warning(f"ATENÇÃO: As seguintes variáveis de ambiente estão faltando: {', '.join(missing_vars)}")
-            logger.warning("Os testes podem falhar sem estas variáveis definidas.")
+            logger.warning("Usando valores de teste. Para testes completos, defina estas variáveis no ambiente.")
         else:
             logger.info("Todas as variáveis de ambiente necessárias estão configuradas.")
         
