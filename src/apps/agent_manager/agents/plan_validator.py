@@ -36,15 +36,35 @@ class PlanValidator:
         """Carrega os requisitos do arquivo YAML"""
         self.logger.info(f"INÍCIO - _load_requirements | Arquivo: {self.requirements_file}")
         
+        # Requisitos padrão caso o arquivo não exista
+        default_requirements = {
+            "requisitos_entregaveis": [
+                {
+                    "nome": "Nome do entregável",
+                    "descricao": "Descrição detalhada do entregável",
+                    "dependencias": "Lista de dependências necessárias",
+                    "exemplo_uso": "Exemplo prático de uso",
+                    "criterios_aceitacao": "Critérios mensuráveis de aceitação",
+                    "resolucao_problemas": "Problemas comuns e soluções",
+                    "passos_implementacao": "Passos detalhados para implementação",
+                    "obrigatorio": True
+                }
+            ]
+        }
+        
         try:
+            if not os.path.exists(self.requirements_file):
+                self.logger.warning(f"ALERTA - _load_requirements | Arquivo não encontrado: {self.requirements_file}. Usando requisitos padrão.")
+                return default_requirements
+                
             with open(self.requirements_file, 'r', encoding='utf-8') as f:
                 requirements = yaml.safe_load(f)
                 self.logger.debug(f"Requisitos carregados: {len(requirements) if requirements else 0} itens")
                 return requirements
         except Exception as e:
             error_msg = mask_sensitive_data(str(e))
-            self.logger.error(f"FALHA - _load_requirements | Erro: {error_msg}", exc_info=True)
-            return {}
+            self.logger.warning(f"ALERTA - _load_requirements | Erro ao carregar requisitos: {error_msg}. Usando requisitos padrão.")
+            return default_requirements
     
     @log_execution
     def validate(self, plan_content, openai_token=None):
