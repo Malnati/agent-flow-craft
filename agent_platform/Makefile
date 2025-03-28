@@ -46,11 +46,11 @@ start-agent: check-env
 		echo "Uso: make start-agent prompt=\"<descricao>\" execution_plan=\"<plano de execucao>\""; \
 		exit 1; \
 	fi
-	PYTHONPATH=. python scripts/start_feature_agent.py "$(prompt)" "$(execution_plan)" --token "$(GITHUB_TOKEN)" --owner "$(GITHUB_OWNER)" --repo "$(GITHUB_REPO)" --openai_token "$(OPENAI_TOKEN)"
+	PYTHONPATH=. python agent_platform/scripts/start_feature_agent.py "$(prompt)" "$(execution_plan)" --token "$(GITHUB_TOKEN)" --owner "$(GITHUB_OWNER)" --repo "$(GITHUB_REPO)" --openai_token "$(OPENAI_TOKEN)"
 
 # Atualiza o índice da documentação automaticamente
 update-docs-index:
-	PYTHONPATH=. python scripts/generate_docs_index.py
+	PYTHONPATH=. python agent_platform/scripts/generate_docs_index.py
 
 # Limpa todos os arquivos __pycache__
 clean:
