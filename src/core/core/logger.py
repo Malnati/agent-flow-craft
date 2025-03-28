@@ -7,6 +7,7 @@ from pathlib import Path
 from functools import wraps
 import time
 import traceback
+import re
 
 # Diretório base do projeto
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -43,6 +44,80 @@ COLORS = {
     'RESET': '\033[0m'    # Resetar cor
 }
 
+# Lista de palavras-chave para identificar dados sensíveis
+SENSITIVE_KEYWORDS = [
+    'pass', 'senha', 'password', 
+    'token', 'access_token', 'refresh_token', 'jwt', 
+    'secret', 'api_key', 'apikey', 'key', 
+    'auth', 'credential', 'oauth', 
+    'private', 'signature'
+]
+
+# Padrões de tokens a serem mascarados
+TOKEN_PATTERNS = [
+    # OpenAI tokens
+    r'sk-[a-zA-Z0-9]{20,}',
+    r'sk-proj-[a-zA-Z0-9_-]{20,}',
+    # GitHub tokens
+    r'gh[pous]_[a-zA-Z0-9]{20,}',
+    r'github_pat_[a-zA-Z0-9]{20,}',
+    # JWT tokens
+    r'eyJ[a-zA-Z0-9_-]{5,}\.eyJ[a-zA-Z0-9_-]{5,}\.[a-zA-Z0-9_-]{5,}',
+    # Tokens genéricos (sequências longas de caracteres)
+    r'[a-zA-Z0-9_-]{30,}'
+]
+
+def mask_sensitive_data(data, mask_str='***'):
+    """
+    Mascara dados sensíveis em strings e dicionários.
+    
+    Args:
+        data: Dados a serem mascarados (string, dict ou outro tipo)
+        mask_str: String de substituição para dados sensíveis
+        
+    Returns:
+        Dados com informações sensíveis mascaradas
+    """
+    if isinstance(data, dict):
+        # Mascara valores em dicionários
+        return {
+            k: mask_str if any(keyword in k.lower() for keyword in SENSITIVE_KEYWORDS) else 
+               mask_sensitive_data(v, mask_str) if isinstance(v, (dict, str)) else v 
+            for k, v in data.items()
+        }
+    elif isinstance(data, str):
+        # Máscara imediata para strings muito longas (potencialmente tokens)
+        if len(data) > 20 and any(keyword in data.lower() for keyword in SENSITIVE_KEYWORDS):
+            # Se contém palavras-chave sensíveis e é longo, mascarar completamente
+            return mask_partially(data, mask_str)
+            
+        # Mascara padrões em strings (ex: chaves de API, tokens)
+        masked_data = data
+        for pattern in TOKEN_PATTERNS:
+            # Só aplicar regex em strings com comprimento suficiente (evita operações caras)
+            if len(masked_data) > 20 and re.search(pattern, masked_data):
+                # Mascarar parcialmente mantendo começo e fim
+                masked_data = re.sub(pattern, lambda m: mask_partially(m.group(0), mask_str), masked_data)
+        
+        return masked_data
+    else:
+        # Retorna o valor original para outros tipos
+        return data
+
+def mask_partially(text, mask_str='***'):
+    """Mascara parcialmente uma string, deixando alguns caracteres iniciais e finais visíveis"""
+    if len(text) <= 10:
+        return mask_str
+    
+    # Preservar parte inicial e final
+    prefix_len = min(4, len(text) // 4)
+    suffix_len = min(4, len(text) // 4)
+    
+    prefix = text[:prefix_len] 
+    suffix = text[-suffix_len:] if suffix_len > 0 else ""
+    
+    return f"{prefix}{mask_str}{suffix}"
+
 class ColoredFormatter(logging.Formatter):
     """Formatador personalizado que adiciona cores aos logs no console."""
     
@@ -52,6 +127,11 @@ class ColoredFormatter(logging.Formatter):
         if sys.stdout.isatty():
             colored_levelname = f"{COLORS.get(levelname, '')}{levelname}{COLORS['RESET']}"
             record.levelname = colored_levelname
+        
+        # Mascarar dados sensíveis no registro antes de formatar
+        if isinstance(record.msg, str):
+            record.msg = mask_sensitive_data(record.msg)
+        
         result = super().format(record)
         # Restaurar levelname original
         record.levelname = levelname
@@ -145,14 +225,50 @@ def log_execution(func=None, level=logging.INFO):
         def wrapper(*args, **kwargs):
             logger = get_logger(func.__module__)
             
-            # Limpar argumentos sensíveis (senhas, tokens)
-            safe_kwargs = {
-                k: '***' if any(s in k.lower() for s in ['pass', 'token', 'secret', 'key']) 
-                else v for k, v in kwargs.items()
-            }
+            # Verificação e mascaramento mais agressivo para argumentos
+            safe_args = []
+            for arg in args:
+                if isinstance(arg, str):
+                    # Verificar se é potencialmente um token ou valor sensível
+                    if len(arg) > 16:
+                        # Verificar por padrões de tokens
+                        for pattern in TOKEN_PATTERNS:
+                            if re.match(pattern, arg):
+                                arg = mask_partially(arg)
+                                break
+                        
+                        # Verificar por palavras-chave sensíveis
+                        if any(keyword in str(arg).lower() for keyword in SENSITIVE_KEYWORDS):
+                            arg = mask_partially(arg)
+                
+                # Tentar mascarar objetos complexos
+                elif isinstance(arg, (dict, list)):
+                    arg = mask_sensitive_data(arg)
+                
+                safe_args.append(arg)
+            
+            # Mascaramento mais agressivo para kwargs
+            safe_kwargs = {}
+            for k, v in kwargs.items():
+                # Se a chave contiver palavras sensíveis, mascarar o valor
+                if any(keyword in k.lower() for keyword in SENSITIVE_KEYWORDS):
+                    safe_kwargs[k] = '***'
+                # Para outros valores, tentar mascarar se for string ou complexo
+                elif isinstance(v, str):
+                    if len(v) > 16 and (
+                        any(keyword in v.lower() for keyword in SENSITIVE_KEYWORDS) or
+                        any(re.search(pattern, v) for pattern in TOKEN_PATTERNS)
+                    ):
+                        safe_kwargs[k] = mask_partially(v)
+                    else:
+                        safe_kwargs[k] = v
+                elif isinstance(v, (dict, list)):
+                    safe_kwargs[k] = mask_sensitive_data(v)
+                else:
+                    safe_kwargs[k] = v
             
             func_name = func.__qualname__
-            logger.log(level, f"Iniciando {func_name} - Args: {args}, Kwargs: {safe_kwargs}")
+            logger.log(level, f"Iniciando {func_name} - Args: {safe_args}, Kwargs: {safe_kwargs}")
             
             start_time = time.time()
             try:
@@ -162,7 +278,10 @@ def log_execution(func=None, level=logging.INFO):
                 return result
             except Exception as e:
                 elapsed = time.time() - start_time
-                logger.error(f"Erro em {func_name} após {elapsed:.3f}s: {str(e)}", 
+                error_msg = str(e)
+                # Mascarar dados sensíveis na mensagem de erro
+                masked_error = mask_sensitive_data(error_msg)
+                logger.error(f"Erro em {func_name} após {elapsed:.3f}s: {masked_error}", 
                              exc_info=True)
                 raise
         return wrapper
