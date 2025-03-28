@@ -85,6 +85,8 @@ def main():
         parser = argparse.ArgumentParser(description="Execute the feature creation process.")
         parser.add_argument("prompt", type=str, help="The user prompt for feature creation.")
         parser.add_argument("execution_plan", type=str, help="The execution plan for the feature.")
+        parser.add_argument("--target", required=True, type=str, 
+                          help="Caminho completo para o repositório Git do projeto")
         parser.add_argument("--token", type=str, help="GitHub token", default=os.environ.get("GITHUB_TOKEN"))
         parser.add_argument("--owner", type=str, help="Repository owner (obrigatório).")
         parser.add_argument("--repo", type=str, help="Repository name (obrigatório).")
@@ -100,6 +102,20 @@ def main():
         if args.verbose:
             logger.setLevel(logging.DEBUG)
             logger.debug("Modo verbose ativado")
+        
+        # Verificar se o caminho do repositório é válido
+        if not os.path.isdir(args.target):
+            logger.error(f"FALHA - Diretório do repositório não encontrado: {args.target}")
+            return
+            
+        git_dir = os.path.join(args.target, '.git')
+        if not os.path.isdir(git_dir):
+            logger.error(f"FALHA - O diretório não é um repositório Git: {args.target}")
+            return
+            
+        # Mudar para o diretório do projeto
+        os.chdir(args.target)
+        logger.info(f"Trabalhando no diretório: {os.getcwd()}")
         
         if not args.token:
             logger.error("FALHA - Token GitHub ausente")
