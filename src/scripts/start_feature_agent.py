@@ -181,38 +181,45 @@ logger = setup_logging_for_feature_agent()
 
 @log_execution
 def ensure_config_files():
-    """Garante que os arquivos de configuração existam"""
-    logger = get_logger(__name__)
-    logger.info("INÍCIO - ensure_config_files")
+    """Garante que todos os arquivos de configuração necessários existam"""
+    # Lista de diretórios a serem verificados/criados
+    directories = [
+        "configs",
+        "configs/agents",
+        "logs"
+    ]
     
-    try:
-        config_dir = "config"
-        os.makedirs(config_dir, exist_ok=True)
-        logger.debug(f"Diretório criado/verificado: {config_dir}")
+    for directory in directories:
+        if not os.path.exists(directory):
+            try:
+                os.makedirs(directory, exist_ok=True)
+                logger.info(f"Diretório criado: {directory}")
+            except Exception as e:
+                logger.warning(f"Não foi possível criar o diretório {directory}: {e}")
+    
+    # Verificar se o arquivo de requisitos existe
+    requirements_file = "configs/agents/plan_requirements.yaml"
+    if not os.path.exists(requirements_file):
+        logger.warning(f"Arquivo de requisitos não encontrado: {requirements_file}")
+        # Não é necessário criar o arquivo, pois o validador usará requisitos padrão
         
-        req_file = os.path.join(config_dir, "plan_requirements.yaml")
-        if not os.path.exists(req_file):
-            default_requirements = {
-                "requisitos_entregaveis": [
-                    {"nome": "Nome claro e específico", "obrigatorio": True},
-                    {"descricao": "Descrição detalhada", "obrigatorio": True},
-                    {"dependencias": "Lista de dependências necessárias", "obrigatorio": True},
-                    {"exemplo_uso": "Exemplo prático de uso", "obrigatorio": True},
-                    {"criterios_aceitacao": "Critérios mensuráveis", "obrigatorio": True},
-                    {"resolucao_problemas": "Problemas e soluções", "obrigatorio": True},
-                    {"passos_implementacao": "Passos detalhados", "obrigatorio": True}
-                ]
-            }
-            
-            with open(req_file, 'w', encoding='utf-8') as f:
-                yaml.dump(default_requirements, f, default_flow_style=False, allow_unicode=True)
-            logger.info(f"SUCESSO - Arquivo de requisitos criado: {req_file}")
-        else:
-            logger.debug(f"Arquivo de requisitos já existe: {req_file}")
-            
+    # Verificar configuração do logging
+    log_config_file = "configs/logging.yaml"
+    try:
+        if not os.path.exists(log_config_file):
+            logger.warning(f"Arquivo de configuração de logging não encontrado: {log_config_file}")
     except Exception as e:
-        logger.error(f"FALHA - ensure_config_files | Erro: {mask_sensitive_data(str(e))}", exc_info=True)
-        raise
+        logger.warning(f"Erro ao verificar arquivo de configuração de logging: {e}")
+    
+    # Verificar arquivo de ambiente
+    env_file = ".env"
+    try:
+        if not os.path.exists(env_file):
+            logger.warning(f"Arquivo de ambiente não encontrado: {env_file}")
+    except Exception as e:
+        logger.warning(f"Erro ao verificar arquivo de ambiente: {e}")
+
+    logger.info("Verificação de arquivos de configuração concluída")
 
 @log_execution
 def main():
@@ -363,17 +370,21 @@ def request_plan_correction(prompt, current_plan, validation_result, openai_toke
     from openai import OpenAI
     
     # Carregar requisitos do arquivo YAML
+    requirements = {}
+    req_details = ""
+    
     try:
-        with open(config_file, 'r', encoding='utf-8') as f:
-            requirements = yaml.safe_load(f)
+        if not os.path.exists(config_file):
+            logger.warning(f"Arquivo de configuração não encontrado: {config_file}. Usando requisitos padrão.")
+        else:
+            with open(config_file, 'r', encoding='utf-8') as f:
+                requirements = yaml.safe_load(f)
     except Exception as e:
         # Mascarar dados sensíveis na mensagem de erro
         error_msg = mask_sensitive_data(str(e))
-        logger.error(f"Erro ao carregar requisitos: {error_msg}")
-        requirements = {}
+        logger.warning(f"Erro ao carregar requisitos: {error_msg}. Usando requisitos padrão.")
     
     # Extrair detalhes dos requisitos para o prompt
-    req_details = ""
     if "requisitos_entregaveis" in requirements:
         req_details = "Cada entregável deve incluir:\n"
         for req in requirements["requisitos_entregaveis"]:
