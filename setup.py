@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="agent_platform",
+    name="agent_flow_craft",
     version="0.1.0",
     packages=find_packages(),
     install_requires=[
@@ -20,7 +20,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'mcp_agent=agent_platform.apps.agent_manager.agents.feature_creation_agent:main',
+            'mcp_agent=src.core.apps.agent_manager.agents.feature_creation_agent:main',
         ],
     },
     python_requires='>=3.8',

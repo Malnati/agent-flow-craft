@@ -22,9 +22,11 @@ jobs:
       - name: Executar script Python para gerar TREE.md
         run: |
           uv pip install rich
-          uv venv
+          python -m venv .venv
+          . .venv/bin/activate
           uv pip install rich
-          uv python agent_platform/scripts/generate_tree.py --output docs/TREE.md
+          python src/scripts/generate_tree.py --output docs/TREE.md
+          deactivate
 
       - name: Commit e push do arquivo TREE.md
         run: |

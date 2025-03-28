@@ -37,9 +37,13 @@ jobs:
         if: steps.branch-info.outputs.branch_match == 'true'
         run: |
           python -m pip install --upgrade pip
+          python -m venv .venv
+          . .venv/bin/activate
           pip install flake8
 
       - name: Rodar flake8
         if: steps.branch-info.outputs.branch_match == 'true'
         run: |
-          flake8 agents/ agent_platform/scripts/ evaluators/ --max-line-length=120 --exclude=__init__.py
+          . .venv/bin/activate
+          flake8 agents/ src/scripts/ evaluators/ --max-line-length=120 --exclude=__init__.py
+          deactivate

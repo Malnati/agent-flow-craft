@@ -6,6 +6,11 @@ from datetime import datetime
 import sys
 from pathlib import Path
 import time
+import json
+import tempfile
+
+from slugify import slugify
+from src.core.core.logger import setup_logging, get_logger, log_execution
 
 # Adicionar o diretório base ao path para permitir importações
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -13,7 +18,6 @@ sys.path.insert(0, str(BASE_DIR))
 
 from apps.agent_manager.agents.feature_creation_agent import FeatureCreationAgent
 from apps.agent_manager.agents.plan_validator import PlanValidator
-from agent_platform.core.logger import setup_logging, get_logger, log_execution
 
 @log_execution
 def setup_logging_for_feature_agent():

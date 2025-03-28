@@ -23,12 +23,15 @@ jobs:
 
       - name: Configurar ambiente Python
         run: |
-          uv venv
-          uv pip install pyyaml
+          python -m venv .venv
+          . .venv/bin/activate
+          pip install pyyaml
 
       - name: Executar script para gerar índice
         run: |
-          python agent_platform/scripts/generate_docs_index.py --output docs/README.md
+          . .venv/bin/activate
+          python src/scripts/generate_docs_index.py --output docs/README.md
+          deactivate
         
       - name: Verificar alterações
         id: verify_changes
