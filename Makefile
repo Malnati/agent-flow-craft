@@ -1,5 +1,5 @@
 .PHONY: install setup test lint format start-agent update-docs-index clean clean-pycache all create-venv \
-	pack deploy undeploy install-cursor install-simple-mcp help build publish version version-info find-commit update-changelog compare-versions
+	pack deploy undeploy install-cursor install-simple-mcp help build publish version version-info find-commit update-changelog compare-versions test-mcp-e2e
 
 VERSION := $(shell python3 -c "import time; print(time.strftime('%Y.%m.%d'))")
 BUILD_DIR := ./dist
@@ -26,7 +26,7 @@ help:
 	@echo "  make update-docs-index        Atualiza o índice da documentação automaticamente"
 	@echo "  make start-agent prompt=\"...\" execution_plan=\"...\"  Inicia o agente de criação de features"
 	@echo "  make pack --out=DIRECTORY     Empacota o projeto MCP para o diretório especificado"
-	@echo "  make deploy --in=FILE --out=DIR  Implanta o MCP empacotado no diretório alvo"
+	@echo "  make deploy                   Instala a última versão do pacote do PyPI e verifica a instalação"
 	@echo "  make install-cursor           Instala no diretório MCP do Cursor"
 	@echo "  make install-simple-mcp       Instala Simple MCP no Cursor"
 	@echo "  make undeploy                 Remove o MCP do Cursor IDE"
@@ -36,6 +36,7 @@ help:
 	@echo "  make find-commit version=X.Y.Z.devN   Retorna o hash do commit associado à versão"
 	@echo "  make update-changelog version=X.Y.Z.devN  Atualiza o CHANGELOG.md com informações da versão"
 	@echo "  make compare-versions from=X.Y.Z.devN to=X.Y.Z.devN  Compara as mudanças entre duas versões"
+	@echo "  make test-mcp-e2e              Executa o teste e2e do MCP"
 
 # Verifica se ambiente virtual existe e cria se necessário
 create-venv:
@@ -147,20 +148,15 @@ endif
 	@echo "Empacotamento concluído! Arquivos disponíveis em: $(out)"
 
 # Implantar o pacote
-deploy:
-ifndef in
-	$(error Por favor especifique um arquivo de entrada: make deploy in=FILE out=DIRECTORY)
-endif
-ifndef out
-	$(error Por favor especifique um diretório de saída: make deploy in=FILE out=DIRECTORY)
-endif
-	@echo "Implantando pacote $(in) no diretório $(out)..."
-	@mkdir -p $(out)
-	@if [[ "$(in)" == *.zip ]]; then unzip -o $(in) -d $(out); \
-	elif [[ "$(in)" == *.tar.gz ]]; then tar -xzf $(in) -C $(out); \
-	elif [[ "$(in)" == *.whl ]]; then pip install $(in) --target=$(out); \
-	else cp -r $(in)/* $(out)/; fi
-	@echo "Implantação concluída!"
+deploy: create-venv
+	@echo "\n🚀 Instalando a última versão do pacote agent-flow-craft do PyPI..."
+	$(ACTIVATE) && $(PYTHON_ENV) pip install --upgrade --force-reinstall agent-flow-craft
+	@echo "\n🔍 Verificando se a instalação foi bem-sucedida..."
+	@echo "📦 Versão instalada:"
+	@$(ACTIVATE) && $(PYTHON_ENV) pip list | grep -i agent-flow-craft || (echo "❌ Erro: O pacote agent-flow-craft não parece estar instalado." && exit 1)
+	@echo "\n⚙️ Verificando importação do pacote..."
+	@$(ACTIVATE) && $(PYTHON_ENV) python -c "import importlib.util; spec = importlib.util.find_spec('agent_platform'); print('✅ Pacote importado: ' + spec.origin if spec is not None else '❌ Erro: Não foi possível importar o pacote agent_platform.'); exit(1 if spec is None else 0)"
+	@echo "\n✅ Implantação concluída com sucesso!"
 
 # Instalar no diretório do MCP do Cursor
 install-cursor:
@@ -197,6 +193,15 @@ print-no-pycache-message:
 	@echo "python -B seu_script.py"
 	@echo "ou defina a variável de ambiente PYTHONDONTWRITEBYTECODE=1"
 	@echo "======================================================="
+
+# Executar teste e2e do MCP
+test-mcp-e2e: create-venv
+	@echo "\n🧪 Executando teste e2e para o MCP..."
+	@echo "\n🔧 Configurando ambiente de teste..."
+	$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python src/scripts/setup_mcp_test.py
+	@echo "\n🚀 Executando teste..."
+	$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python src/tests/test_mcp_e2e.py
+	@echo "\n✅ Teste e2e do MCP concluído!"
 
 # Atualizar o CHANGELOG.md com a nova versão
 update-changelog:
