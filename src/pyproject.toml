@@ -1,6 +1,6 @@
 [project]
 name = "agent-flow-craft"
-version = "0.1.0"
+version = "1.0.0"
 description = "Automatização do fluxo de criação de features via agentes e integração com o GitHub e OpenAI."
 authors = [{ name = "Malnati", email = "ricardomalnati@gmail.com" }]
 dependencies = [
