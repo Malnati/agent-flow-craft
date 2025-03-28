@@ -189,11 +189,17 @@ python src/scripts/start_feature_agent.py "Descrição da nova funcionalidade" "
 O projeto inclui um comando para publicação automatizada no Python Package Index (PyPI):
 
 ```bash
+# Verificar a versão que será publicada
+make version
+
 # Configurar token do PyPI
 export PyPI_TOKEN=seu_token_aqui
 
 # Publicar no PyPI
 make publish
+
+# Para definir uma versão específica (padrão Semantic Versioning)
+VERSION=1.2.3 make publish
 ```
 
 Para publicar o pacote, você precisa:
@@ -202,7 +208,24 @@ Para publicar o pacote, você precisa:
 3. Definir a variável de ambiente `PyPI_TOKEN` com sua chave
 4. Executar o comando `make publish`
 
-O comando verificará a presença do token, construirá o pacote e fará o upload para o PyPI automaticamente.
+#### Sistema de Versionamento
+
+O sistema de versionamento segue o padrão Semantic Versioning 2.0.0, com a seguinte estrutura:
+
+```
+MAJOR.MINOR.PATCH[.BUILD]+COMMIT_HASH
+```
+
+Onde:
+- **MAJOR.MINOR.PATCH**: Versão principal do software (incrementada conforme compatibilidade)
+- **BUILD**: Número da compilação baseado na data/hora (HHMMSS) para garantir unicidade
+- **COMMIT_HASH**: Hash curto do último commit no Git
+
+Exemplos:
+- Versão automática: `2025.03.26.143010+a1b2c3d`
+- Versão manual: `1.2.3+a1b2c3d` (quando definida via `VERSION=1.2.3 make publish`)
+
+Este formato garante que cada publicação tenha uma versão única (evitando o erro "File already exists") e facilita a rastreabilidade ao repositório Git.
 
 ### Estrutura do diretório `docs/pr/`
 

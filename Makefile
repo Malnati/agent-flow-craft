@@ -1,5 +1,5 @@
 .PHONY: install setup test lint format start-agent update-docs-index clean clean-pycache all create-venv \
-	pack deploy undeploy install-cursor install-simple-mcp help build publish
+	pack deploy undeploy install-cursor install-simple-mcp help build publish version
 
 VERSION := $(shell python3 -c "import time; print(time.strftime('%Y.%m.%d'))")
 BUILD_DIR := ./dist
@@ -31,6 +31,7 @@ help:
 	@echo "  make install-simple-mcp       Instala Simple MCP no Cursor"
 	@echo "  make undeploy                 Remove o MCP do Cursor IDE"
 	@echo "  make publish                  Publica o projeto no PyPI (requer PyPI_TOKEN)"
+	@echo "  make version                  Mostra a versão que será usada na publicação"
 
 # Verifica se ambiente virtual existe e cria se necessário
 create-venv:
@@ -205,8 +206,21 @@ publish: build
 	@echo "Instalando twine no ambiente virtual..."
 	$(ACTIVATE) && $(PYTHON_ENV) pip install twine
 	@echo "Publicando no PyPI..."
+	@echo "A versão do pacote será gerada automaticamente com o formato: YYYY.MM.DD.HHMMSS"
+	@echo "Se quiser definir uma versão específica, use: VERSION=1.2.3 make publish"
 	$(ACTIVATE) && $(PYTHON_ENV) TWINE_USERNAME=__token__ TWINE_PASSWORD=$(PyPI_TOKEN) python -m twine upload dist/*
 	@echo "Publicação concluída!"
+	@echo "Versão publicada: $(shell python -c "import subprocess; print(subprocess.check_output(['pip', 'show', 'agent_flow_craft']).decode().split('Version: ')[1].split('\\n')[0] if 'agent_flow_craft' in subprocess.check_output(['pip', 'freeze']).decode() else 'Não instalado localmente')")"
 
 # Adiciona o lembrete a todos os comandos principais
 install setup test lint format start-agent update-docs-index publish: print-no-pycache-message 
+
+# Verificar a versão que será publicada
+version:
+	@echo "Versão que será publicada:"
+	@$(PYTHON) -c "import subprocess; import time; hash = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('utf-8').strip(); build = time.strftime('%H%M%S'); print(f'{time.strftime(\"%Y.%m.%d\")}.{build}+{hash}')"
+	@echo ""
+	@echo "Formato: MAJOR.MINOR.PATCH[.BUILD]+COMMIT_HASH (Semantic Versioning 2.0.0)"
+	@echo ""
+	@echo "Para definir manualmente a versão, use:"
+	@echo "VERSION=1.2.3 make publish    # Será expandido para 1.2.3+<commit_hash>" 
