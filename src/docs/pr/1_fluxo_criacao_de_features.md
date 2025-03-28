@@ -27,7 +27,7 @@ Você é um agente encarregado de criar o primeiro agente funcional do projeto *
 
 3. **Configuração de ambiente e scripts:**
    - Adicione logs detalhados de cada etapa na pasta `logs/`.
-   - Crie um script CLI simples (`agent_platform/scripts/start_feature_agent.py`) para facilitar a execução do agente via terminal.
+   - Crie um script CLI simples (`src/scripts/start_feature_agent.py`) para facilitar a execução do agente via terminal.
 
 4. **Testes:**
    - Crie um arquivo inicial de testes automatizados para o agente, dentro de `tests/test_feature_creation_agent.py`.

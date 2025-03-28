@@ -1,4 +1,4 @@
-.PHONY: pack deploy clean install test undeploy start-agent agent-platform-commands
+.PHONY: pack deploy clean install test undeploy start-agent src-commands
 
 VERSION := $(shell python3 -c "import time; print(time.strftime('%Y.%m.%d'))")
 BUILD_DIR := ./dist
@@ -67,12 +67,12 @@ test:
 # Instalar no diretório do MCP do Cursor
 install-cursor:
 	@echo "Instalando no diretório MCP do Cursor..."
-	@mkdir -p $(HOME)/.cursor/mcp/agent_platform
-	@pip install -e . --target=$(HOME)/.cursor/mcp/agent_platform
+	@mkdir -p $(HOME)/.cursor/mcp/src
+	@pip install -e . --target=$(HOME)/.cursor/mcp/src
 	@echo "Configurando arquivo MCP..."
 	@cp -f .cursor/config.json $(HOME)/.cursor/mcp.json
 	@echo "Configurando permissões de execução..."
-	@chmod +x $(HOME)/.cursor/mcp/agent_platform/mcp_agent
+	@chmod +x $(HOME)/.cursor/mcp/src/mcp_agent
 	@echo "Instalação concluída! Reinicie o Cursor para usar o MCP."
 
 # Instalação simplificada do MCP
@@ -88,7 +88,7 @@ undeploy:
 	@echo "Removendo MCP do Cursor IDE..."
 	@rm -f $(HOME)/.cursor/mcp.json
 	@rm -f $(HOME)/.cursor/mcp_agent.py
-	@rm -rf $(HOME)/.cursor/mcp/agent_platform
+	@rm -rf $(HOME)/.cursor/mcp/src
 	@echo "MCP removido com sucesso!"
 
 # Comandos da Agent Platform
@@ -99,13 +99,13 @@ start-agent:
 		exit 1; \
 	fi
 	@echo "Iniciando agente de criação de features..."
-	@cd agent_platform && $(MAKE) start-agent prompt="$(prompt)" execution_plan="$(execution_plan)" \
+	@cd src && $(MAKE) start-agent prompt="$(prompt)" execution_plan="$(execution_plan)" \
 		GITHUB_TOKEN="$(GITHUB_TOKEN)" GITHUB_OWNER="$(GITHUB_OWNER)" \
 		GITHUB_REPO="$(GITHUB_REPO)" OPENAI_TOKEN="$(OPENAI_TOKEN)"
 
-# Passa qualquer comando para o Makefile do agent_platform
-agent-platform-commands:
-	@cd agent_platform && $(MAKE) $(MAKECMDGOALS)
+# Passa qualquer comando para o Makefile do src
+src-commands:
+	@cd src && $(MAKE) $(MAKECMDGOALS)
 	
-# Alvos que serão redirecionados para o Makefile do agent_platform
-lint format update-docs-index: agent-platform-commands 
+# Alvos que serão redirecionados para o Makefile do src
+lint format update-docs-index: src-commands 

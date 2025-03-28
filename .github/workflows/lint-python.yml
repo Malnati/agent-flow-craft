@@ -45,5 +45,5 @@ jobs:
         if: steps.branch-info.outputs.branch_match == 'true'
         run: |
           . .venv/bin/activate
-          flake8 agents/ agent_platform/scripts/ evaluators/ --max-line-length=120 --exclude=__init__.py
+          flake8 agents/ src/scripts/ evaluators/ --max-line-length=120 --exclude=__init__.py
           deactivate
