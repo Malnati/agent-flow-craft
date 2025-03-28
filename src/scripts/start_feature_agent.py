@@ -13,7 +13,9 @@ from slugify import slugify
 from src.core.core.logger import setup_logging, get_logger, log_execution
 
 # Adicionar o diretório base ao path para permitir importações
-BASE_DIR = Path(__file__).resolve().parent.parent.parent  # Go up one more level to project root
+BASE_DIR = Path(__file__).resolve().parent.parent.parent  # Project root
+SRC_DIR = BASE_DIR / 'src'
+sys.path.insert(0, str(SRC_DIR))
 sys.path.insert(0, str(BASE_DIR))
 
 from src.apps.agent_manager.agents.feature_creation_agent import FeatureCreationAgent
