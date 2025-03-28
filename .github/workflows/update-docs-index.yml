@@ -16,22 +16,23 @@ jobs:
         with:
           fetch-depth: 0  # Clona todo o histórico para garantir acesso completo
 
-      - name: Instalar UV
-        run: |
-          curl -Ls https://astral.sh/uv/install.sh | sh
-          export PATH="/root/.cargo/bin:$PATH"
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
 
       - name: Configurar ambiente Python
         run: |
-          python -m venv .venv
-          . .venv/bin/activate
-          pip install pyyaml
+          python -m pip install --upgrade pip
+          pip install pyyaml loguru
+          # Instala o próprio pacote em modo de desenvolvimento
+          pip install -e .
 
       - name: Executar script para gerar índice
         run: |
-          . .venv/bin/activate
+          # Adiciona o diretório src ao PYTHONPATH
+          export PYTHONPATH=$PYTHONPATH:$(pwd):$(pwd)/src
           python src/scripts/generate_docs_index.py --output docs/README.md
-          deactivate
         
       - name: Verificar alterações
         id: verify_changes
