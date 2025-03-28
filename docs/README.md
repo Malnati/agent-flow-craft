@@ -2,8 +2,6 @@
 
 ### Planos de execução:
 
-
-
 <!-- A lista abaixo será gerada automaticamente -->
 - [87 feature plan](pr/87_feature_plan.md)
 - [89 feature plan](pr/89_feature_plan.md)
