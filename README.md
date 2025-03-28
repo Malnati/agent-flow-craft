@@ -210,22 +210,26 @@ Para publicar o pacote, você precisa:
 
 #### Sistema de Versionamento
 
-O sistema de versionamento segue o padrão Semantic Versioning 2.0.0, com a seguinte estrutura:
+O sistema de versionamento segue o padrão PEP 440 (compatível com PyPI), com a seguinte estrutura:
 
 ```
-MAJOR.MINOR.PATCH[.BUILD]+COMMIT_HASH
+MAJOR.MINOR.PATCH[.BUILD].devCOMMIT_HASH
 ```
 
 Onde:
 - **MAJOR.MINOR.PATCH**: Versão principal do software (incrementada conforme compatibilidade)
 - **BUILD**: Número da compilação baseado na data/hora (HHMMSS) para garantir unicidade
-- **COMMIT_HASH**: Hash curto do último commit no Git
+- **COMMIT_HASH**: Hash do último commit no Git (com slugify para remover caracteres inválidos)
 
 Exemplos:
-- Versão automática: `2025.03.26.143010+a1b2c3d`
-- Versão manual: `1.2.3+a1b2c3d` (quando definida via `VERSION=1.2.3 make publish`)
+- Versão automática: `2025.03.26.143010.dev1a2b3cd`
+- Versão manual: `1.2.3.dev1a2b3cd` (quando definida via `VERSION=1.2.3 make publish`)
 
-Este formato garante que cada publicação tenha uma versão única (evitando o erro "File already exists") e facilita a rastreabilidade ao repositório Git.
+Este formato garante que:
+1. Cada publicação tem uma versão única (evitando o erro "File already exists")
+2. As versões são compatíveis com o PyPI (seguindo o PEP 440)
+3. Mantém a rastreabilidade ao repositório Git
+4. Usa slugify para garantir que não há caracteres inválidos no nome
 
 ### Estrutura do diretório `docs/pr/`
 

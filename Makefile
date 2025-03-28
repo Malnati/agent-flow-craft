@@ -206,7 +206,8 @@ publish: build
 	@echo "Instalando twine no ambiente virtual..."
 	$(ACTIVATE) && $(PYTHON_ENV) pip install twine
 	@echo "Publicando no PyPI..."
-	@echo "A versão do pacote será gerada automaticamente com o formato: YYYY.MM.DD.HHMMSS"
+	@echo "A versão do pacote será gerada automaticamente com o formato: YYYY.MM.DD.HHMMSS.devCOMMIT_HASH"
+	@echo "Este formato é compatível com PEP 440 e aceito pelo PyPI."
 	@echo "Se quiser definir uma versão específica, use: VERSION=1.2.3 make publish"
 	$(ACTIVATE) && $(PYTHON_ENV) TWINE_USERNAME=__token__ TWINE_PASSWORD=$(PyPI_TOKEN) python -m twine upload dist/*
 	@echo "Publicação concluída!"
@@ -218,9 +219,9 @@ install setup test lint format start-agent update-docs-index publish: print-no-p
 # Verificar a versão que será publicada
 version:
 	@echo "Versão que será publicada:"
-	@$(PYTHON) -c "import subprocess; import time; hash = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('utf-8').strip(); build = time.strftime('%H%M%S'); print(f'{time.strftime(\"%Y.%m.%d\")}.{build}+{hash}')"
+	@$(PYTHON) -c "import subprocess; import time; from slugify import slugify; hash = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('utf-8').strip(); build = time.strftime('%H%M%S'); print(f'{time.strftime(\"%Y.%m.%d\")}.{build}.dev{slugify(hash, separator=\"\")}')"
 	@echo ""
-	@echo "Formato: MAJOR.MINOR.PATCH[.BUILD]+COMMIT_HASH (Semantic Versioning 2.0.0)"
+	@echo "Formato: MAJOR.MINOR.PATCH.BUILD.devCOMMIT_HASH (PEP 440 compatível)"
 	@echo ""
 	@echo "Para definir manualmente a versão, use:"
-	@echo "VERSION=1.2.3 make publish    # Será expandido para 1.2.3+<commit_hash>" 
+	@echo "VERSION=1.2.3 make publish    # Será expandido para 1.2.3.dev<commit_hash_slugify>" 
