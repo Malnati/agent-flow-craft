@@ -213,23 +213,23 @@ Para publicar o pacote, você precisa:
 O sistema de versionamento segue o padrão PEP 440 (compatível com PyPI), com a seguinte estrutura:
 
 ```
-MAJOR.MINOR.PATCH[.BUILD].devCOMMIT_HASH
+MAJOR.MINOR.PATCH.devN
 ```
 
 Onde:
-- **MAJOR.MINOR.PATCH**: Versão principal do software (incrementada conforme compatibilidade)
-- **BUILD**: Número da compilação baseado na data/hora (HHMMSS) para garantir unicidade
-- **COMMIT_HASH**: Hash do último commit no Git (com slugify para remover caracteres inválidos)
+- **MAJOR.MINOR**: Ano e mês (ex: 2025.03)
+- **PATCH**: Dia do mês (ex: 28)
+- **N**: Timestamp (HHMM) + hash do commit slugificado
 
 Exemplos:
-- Versão automática: `2025.03.26.143010.dev1a2b3cd`
-- Versão manual: `1.2.3.dev1a2b3cd` (quando definida via `VERSION=1.2.3 make publish`)
+- Versão automática: `2025.03.28.dev1022b242007`
+- Versão manual: `1.2.3.dev1022b242007` (quando definida via `VERSION=1.2.3 make publish`)
 
 Este formato garante que:
 1. Cada publicação tem uma versão única (evitando o erro "File already exists")
 2. As versões são compatíveis com o PyPI (seguindo o PEP 440)
 3. Mantém a rastreabilidade ao repositório Git
-4. Usa slugify para garantir que não há caracteres inválidos no nome
+4. Versões geradas automaticamente seguem uma lógica temporal (ano.mês.dia.devHHMMCOMMIT_HASH)
 
 ### Estrutura do diretório `docs/pr/`
 

@@ -16,7 +16,15 @@ def simple_slugify(text, separator=''):
 def get_version():
     # Se existir variável de ambiente VERSION, usar ela como base
     env_version = os.environ.get('VERSION')
-    base_version = env_version if env_version else time.strftime('%Y.%m.%d')
+    
+    if env_version:
+        base_version = env_version
+    else:
+        # Usar ano e mês como MAJOR.MINOR
+        year_month = time.strftime('%Y.%m')
+        # Usar dia como PATCH
+        day = time.strftime('%d')
+        base_version = f"{year_month}.{day}"
     
     # Obter o hash curto do último commit
     try:
@@ -24,17 +32,13 @@ def get_version():
     except (subprocess.SubprocessError, FileNotFoundError):
         commit_hash = "dev"
     
-    # Formato PEP 440 compatível: X.Y.Z.devN
-    # Não podemos usar +COMMIT_HASH no PyPI, então usamos .devCOMMIT_HASH
-    return f"{base_version}.dev{simple_slugify(commit_hash, separator='')}"
+    # Número de build baseado na hora (para diferenciar builds do mesmo dia)
+    build_number = time.strftime('%H%M')
+    
+    # Formato PEP 440 compatível: X.Y.Z.devABC
+    return f"{base_version}.dev{build_number}{simple_slugify(commit_hash, separator='')}"
 
-# Adicionar um número de build único baseado na hora atual para evitar colisões
-# apenas se não estiver usando versão manual
 version = get_version()
-if not os.environ.get('VERSION'):
-    build_number = time.strftime('%H%M%S')
-    parts = version.split('.dev')
-    version = f"{parts[0]}.{build_number}.dev{parts[1] if len(parts) > 1 else ''}"
 
 setup(
     name="agent_flow_craft",

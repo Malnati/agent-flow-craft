@@ -206,7 +206,7 @@ publish: build
 	@echo "Instalando twine no ambiente virtual..."
 	$(ACTIVATE) && $(PYTHON_ENV) pip install twine
 	@echo "Publicando no PyPI..."
-	@echo "A versão do pacote será gerada automaticamente com o formato: YYYY.MM.DD.HHMMSS.devCOMMIT_HASH"
+	@echo "A versão do pacote será gerada como: YYYY.MM.DD.devHHMMCOMMIT_HASH"
 	@echo "Este formato é compatível com PEP 440 e aceito pelo PyPI."
 	@echo "Se quiser definir uma versão específica, use: VERSION=1.2.3 make publish"
 	$(ACTIVATE) && $(PYTHON_ENV) TWINE_USERNAME=__token__ TWINE_PASSWORD=$(PyPI_TOKEN) python -m twine upload dist/*
@@ -219,9 +219,12 @@ install setup test lint format start-agent update-docs-index publish: print-no-p
 # Verificar a versão que será publicada
 version:
 	@echo "Versão que será publicada:"
-	@$(PYTHON) -c "import subprocess; import time; import re; def simple_slugify(text, separator=''): text = re.sub(r'[^\w\s-]', '', text.lower()); text = re.sub(r'[-\s]+', separator, text).strip('-'); return text; hash = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('utf-8').strip(); build = time.strftime('%H%M%S'); print(f'{time.strftime(\"%Y.%m.%d\")}.{build}.dev{simple_slugify(hash, separator=\"\")}')"
+	@$(PYTHON) -c "import subprocess; import time; import re; def simple_slugify(text, separator=''): text = re.sub(r'[^\w\s-]', '', text.lower()); text = re.sub(r'[-\s]+', separator, text).strip('-'); return text; hash = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('utf-8').strip(); build = time.strftime('%H%M'); year_month = time.strftime('%Y.%m'); day = time.strftime('%d'); print(f'{year_month}.{day}.dev{build}{simple_slugify(hash, separator=\"\")}')"
 	@echo ""
-	@echo "Formato: MAJOR.MINOR.PATCH.BUILD.devCOMMIT_HASH (PEP 440 compatível)"
+	@echo "Formato: MAJOR.MINOR.PATCH.devN (PEP 440 compatível)"
+	@echo "  • MAJOR.MINOR = ano.mês (2025.03)"
+	@echo "  • PATCH = dia (28)"
+	@echo "  • N = hora+minuto+commit_hash (1022b242007)"
 	@echo ""
 	@echo "Para definir manualmente a versão, use:"
-	@echo "VERSION=1.2.3 make publish    # Será expandido para 1.2.3.dev<commit_hash_slugify>" 
+	@echo "VERSION=1.2.3 make publish    # Será expandido para 1.2.3.dev<timestamp+commit_hash>" 
