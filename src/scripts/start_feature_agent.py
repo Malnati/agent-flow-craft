@@ -10,7 +10,7 @@ import json
 import tempfile
 
 from slugify import slugify
-from src.core.core.logger import setup_logging, get_logger, log_execution
+from core.core.logger import setup_logging, get_logger, log_execution
 
 # Adicionar o diretório base ao path para permitir importações
 BASE_DIR = Path(__file__).resolve().parent.parent
