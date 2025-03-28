@@ -219,17 +219,17 @@ MAJOR.MINOR.PATCH.devN
 Onde:
 - **MAJOR.MINOR**: Ano e mês (ex: 2025.03)
 - **PATCH**: Dia do mês (ex: 28)
-- **N**: Timestamp (HHMM) + hash do commit slugificado
+- **N**: Número único derivado do timestamp e hash do commit (ex: 10150123)
 
 Exemplos:
-- Versão automática: `2025.03.28.dev1022b242007`
-- Versão manual: `1.2.3.dev1022b242007` (quando definida via `VERSION=1.2.3 make publish`)
+- Versão automática: `2025.03.28.dev10150123`
+- Versão manual: `1.2.3.dev10150123` (quando definida via `VERSION=1.2.3 make publish`)
 
 Este formato garante que:
 1. Cada publicação tem uma versão única (evitando o erro "File already exists")
-2. As versões são compatíveis com o PyPI (seguindo o PEP 440)
-3. Mantém a rastreabilidade ao repositório Git
-4. Versões geradas automaticamente seguem uma lógica temporal (ano.mês.dia.devHHMMCOMMIT_HASH)
+2. As versões são 100% compatíveis com o PyPI (seguindo estritamente o PEP 440)
+3. Mantém rastreabilidade indireta ao repositório Git (o número contém informações do commit)
+4. As versões automáticas seguem uma lógica temporal (ano.mês.dia)
 
 ### Estrutura do diretório `docs/pr/`
 

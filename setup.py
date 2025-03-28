@@ -26,17 +26,26 @@ def get_version():
         day = time.strftime('%d')
         base_version = f"{year_month}.{day}"
     
-    # Obter o hash curto do último commit
+    # Obter o hash curto do último commit e usar apenas os primeiros 6 dígitos numéricos do timestamp
+    # mais os primeiros 4 caracteres do hash convertidos para números (somar os códigos ASCII)
+    timestamp = time.strftime('%H%M%S')
+    
+    # Gerar um número baseado no hash do commit
     try:
         commit_hash = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('utf-8').strip()
+        # Converter o hash para um número usando a soma dos códigos ASCII dos primeiros 4 caracteres
+        hash_num = 0
+        for i, c in enumerate(commit_hash[:4]):
+            hash_num += ord(c) * (10 ** i)
+        hash_num = hash_num % 1000  # Limitar a 3 dígitos
     except (subprocess.SubprocessError, FileNotFoundError):
-        commit_hash = "dev"
+        hash_num = int(time.time()) % 1000
     
-    # Número de build baseado na hora (para diferenciar builds do mesmo dia)
-    build_number = time.strftime('%H%M')
+    # Formato PEP 440 compatível: X.Y.Z.devN (N deve ser um número)
+    # Usamos os primeiros dígitos do timestamp + número derivado do hash
+    dev_num = int(timestamp[:4] + str(hash_num).zfill(3))
     
-    # Formato PEP 440 compatível: X.Y.Z.devABC
-    return f"{base_version}.dev{build_number}{simple_slugify(commit_hash, separator='')}"
+    return f"{base_version}.dev{dev_num}"
 
 version = get_version()
 

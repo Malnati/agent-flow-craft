@@ -206,8 +206,9 @@ publish: build
 	@echo "Instalando twine no ambiente virtual..."
 	$(ACTIVATE) && $(PYTHON_ENV) pip install twine
 	@echo "Publicando no PyPI..."
-	@echo "A versão do pacote será gerada como: YYYY.MM.DD.devHHMMCOMMIT_HASH"
-	@echo "Este formato é compatível com PEP 440 e aceito pelo PyPI."
+	@echo "A versão do pacote será gerada como: YYYY.MM.DD.devN"
+	@echo "Onde N é um número único derivado do timestamp e hash do commit."
+	@echo "Este formato é totalmente compatível com PEP 440 e aceito pelo PyPI."
 	@echo "Se quiser definir uma versão específica, use: VERSION=1.2.3 make publish"
 	$(ACTIVATE) && $(PYTHON_ENV) TWINE_USERNAME=__token__ TWINE_PASSWORD=$(PyPI_TOKEN) python -m twine upload dist/*
 	@echo "Publicação concluída!"
@@ -219,12 +220,12 @@ install setup test lint format start-agent update-docs-index publish: print-no-p
 # Verificar a versão que será publicada
 version:
 	@echo "Versão que será publicada:"
-	@$(PYTHON) -c "import subprocess; import time; import re; def simple_slugify(text, separator=''): text = re.sub(r'[^\w\s-]', '', text.lower()); text = re.sub(r'[-\s]+', separator, text).strip('-'); return text; hash = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('utf-8').strip(); build = time.strftime('%H%M'); year_month = time.strftime('%Y.%m'); day = time.strftime('%d'); print(f'{year_month}.{day}.dev{build}{simple_slugify(hash, separator=\"\")}')"
+	@$(PYTHON) -c "import subprocess; import time; import re; def simple_slugify(text, separator=''): text = re.sub(r'[^\w\s-]', '', text.lower()); text = re.sub(r'[-\s]+', separator, text).strip('-'); return text; try: commit_hash = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('utf-8').strip(); hash_num = 0; for i, c in enumerate(commit_hash[:4]): hash_num += ord(c) * (10 ** i); hash_num = hash_num % 1000; except (subprocess.SubprocessError, FileNotFoundError): hash_num = int(time.time()) % 1000; timestamp = time.strftime('%H%M%S'); year_month = time.strftime('%Y.%m'); day = time.strftime('%d'); dev_num = int(timestamp[:4] + str(hash_num).zfill(3)); print(f'{year_month}.{day}.dev{dev_num}')"
 	@echo ""
 	@echo "Formato: MAJOR.MINOR.PATCH.devN (PEP 440 compatível)"
 	@echo "  • MAJOR.MINOR = ano.mês (2025.03)"
 	@echo "  • PATCH = dia (28)"
-	@echo "  • N = hora+minuto+commit_hash (1022b242007)"
+	@echo "  • N = número derivado do timestamp e hash do commit (10150123)"
 	@echo ""
 	@echo "Para definir manualmente a versão, use:"
-	@echo "VERSION=1.2.3 make publish    # Será expandido para 1.2.3.dev<timestamp+commit_hash>" 
+	@echo "VERSION=1.2.3 make publish    # Será expandido para 1.2.3.devXXXXX" 
