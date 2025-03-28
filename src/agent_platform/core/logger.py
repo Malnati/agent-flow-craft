@@ -144,15 +144,21 @@ def log_execution(func=None, level=logging.INFO):
         @wraps(func)
         def wrapper(*args, **kwargs):
             logger = get_logger(func.__module__)
-            
             # Limpar argumentos sensíveis (senhas, tokens)
+            safe_args = [
+                '***' if isinstance(arg, str) and 
+                (any(s in arg.lower() for s in ['pass', 'token', 'secret', 'key']) or 
+                arg.startswith('sk-') or arg.startswith('ghp-') or arg.startswith('pypi-'))
+                else arg for arg in args
+            ]
             safe_kwargs = {
-                k: '***' if any(s in k.lower() for s in ['pass', 'token', 'secret', 'key']) 
+                k: '***' if any(s in k.lower() for s in ['pass', 'token', 'secret', 'key']) or 
+                (isinstance(v, str) and (v.startswith('sk-') or v.startswith('ghp-') or v.startswith('pypi-')))
                 else v for k, v in kwargs.items()
             }
             
             func_name = func.__qualname__
-            logger.log(level, f"Iniciando {func_name} - Args: {args}, Kwargs: {safe_kwargs}")
+            logger.log(level, f"Iniciando {func_name} - Args: {safe_args}, Kwargs: {safe_kwargs}")
             
             start_time = time.time()
             try:

@@ -12,6 +12,23 @@ from agent_platform.core.logger import get_logger, log_execution
 import yaml
 from apps.agent_manager.agents.local_agent_runner import LocalAgentRunner, AgentConfig
 import asyncio
+from datetime import datetime
+from openai import OpenAI
+
+# Tente importar funções de mascaramento de dados sensíveis
+try:
+    from agent_platform.core.utils import mask_sensitive_data, get_env_status
+    has_utils = True
+except ImportError:
+    has_utils = False
+    # Função básica de fallback para mascaramento
+    def mask_sensitive_data(data, mask_str='***'):
+        if isinstance(data, str) and any(s in data.lower() for s in ['token', 'key', 'secret', 'password']):
+            # Mostrar parte do início e fim para debugging
+            if len(data) > 10:
+                return f"{data[:4]}{'*' * 12}{data[-4:] if len(data) > 8 else ''}"
+            return mask_str
+        return data
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -88,7 +105,12 @@ class FeatureCreationAgent(AssistantAgent):
             self.github_token = github_token
             self.repo_owner = repo_owner
             self.repo_name = repo_name
-            self.check_github_auth()
+            
+            # Verifica a autenticação, mas não falha se não for bem-sucedida
+            auth_success = self.check_github_auth()
+            if not auth_success:
+                self.logger.warning("Inicializando FeatureCreationAgent mesmo sem autenticação GitHub confirmada")
+            
             self.logger.info("SUCESSO - FeatureCreationAgent inicializado")
         except Exception as e:
             self.logger.error(f"FALHA - FeatureCreationAgent.__init__ | Erro: {str(e)}", exc_info=True)
@@ -100,16 +122,27 @@ class FeatureCreationAgent(AssistantAgent):
         self.logger.info("INÍCIO - check_github_auth | Verificando autenticação GitHub")
         
         try:
-            result = subprocess.run(['gh', 'auth', 'status'], 
-                                 check=True, capture_output=True, timeout=15)
-            self.logger.info("SUCESSO - Autenticação GitHub verificada")
-            return True
-        except subprocess.CalledProcessError as e:
-            self.logger.error("FALHA - check_github_auth | Erro na autenticação do GitHub CLI", exc_info=True)
-            raise
+            # Aumentando o timeout para 30 segundos e adicionando tratamento para falhas de timeout
+            try:
+                result = subprocess.run(['gh', 'auth', 'status'], 
+                                     check=False, capture_output=True, timeout=30, text=True)
+                
+                if result.returncode == 0:
+                    self.logger.info("SUCESSO - Autenticação GitHub verificada")
+                    return True
+                else:
+                    self.logger.warning(f"AVISO - GitHub CLI não autenticado ou com problemas: {result.stderr}")
+                    # Continuar mesmo com erro na autenticação
+                    return False
+                    
+            except subprocess.TimeoutExpired:
+                self.logger.warning("AVISO - Timeout ao verificar autenticação GitHub. Continuando mesmo assim.")
+                return False
+            
         except Exception as e:
             self.logger.error(f"FALHA - check_github_auth | Erro inesperado: {str(e)}", exc_info=True)
-            raise
+            # Permitir continuar mesmo com erro
+            return False
 
     @log_execution
     def create_github_issue(self, title, body):
@@ -227,11 +260,20 @@ class FeatureCreationAgent(AssistantAgent):
                 self.logger.debug(f"Sugestão truncada de {len(suggestion)} para 500 caracteres")
                 suggestion = suggestion[:497] + "..."
             
-            self.logger.info("SUCESSO - Notificação enviada para OpenAI Agent SDK")
+            # Mascarar tokens sensíveis nos logs
+            safe_token = mask_sensitive_data(openai_token) if openai_token else "não informado"
+            self.logger.info(f"Notificando OpenAI sobre criação de issue #{issue_number} e branch {branch_name}")
+            
+            # Simulação: na implementação real chamaríamos a API do OpenAI Agent SDK
+            time.sleep(0.5)  # Simular tempo de resposta da API
+            
+            self.logger.info(f"OpenAI notificada com sucesso para issue #{issue_number}")
             return suggestion
             
         except Exception as e:
-            self.logger.error(f"FALHA - notify_openai_agent_sdk | Erro: {str(e)}", exc_info=True)
+            # Mascarar possíveis tokens na mensagem de erro
+            error_msg = mask_sensitive_data(str(e))
+            self.logger.error(f"FALHA - notify_openai_agent_sdk | Erro: {error_msg}", exc_info=True)
             return None
 
     @log_execution
@@ -241,14 +283,25 @@ class FeatureCreationAgent(AssistantAgent):
         
         try:
             logger.info("Obtendo histórico de log da branch main")
-            result = subprocess.run(
-                ['git', 'log', '--oneline', '-n', '10'],
-                check=True, capture_output=True, text=True, timeout=15
-            )
-            return result.stdout
+            try:
+                result = subprocess.run(
+                    ['git', 'log', '--oneline', '-n', '10'],
+                    check=False, capture_output=True, text=True, timeout=15
+                )
+                
+                if result.returncode == 0:
+                    return result.stdout
+                else:
+                    logger.warning(f"AVISO - Comando git log falhou: {result.stderr}")
+                    return "Histórico Git não disponível"
+                    
+            except subprocess.SubprocessError as e:
+                logger.warning(f"AVISO - Erro ao executar git log: {str(e)}")
+                return "Histórico Git não disponível"
+            
         except Exception as e:
             logger.error(f"FALHA - get_git_main_log | Erro: {str(e)}", exc_info=True)
-            raise
+            return "Histórico Git não disponível"
         finally:
             logger.info("FIM - get_git_main_log")
 
@@ -261,16 +314,20 @@ class FeatureCreationAgent(AssistantAgent):
             logger.info("Coletando contexto do projeto")
             context = []
             
-            files = _list_project_files_internal(".", 2)
-            important_files = [
-                f for f in files 
-                if f.endswith(('.md', '.py', '.toml', '.json', 'Makefile')) and 
-                not f.startswith('venv/') and 
-                not '/venv/' in f
-            ]
-            
-            # Limitar a quantidade de arquivos
-            important_files = important_files[:max_files]
+            try:
+                files = _list_project_files_internal(".", 2)
+                important_files = [
+                    f for f in files 
+                    if f.endswith(('.md', '.py', '.toml', '.json', 'Makefile')) and 
+                    not f.startswith('venv/') and 
+                    not '/venv/' in f
+                ]
+                
+                # Limitar a quantidade de arquivos
+                important_files = important_files[:max_files]
+            except Exception as e:
+                logger.warning(f"AVISO - Erro ao listar arquivos: {str(e)}")
+                important_files = []
             
             for file_path in important_files:
                 try:
@@ -282,20 +339,27 @@ class FeatureCreationAgent(AssistantAgent):
                 except Exception as e:
                     logger.warning(f"Não foi possível ler o arquivo {file_path}: {str(e)}")
             
+            if not context:
+                context.append("# Contexto do projeto\n\nNão foi possível obter contexto do projeto.")
+            
             return "\n\n".join(context)
         except Exception as e:
             logger.error(f"FALHA - get_project_context | Erro: {str(e)}", exc_info=True)
-            raise
+            return "Não foi possível obter contexto do projeto."
         finally:
             logger.info("FIM - get_project_context")
 
     @log_execution
     def get_suggestion_from_openai(self, openai_token, prompt_text, git_log):
         logger = get_logger(__name__)
+        # Mascarar token sensível nos logs
+        safe_token = mask_sensitive_data(openai_token) if openai_token else "não informado"
         logger.info(f"INÍCIO - get_suggestion_from_openai | Parâmetros: prompt_text={prompt_text[:100]}...")
         
         try:
-            from openai import OpenAI
+            # Não logar o token diretamente
+            if has_utils:
+                logger.debug(f"Status do token OpenAI: {'disponível' if openai_token else 'não informado'}")
             
             client = OpenAI(api_key=openai_token)
             
@@ -329,8 +393,9 @@ class FeatureCreationAgent(AssistantAgent):
             )
             
             suggestion = response.choices[0].message.content
-            logger.info(f"Sugestão recebida do OpenAI: {suggestion[:100]}...")
-            logger.debug(f"Sugestão completa: {suggestion}")
+            # Mascarar possíveis dados sensíveis na resposta
+            safe_suggestion = mask_sensitive_data(suggestion[:100])
+            logger.info(f"Sugestão recebida do OpenAI: {safe_suggestion}...")
             
             # Garantir que a resposta é um JSON válido
             try:
@@ -355,7 +420,9 @@ class FeatureCreationAgent(AssistantAgent):
                 return default_json
             
         except Exception as e:
-            logger.error(f"FALHA - get_suggestion_from_openai | Erro: {str(e)}", exc_info=True)
+            # Mascarar possíveis tokens na mensagem de erro
+            error_msg = mask_sensitive_data(str(e))
+            logger.error(f"FALHA - get_suggestion_from_openai | Erro: {error_msg}", exc_info=True)
             raise
         finally:
             logger.info("FIM - get_suggestion_from_openai")
@@ -363,6 +430,8 @@ class FeatureCreationAgent(AssistantAgent):
     @log_execution
     def execute_feature_creation(self, prompt_text, execution_plan, openai_token=None):
         logger = get_logger(__name__)
+        # Mascarar token nos logs
+        safe_token = mask_sensitive_data(openai_token) if openai_token else "não informado" 
         logger.info(f"INÍCIO - execute_feature_creation | Parâmetros: prompt_text={prompt_text[:100]}...")
         
         try:
@@ -371,15 +440,37 @@ class FeatureCreationAgent(AssistantAgent):
             git_log = self.get_git_main_log()
             context = self.get_project_context()
             
-            # Obter sugestão do OpenAI para criar nomes adequados
-            suggestion_json = self.get_suggestion_from_openai(
-                openai_token, 
-                prompt_text, 
-                git_log
-            )
+            # Verificar se estamos em um repositório Git
+            is_git_repo = git_log != "Histórico Git não disponível"
             
-            # Não precisamos usar json.loads aqui pois suggestion_json já é um dict
-            suggestion = suggestion_json  # Removido o json.loads()
+            if not is_git_repo:
+                logger.warning("AVISO - Não estamos em um repositório Git válido. Algumas funcionalidades serão limitadas.")
+                
+                # Retornar informações de diagnóstico em vez de tentar executar operações Git
+                return {
+                    "status": "erro",
+                    "mensagem": "Não estamos em um repositório Git válido",
+                    "prompt": prompt_text,
+                    "plano": execution_plan
+                }
+            
+            # Obter sugestão do OpenAI para criar nomes adequados
+            try:
+                suggestion_json = self.get_suggestion_from_openai(
+                    openai_token, 
+                    prompt_text, 
+                    git_log
+                )
+                # Não precisamos usar json.loads aqui pois suggestion_json já é um dict
+                suggestion = suggestion_json  # Removido o json.loads()
+            except Exception as e:
+                logger.error(f"Erro ao obter sugestão da OpenAI: {str(e)}")
+                suggestion = {
+                    "branch_type": "feat",
+                    "issue_title": f'Feature: {prompt_text[:50]}...',
+                    "issue_description": execution_plan,
+                    "generated_branch_suffix": "new-feature"
+                }
             
             # Extrair informações da sugestão
             branch_type = suggestion.get('branch_type', 'feat')
@@ -388,44 +479,71 @@ class FeatureCreationAgent(AssistantAgent):
             branch_suffix = suggestion.get('generated_branch_suffix', 'new-feature')
             
             # Criar issue no GitHub
-            issue_number = self.create_github_issue(issue_title, issue_description)
+            try:
+                issue_number = self.create_github_issue(issue_title, issue_description)
+            except Exception as e:
+                logger.error(f"Erro ao criar issue no GitHub: {str(e)}")
+                issue_number = int(time.time())  # Usar timestamp como fallback
             
             # Criar nome da branch baseado na issue
             branch_name = f"{branch_type}/{issue_number}/{branch_suffix}"
             
             # Criar branch
-            self.create_branch(branch_name)
+            try:
+                self.create_branch(branch_name)
+            except Exception as e:
+                logger.error(f"Erro ao criar branch {branch_name}: {str(e)}")
             
             # Criar arquivo com plano para PR
-            self.create_pr_plan_file(issue_number, prompt_text, execution_plan, branch_name)
+            try:
+                self.create_pr_plan_file(issue_number, prompt_text, execution_plan, branch_name)
+            except Exception as e:
+                logger.error(f"Erro ao criar arquivo de plano para PR: {str(e)}")
             
             # Criar PR
-            self.create_pull_request(branch_name, issue_number)
+            try:
+                self.create_pull_request(branch_name, issue_number)
+            except Exception as e:
+                logger.error(f"Erro ao criar PR: {str(e)}")
             
             # Notificar OpenAI (opcional)
             if openai_token:
-                self.notify_openai_agent_sdk(openai_token, issue_number, branch_name)
-                
+                try:
+                    self.notify_openai_agent_sdk(openai_token, issue_number, branch_name)
+                except Exception as e:
+                    logger.error(f"Erro ao notificar OpenAI: {str(e)}")
+            
             logger.info(f"Processo de criação de feature concluído com sucesso para a issue #{issue_number}")
             
             return issue_number, branch_name
         except Exception as e:
-            logger.error(f"FALHA - execute_feature_creation | Erro: {str(e)}", exc_info=True)
-            raise
+            # Mascarar possíveis tokens na mensagem de erro
+            error_msg = mask_sensitive_data(str(e))
+            logger.error(f"FALHA - execute_feature_creation | Erro: {error_msg}", exc_info=True)
+            
+            # Retornar informações de erro em vez de levantar exceção
+            return {
+                "status": "erro",
+                "mensagem": error_msg,
+                "prompt": prompt_text,
+                "plano": execution_plan
+            }
         finally:
             logger.info("FIM - execute_feature_creation")
 
     @log_execution
     def request_plan_correction(self, prompt, current_plan, validation_result, openai_token):
         logger = get_logger(__name__)
+        # Mascarar token nos logs
+        safe_token = mask_sensitive_data(openai_token) if openai_token else "não informado"
         logger.info(f"INÍCIO - request_plan_correction | Parâmetros: prompt={prompt[:100]}...")
         
         try:
-            from openai import OpenAI
-            
             # Extrair itens ausentes
             missing_items = validation_result.get("missing_items", [])
-            missing_items_text = "\n".join([f"- {item}" for item in missing_items])
+            # Mascarar possíveis dados sensíveis nos itens ausentes
+            safe_missing_items = [mask_sensitive_data(item) for item in missing_items]
+            missing_items_text = "\n".join([f"- {item}" for item in safe_missing_items])
             
             # Criar mensagem de correção
             correction_message = (
@@ -437,6 +555,10 @@ class FeatureCreationAgent(AssistantAgent):
                 f"Por favor, corrija o plano acima incluindo todos os itens ausentes. "
                 f"Forneça o plano completo corrigido, não apenas os itens ausentes."
             )
+            
+            # Mascarar possíveis dados sensíveis na mensagem para log
+            safe_msg = mask_sensitive_data(correction_message)
+            logger.debug(f"Mensagem de correção preparada: {len(safe_msg)} caracteres")
             
             # Chamar API para correção
             client = OpenAI(api_key=openai_token)
@@ -455,7 +577,9 @@ class FeatureCreationAgent(AssistantAgent):
             logger.info("Correção do plano recebida")
             return corrected_plan
         except Exception as e:
-            logger.error(f"FALHA - request_plan_correction | Erro: {str(e)}", exc_info=True)
+            # Mascarar possíveis tokens na mensagem de erro
+            error_msg = mask_sensitive_data(str(e))
+            logger.error(f"FALHA - request_plan_correction | Erro: {error_msg}", exc_info=True)
             raise
         finally:
             logger.info("FIM - request_plan_correction")

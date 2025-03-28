@@ -10,12 +10,32 @@ import time
 import logging
 import subprocess
 from pathlib import Path
+import argparse
+
+# Tente importar nossas utilidades, com fallback para funcionalidade básica
+try:
+    from agent_platform.core.utils import mask_sensitive_data, log_env_status, get_env_status
+    has_utils = True
+except ImportError:
+    has_utils = False
+    # Função básica para mascaramento em caso de falha de importação
+    def mask_sensitive_data(data, mask_str='***'):
+        if isinstance(data, str) and any(s in data.lower() for s in ['token', 'key', 'secret', 'password']):
+            # Mostrar parte do início e fim para debugging
+            if len(data) > 10:
+                return f"{data[:4]}{'*' * 12}{data[-4:] if len(data) > 8 else ''}"
+            return mask_str
+        return data
 
 # Configurar logging
 logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    filename=os.path.expanduser('~/.cursor/mcp_agent.log')
+    filename=os.path.expanduser('~/.cursor/mcp_agent.log'),
+    handlers=[
+        logging.FileHandler(str(Path.home() / '.cursor' / 'mcp_agent.log')),
+        logging.StreamHandler()
+    ]
 )
 
 logger = logging.getLogger('mcp_agent')
@@ -30,10 +50,13 @@ def create_feature(prompt):
         issue_number = int(time.time()) % 1000
         branch_name = f"feat/{issue_number}/{feature_name}"
         
-        # Log dos parâmetros
-        logger.info(f"GITHUB_TOKEN: {os.environ.get('GITHUB_TOKEN', 'não definido')}")
-        logger.info(f"GITHUB_OWNER: {os.environ.get('GITHUB_OWNER', 'não definido')}")
-        logger.info(f"GITHUB_REPO: {os.environ.get('GITHUB_REPO', 'não definido')}")
+        # Log dos parâmetros de forma segura
+        if has_utils:
+            log_env_status(logger, ["GITHUB_TOKEN", "GITHUB_OWNER", "GITHUB_REPO"])
+        else:
+            logger.info(f"Estado do GITHUB_TOKEN: {'configurado' if os.environ.get('GITHUB_TOKEN') else 'não definido'}")
+            logger.info(f"GITHUB_OWNER: {os.environ.get('GITHUB_OWNER', 'não definido')}")
+            logger.info(f"GITHUB_REPO: {os.environ.get('GITHUB_REPO', 'não definido')}")
         
         # Criar issue (simulado)
         logger.info(f"Criando issue para: {feature_name}")
@@ -50,10 +73,12 @@ def create_feature(prompt):
             }
         }
     except Exception as e:
-        logger.error(f"Erro ao criar feature: {str(e)}", exc_info=True)
+        # Mascarar informações sensíveis na mensagem de erro
+        error_msg = mask_sensitive_data(str(e))
+        logger.error(f"Erro ao criar feature: {error_msg}", exc_info=True)
         return {
             "status": "error",
-            "error": str(e)
+            "error": error_msg
         }
 
 def main():

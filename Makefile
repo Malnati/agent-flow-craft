@@ -103,7 +103,12 @@ start-agent: check-env create-venv print-no-pycache-message
 		echo "Uso: make start-agent prompt=\"<descricao>\" execution_plan=\"<plano de execucao>\" target=\"<target>\""; \
 		exit 1; \
 	fi
-	$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/start_feature_agent.py \
+	@# Criar versão segura dos argumentos sem exibir tokens
+	@echo "Executando agente com prompt: \"$(prompt)\""
+	@echo "Diretório alvo: \"$(target)\""
+	@echo "Executando comando com argumentos sensíveis mascarados..."
+	@# Executar o comando sem exibir tokens
+	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/start_feature_agent.py \
 		"$(prompt)" \
 		"$(execution_plan)" \
 		--target "$(target)" \

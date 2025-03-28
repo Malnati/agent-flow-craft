@@ -5,6 +5,21 @@ from openai import OpenAI
 from agent_platform.core.logger import get_logger, log_execution
 import logging
 
+# Tente importar funções de mascaramento de dados sensíveis
+try:
+    from agent_platform.core.utils import mask_sensitive_data, get_env_status
+    has_utils = True
+except ImportError:
+    has_utils = False
+    # Função básica de fallback para mascaramento
+    def mask_sensitive_data(data, mask_str='***'):
+        if isinstance(data, str) and any(s in data.lower() for s in ['token', 'key', 'secret', 'password']):
+            # Mostrar parte do início e fim para debugging
+            if len(data) > 10:
+                return f"{data[:4]}{'*' * 12}{data[-4:] if len(data) > 8 else ''}"
+            return mask_str
+        return data
+
 class PlanValidator:
     """Classe responsável por validar planos de execução usando modelos de IA mais econômicos"""
     
@@ -27,7 +42,8 @@ class PlanValidator:
                 self.logger.debug(f"Requisitos carregados: {len(requirements) if requirements else 0} itens")
                 return requirements
         except Exception as e:
-            self.logger.error(f"FALHA - _load_requirements | Erro: {str(e)}", exc_info=True)
+            error_msg = mask_sensitive_data(str(e))
+            self.logger.error(f"FALHA - _load_requirements | Erro: {error_msg}", exc_info=True)
             return {}
     
     @log_execution
@@ -41,6 +57,13 @@ class PlanValidator:
                 if not openai_token:
                     self.logger.error("FALHA - validate | Token OpenAI ausente")
                     return {"is_valid": False, "missing_items": ["Token da OpenAI ausente"]}
+            
+            # Não registrar o token OpenAI
+            if has_utils:
+                token_status = get_env_status("OPENAI_API_KEY") 
+                self.logger.debug(f"Status do token OpenAI: {token_status}")
+            else:
+                self.logger.debug("Token OpenAI disponível para API")
             
             client = OpenAI(api_key=openai_token)
             prompt = self._create_validation_prompt(plan_content)
@@ -64,15 +87,19 @@ class PlanValidator:
             self.logger.info(f"SUCESSO - validate | Status: plano {status}")
             if not is_valid:
                 missing = validation_result.get("missing_items", [])
-                self.logger.warning(f"ALERTA - Plano inválido | Itens ausentes: {missing}")
+                # Mascarar itens ausentes para evitar exposição de dados sensíveis
+                safe_missing = [mask_sensitive_data(item) for item in missing]
+                self.logger.warning(f"ALERTA - Plano inválido | Itens ausentes: {safe_missing}")
             
             return validation_result
             
         except Exception as e:
-            self.logger.error(f"FALHA - validate | Erro: {str(e)}", exc_info=True)
+            # Mascarar dados sensíveis na mensagem de erro
+            error_msg = mask_sensitive_data(str(e))
+            self.logger.error(f"FALHA - validate | Erro: {error_msg}", exc_info=True)
             return {
                 "is_valid": False,
-                "missing_items": [f"Erro durante validação: {str(e)}"]
+                "missing_items": [f"Erro durante validação: {error_msg}"]
             }
     
     def _create_validation_prompt(self, plan_content):

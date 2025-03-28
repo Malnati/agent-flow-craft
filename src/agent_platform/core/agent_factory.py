@@ -4,6 +4,21 @@ import sys
 from pathlib import Path
 from agent_platform.core.logger import get_logger, log_execution
 
+# Tente importar funções de mascaramento de dados sensíveis
+try:
+    from agent_platform.core.utils import mask_sensitive_data, get_env_status
+    has_utils = True
+except ImportError:
+    has_utils = False
+    # Função básica de fallback para mascaramento
+    def mask_sensitive_data(data, mask_str='***'):
+        if isinstance(data, str) and any(s in data.lower() for s in ['token', 'key', 'secret', 'password']):
+            # Mostrar parte do início e fim para debugging
+            if len(data) > 10:
+                return f"{data[:4]}{'*' * 12}{data[-4:] if len(data) > 8 else ''}"
+            return mask_str
+        return data
+
 # Adicionar o diretório base ao path para permitir importações
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(BASE_DIR))
@@ -15,7 +30,8 @@ try:
     from apps.agent_manager.agents.feature_creation_agent import FeatureCreationAgent
     from apps.agent_manager.agents.plan_validator import PlanValidator
 except ImportError as e:
-    logger.critical(f"FALHA - Importação de agentes | Erro: {str(e)}", exc_info=True)
+    error_msg = mask_sensitive_data(str(e))
+    logger.critical(f"FALHA - Importação de agentes | Erro: {error_msg}", exc_info=True)
     sys.exit(1)
 
 class AgentFactory:
@@ -33,6 +49,14 @@ class AgentFactory:
             repo_owner = repo_owner or os.environ.get('GITHUB_OWNER', '')
             repo_name = repo_name or os.environ.get('GITHUB_REPO', '')
             
+            # Log seguro do status do token
+            if has_utils:
+                token_status = get_env_status('GITHUB_TOKEN')
+                logger.debug(f"Status do token GitHub: {token_status}")
+            else:
+                token_available = "disponível" if github_token else "ausente"
+                logger.debug(f"Status do token GitHub: {token_available}")
+            
             if not github_token:
                 logger.warning("ALERTA - Token GitHub ausente | Funcionalidades GitHub serão limitadas")
             
@@ -41,7 +65,9 @@ class AgentFactory:
             return agent
             
         except Exception as e:
-            logger.error(f"FALHA - create_feature_agent | Erro: {str(e)}", exc_info=True)
+            # Mascarar possíveis tokens na mensagem de erro
+            error_msg = mask_sensitive_data(str(e))
+            logger.error(f"FALHA - create_feature_agent | Erro: {error_msg}", exc_info=True)
             raise
     
     @classmethod
@@ -57,5 +83,7 @@ class AgentFactory:
             return validator
             
         except Exception as e:
-            logger.error(f"FALHA - create_plan_validator | Erro: {str(e)}", exc_info=True)
+            # Mascarar possíveis tokens na mensagem de erro
+            error_msg = mask_sensitive_data(str(e))
+            logger.error(f"FALHA - create_plan_validator | Erro: {error_msg}", exc_info=True)
             raise
