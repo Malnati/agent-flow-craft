@@ -24,7 +24,7 @@ help:
 	@echo "  make clean-pycache            Remove apenas os diretórios __pycache__ e arquivos .pyc"
 	@echo "  make all                      Executa lint, test, formatação e atualização de docs"
 	@echo "  make update-docs-index        Atualiza o índice da documentação automaticamente"
-	@echo "  make start-agent prompt=\"...\" execution_plan=\"...\"  Inicia o agente de criação de features"
+	@echo "  make start-agent prompt=\"...\" execution_plan=\"...\" target=\"...\"  Inicia o agente de criação de features"
 	@echo "  make pack --out=DIRECTORY     Empacota o projeto MCP para o diretório especificado"
 	@echo "  make deploy                   Instala a última versão do pacote do PyPI e verifica a instalação"
 	@echo "  make install-cursor           Instala no diretório MCP do Cursor"
@@ -97,14 +97,17 @@ build: create-venv
 	@echo "Construindo pacote..."
 	$(ACTIVATE) && $(PYTHON_ENV) python -m build
 
-# Exemplo de uso:
-# make start-agent prompt="Descrição da feature" execution_plan="Plano detalhado de execução"
-start-agent: check-env create-venv
-	@if [ -z "$(prompt)" ] || [ -z "$(execution_plan)" ]; then \
-		echo "Uso: make start-agent prompt=\"<descricao>\" execution_plan=\"<plano de execucao>\""; \
+# Target para iniciar o agente de feature
+start-agent: check-env create-venv print-no-pycache-message
+	@if [ -z "$(prompt)" ] || [ -z "$(execution_plan)" ] || [ -z "$(target)" ]; then \
+		echo "Uso: make start-agent prompt=\"<descricao>\" execution_plan=\"<plano de execucao>\" target=\"<target>\""; \
 		exit 1; \
 	fi
-	$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python src/scripts/start_feature_agent.py "$(prompt)" "$(execution_plan)" --token "$(GITHUB_TOKEN)" --owner "$(GITHUB_OWNER)" --repo "$(GITHUB_REPO)" --openai_token "$(OPENAI_TOKEN)"
+	$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/start_feature_agent.py \
+		"$(prompt)" \
+		"$(execution_plan)" \
+		--target "$(target)" \
+		$(ARGS)
 
 # Atualiza o índice da documentação automaticamente
 update-docs-index: create-venv
