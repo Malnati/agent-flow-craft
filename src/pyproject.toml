@@ -2,7 +2,7 @@
 name = "agent-flow-craft"
 version = "0.1.0"
 description = "Automatização do fluxo de criação de features via agentes e integração com o GitHub e OpenAI."
-authors = [{ name = "Malnati" }]
+authors = [{ name = "Malnati", email = "ricardomalnati@gmail.com" }]
 dependencies = [
     "openai>=1.0.0,<2.0.0",
     "autogen>=0.2.0,<1.0.0",
@@ -22,8 +22,17 @@ dev = [
     "black>=23.0.0,<24.0.0",
     "flake8>=6.0.0,<7.0.0",
     "isort>=5.12.0,<6.0.0",
-    "pre-commit>=3.0.0,<4.0.0"
+    "pre-commit>=3.0.0,<4.0.0",
+    "wheel",
+    "build",
+    "twine>=4.0.0,<5.0.0",
+    "pytest>=7.0.0,<8.0.0",
+    "pytest-mock>=3.0.0,<4.0.0"
 ]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 packages = [
@@ -33,10 +42,6 @@ packages = [
     "scripts",
     "tests"
 ]
-
-[build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
 
 [tool.black]
 line-length = 88
@@ -48,3 +53,10 @@ profile = "black"
 [tool.flake8]
 max-line-length = 88
 extend-ignore = ["E203", "W503"]
+
+[tool.autopep8]
+max_line_length = 120
+ignore = ["E203", "E501"]
+
+[tool.pytest.ini_options]
+pythonpath = "."
