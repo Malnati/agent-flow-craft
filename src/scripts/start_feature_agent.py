@@ -1,3 +1,9 @@
+#!/usr/bin/env python3
+"""
+Script para iniciar o processo de criação de feature usando o FeatureCoordinatorAgent.
+Este script recebe um prompt de texto e coordena a criação de uma feature completa.
+"""
+
 import argparse
 import logging
 import os
@@ -9,6 +15,7 @@ import time
 import json
 import tempfile
 import re
+import asyncio
 
 # Função básica de mascaramento (disponível antes de qualquer importação)
 def _mask_sensitive_args():
@@ -110,23 +117,25 @@ from slugify import slugify
 from core.core.logger import setup_logging, get_logger, log_execution, mask_sensitive_data
 
 # Adicionar o diretório base ao path para permitir importações
-BASE_DIR = Path(__file__).resolve().parent.parent.parent  # Project root
-SRC_DIR = BASE_DIR / 'src'
-sys.path.insert(0, str(SRC_DIR))
+BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
-from src.apps.agent_manager.agents.feature_creation_agent import FeatureCreationAgent
-from src.apps.agent_manager.agents.plan_validator import PlanValidator
+# Importar o agente coordenador
+from apps.agent_manager.agents.feature_coordinator_agent import FeatureCoordinatorAgent
 
-# Importar utilitários para mascaramento de dados sensíveis
+# Configurar logger
+logger = get_logger(__name__)
+
+# Mascaramento básico de dados sensíveis para logs
 try:
-    from agent_platform.core.utils import mask_sensitive_data, log_env_status, get_env_status
+    from agent_platform.core.utils import mask_sensitive_data, get_env_status
     has_utils = True
 except ImportError:
     has_utils = False
-    # Função básica de fallback para mascaramento
     def mask_sensitive_data(data, mask_str='***'):
         if isinstance(data, str) and any(s in data.lower() for s in ['token', 'key', 'secret', 'password']):
+            if len(data) > 10:
+                return f"{data[:4]}{'*' * 12}{data[-4:] if len(data) > 8 else ''}"
             return mask_str
         return data
 
@@ -222,247 +231,172 @@ def ensure_config_files():
     logger.info("Verificação de arquivos de configuração concluída")
 
 @log_execution
-def main():
-    """Função principal do script"""
-    logger = get_logger(__name__)
-    logger.info("INÍCIO - main")
+def parse_arguments():
+    """
+    Analisa os argumentos da linha de comando.
     
-    try:
-        ensure_config_files()
-        
-        parser = argparse.ArgumentParser(description="Execute the feature creation process.")
-        parser.add_argument("prompt", type=str, help="The user prompt for feature creation.")
-        parser.add_argument("execution_plan", type=str, help="The execution plan for the feature.")
-        parser.add_argument("--target", required=True, type=str, 
-                          help="Caminho completo para o repositório Git do projeto")
-        parser.add_argument("--token", type=str, help="GitHub token", default=os.environ.get("GITHUB_TOKEN"))
-        parser.add_argument("--owner", type=str, help="Repository owner (obrigatório).")
-        parser.add_argument("--repo", type=str, help="Repository name (obrigatório).")
-        parser.add_argument("--openai_token", type=str, help="Token da OpenAI", 
-                            default=os.environ.get("OPENAI_API_KEY"))
-        parser.add_argument("--max_attempts", type=int, help="Número máximo de tentativas", default=3)
-        parser.add_argument("--config", type=str, help="Arquivo de configuração", 
-                            default="config/plan_requirements.yaml")
-        parser.add_argument("--verbose", action="store_true", help="Ativa modo verbose")
-        
-        args = parser.parse_args()
-        
-        # Log seguro dos argumentos (mascarando dados sensíveis)
-        safe_args = mask_args_for_logging(args)
-        logger.debug(f"Argumentos: {safe_args}")
-        
-        if args.verbose:
-            logger.setLevel(logging.DEBUG)
-            logger.debug("Modo verbose ativado")
-        
-        # Verificar se o caminho do repositório é válido
-        if not os.path.isdir(args.target):
-            logger.error(f"FALHA - Diretório do repositório não encontrado: {args.target}")
-            return
-            
-        git_dir = os.path.join(args.target, '.git')
-        if not os.path.isdir(git_dir):
-            logger.warning(f"AVISO - O diretório não é um repositório Git: {args.target}")
-            # Continuamos a execução mesmo sem repositório Git
-            # return
-            
-        # Mudar para o diretório do projeto
-        os.chdir(args.target)
-        logger.info(f"Trabalhando no diretório: {os.getcwd()}")
-        
-        # Log seguro das variáveis de ambiente e tokens
-        if has_utils:
-            # Usar utilitários avançados se disponíveis
-            logger.info(f"Status do token GitHub: {get_env_status('GITHUB_TOKEN')}")
-            logger.info(f"Status do token OpenAI: {get_env_status('OPENAI_API_KEY')}")
-        else:
-            # Simples verificação de presença
-            github_token_status = 'configurado' if args.token else 'não configurado'
-            openai_token_status = 'configurado' if args.openai_token else 'não configurado'
-            logger.info(f"Status do token GitHub: {github_token_status}")
-            logger.info(f"Status do token OpenAI: {openai_token_status}")
-        
-        if not args.token:
-            logger.error("FALHA - Token GitHub ausente")
-            return
-            
-        if not args.owner or not args.repo:
-            logger.error("FALHA - Parâmetros owner/repo ausentes")
-            return
-        
-        logger.info(f"Iniciando processo | Prompt: {args.prompt[:100]}...")
-        
-        agent = FeatureCreationAgent(args.token, args.owner, args.repo)
-        validator = PlanValidator(logger)
-        
-        # Loop de auto-correção
-        attempt = 0
-        valid_plan = False
-        current_plan = args.execution_plan
-        
-        while not valid_plan and attempt < args.max_attempts:
-            attempt += 1
-            logger.info(f"Tentativa {attempt} de {args.max_attempts}")
-            
-            # Validar plano
-            validation_result = validator.validate(current_plan, args.openai_token)
-            
-            if validation_result.get("is_valid", False):
-                valid_plan = True
-                logger.info("Plano válido encontrado!")
-            else:
-                missing_items = validation_result.get("missing_items", [])
-                # Mascarar possíveis dados sensíveis nos itens ausentes
-                safe_missing_items = [mask_sensitive_data(item) for item in missing_items]
-                logger.warning(f"Plano inválido. Itens ausentes: {safe_missing_items}")
-                
-                # Solicitar correção
-                try:
-                    corrected_plan = request_plan_correction(
-                        args.prompt, 
-                        current_plan, 
-                        validation_result, 
-                        args.openai_token,
-                        args.config
-                    )
-                    current_plan = corrected_plan
-                    logger.info("Plano corrigido recebido")
-                except Exception as e:
-                    # Mascarar dados sensíveis na mensagem de erro
-                    error_msg = mask_sensitive_data(str(e))
-                    logger.error(f"Erro ao corrigir plano: {error_msg}")
-                    break
-        
-        # Executar com o plano final
-        if valid_plan:
-            logger.info("Executando com plano validado")
-        else:
-            logger.warning(f"Execução com plano parcial após {args.max_attempts} tentativas")
-        
-        # Executar a criação da feature
-        result = agent.execute_feature_creation(args.prompt, current_plan, openai_token=args.openai_token)
-        
-        # Verificar resultado
-        if isinstance(result, tuple) and len(result) == 2:
-            # Resultado normal: (issue_number, branch_name)
-            issue_number, branch_name = result
-            logger.info(f"Processo de criação de feature concluído para issue #{issue_number}")
-        elif isinstance(result, dict) and "status" in result:
-            # Resultado de erro
-            if result["status"] == "erro":
-                logger.warning(f"Processo de criação de feature concluído com limitações: {result['mensagem']}")
-            else:
-                logger.info(f"Processo de criação de feature concluído com status: {result['status']}")
-        else:
-            logger.warning("Processo de criação de feature concluído com resultado desconhecido")
-            
-        logger.info("Processo de criação de feature concluído")
-        
-    except Exception as e:
-        # Mascarar dados sensíveis na mensagem de erro
-        error_msg = mask_sensitive_data(str(e))
-        logger.error(f"FALHA - main | Erro: {error_msg}", exc_info=True)
-        raise
+    Returns:
+        argparse.Namespace: Argumentos da linha de comando
+    """
+    parser = argparse.ArgumentParser(
+        description="Inicia o processo de criação de feature usando o FeatureCoordinatorAgent",
+        formatter_class=argparse.RawTextHelpFormatter
+    )
+    
+    parser.add_argument(
+        "prompt",
+        help="Descrição da feature a ser criada (texto ou caminho para arquivo .txt)"
+    )
+    
+    parser.add_argument(
+        "plan",
+        nargs="?",
+        default=None,
+        help="Plano de execução opcional (texto ou caminho para arquivo .json/.txt)"
+    )
+    
+    parser.add_argument(
+        "--github_token",
+        help="Token de acesso ao GitHub (opcional, usa variável de ambiente GITHUB_TOKEN se não especificado)"
+    )
+    
+    parser.add_argument(
+        "--openai_token",
+        help="Token de acesso à OpenAI (opcional, usa variável de ambiente OPENAI_API_KEY se não especificado)"
+    )
+    
+    parser.add_argument(
+        "--owner",
+        help="Proprietário do repositório GitHub (opcional, usa variável de ambiente GITHUB_OWNER se não especificado)"
+    )
+    
+    parser.add_argument(
+        "--repo",
+        help="Nome do repositório GitHub (opcional, usa variável de ambiente GITHUB_REPO se não especificado)"
+    )
+    
+    parser.add_argument(
+        "--target",
+        help="Diretório alvo do repositório Git (opcional, usa diretório atual se não especificado)"
+    )
+    
+    parser.add_argument(
+        "--timeout",
+        type=int,
+        default=180,
+        help="Timeout em segundos para operações (padrão: 180)"
+    )
+    
+    parser.add_argument(
+        "--output",
+        help="Arquivo de saída para o resultado (opcional)"
+    )
+    
+    return parser.parse_args()
 
 @log_execution
-def request_plan_correction(prompt, current_plan, validation_result, openai_token, config_file):
-    """Solicita correção do plano usando a API da OpenAI e os requisitos do arquivo YAML"""
-    from openai import OpenAI
+async def main():
+    """
+    Função principal de execução do script.
+    """
+    # Configurar mascaramento de dados sensíveis
+    _mask_sensitive_args()
     
-    # Carregar requisitos do arquivo YAML
-    requirements = {}
-    req_details = ""
+    # Configurar logging específico
+    feature_logger = setup_logging_for_feature_agent()
     
     try:
-        if not os.path.exists(config_file):
-            logger.warning(f"Arquivo de configuração não encontrado: {config_file}. Usando requisitos padrão.")
-        else:
-            with open(config_file, 'r', encoding='utf-8') as f:
-                requirements = yaml.safe_load(f)
-    except Exception as e:
-        # Mascarar dados sensíveis na mensagem de erro
-        error_msg = mask_sensitive_data(str(e))
-        logger.warning(f"Erro ao carregar requisitos: {error_msg}. Usando requisitos padrão.")
-    
-    # Extrair detalhes dos requisitos para o prompt
-    if "requisitos_entregaveis" in requirements:
-        req_details = "Cada entregável deve incluir:\n"
-        for req in requirements["requisitos_entregaveis"]:
-            for key, desc in req.items():
-                if key != "obrigatorio":
-                    req_details += f"- {key}: {desc}\n"
-    else:
-        req_details = (
-            "Cada entregável deve incluir: nome, descrição, dependências, "
-            "exemplo de uso, critérios de aceitação, resolução de problemas "
-            "e passos de implementação."
+        # Analisar argumentos
+        args = parse_arguments()
+        masked_args = mask_args_for_logging(args)
+        logger.info(f"Argumentos: {masked_args}")
+        
+        # Verificar e preparar arquivos de configuração
+        config_files = ensure_config_files()
+        
+        # Verificar prompt - pode ser texto diretamente ou arquivo
+        prompt_text = args.prompt
+        if os.path.isfile(prompt_text):
+            with open(prompt_text, 'r', encoding='utf-8') as f:
+                prompt_text = f.read().strip()
+            logger.info(f"Prompt carregado do arquivo: {args.prompt}")
+        
+        # Verificar plano - pode ser texto, arquivo JSON/TXT ou None
+        execution_plan = None
+        if args.plan:
+            if os.path.isfile(args.plan):
+                with open(args.plan, 'r', encoding='utf-8') as f:
+                    content = f.read().strip()
+                    
+                # Tentar interpretar como JSON
+                try:
+                    execution_plan = json.loads(content)
+                    logger.info(f"Plano de execução carregado do arquivo JSON: {args.plan}")
+                except json.JSONDecodeError:
+                    # Se não for JSON, usar como texto
+                    execution_plan = {"steps": [line.strip() for line in content.split('\n') if line.strip()]}
+                    logger.info(f"Plano de execução carregado do arquivo de texto: {args.plan}")
+            else:
+                # Tentar interpretar como JSON
+                try:
+                    execution_plan = json.loads(args.plan)
+                    logger.info("Plano de execução fornecido como JSON")
+                except json.JSONDecodeError:
+                    # Se não for JSON, usar como texto
+                    execution_plan = {"steps": [line.strip() for line in args.plan.split('\n') if line.strip()]}
+                    logger.info("Plano de execução fornecido como texto")
+        
+        # Inicializar agente de criação de features
+        agent = FeatureCoordinatorAgent(
+            github_token=args.github_token,
+            openai_token=args.openai_token,
+            repo_owner=args.owner,
+            repo_name=args.repo,
+            target_dir=args.target
         )
-    
-    # Extrair itens ausentes - garantindo mascaramento
-    missing_items = validation_result.get("missing_items", [])
-    safe_missing_items = [mask_sensitive_data(item) for item in missing_items]
-    missing_items_text = "\n".join([f"- {item}" for item in safe_missing_items])
-    
-    # Detalhes por entregável - garantindo mascaramento
-    details_text = ""
-    if "detalhes_por_entregavel" in validation_result:
-        for entregavel in validation_result["detalhes_por_entregavel"]:
-            nome = entregavel.get("nome", "Entregável sem nome")
-            # Mascarar o nome se necessário
-            nome_seguro = mask_sensitive_data(nome)
-            itens = entregavel.get("itens_ausentes", [])
-            safe_itens = [mask_sensitive_data(item) for item in itens]
-            if safe_itens:
-                details_text += f"\n### Para o entregável '{nome_seguro}':\n"
-                details_text += "\n".join([f"- Falta: {item}" for item in safe_itens])
-    
-    # Criar mensagem de correção
-    correction_message = (
-        f"# Solicitação de Correção de Plano\n\n"
-        f"## Prompt original:\n{prompt}\n\n"
-        f"## Plano atual com problemas:\n{current_plan}\n\n"
-        f"## Itens ausentes no plano:\n{missing_items_text}\n"
-        f"{details_text}\n\n"
-        f"## Requisitos para entregáveis:\n{req_details}\n\n"
-        f"## Instruções:\n"
-        f"Por favor, corrija o plano acima incluindo todos os itens ausentes. "
-        f"Forneça o plano completo corrigido, não apenas os itens ausentes."
-    )
-    
-    # Mascarar qualquer dado sensível que possa estar na mensagem
-    safe_correction_message = mask_sensitive_data(correction_message)
-    
-    # Log seguro da operação (sem expor dados sensíveis)
-    logger.info(f"Enviando solicitação de correção do plano (comprimento: {len(safe_correction_message)} caracteres)")
-    
-    # Chamar API para correção
-    client = OpenAI(api_key=openai_token)
-    
-    response = client.chat.completions.create(
-        model="gpt-4",  # Modelo mais avançado para correção
-        messages=[
-            {"role": "system", "content": "Você é um especialista em criar planos de execução de software."},
-            {"role": "user", "content": safe_correction_message}
-        ],
-        temperature=0.7,
-        max_tokens=4000
-    )
-    
-    resposta = response.choices[0].message.content
-    logger.info(f"Resposta recebida (comprimento: {len(resposta)} caracteres)")
-    
-    return resposta
-
-if __name__ == "__main__":
-    try:
-        # Inicialização segura - usar a função de mascaramento já criada
-        # em vez de fazer novo log, pois já mascaramos a linha de comando acima
-        main()
+        
+        # Executar criação de feature
+        logger.info("Iniciando processo de criação de feature")
+        feature_result = await agent.execute_feature_creation(
+            prompt_text=prompt_text,
+            execution_plan=execution_plan
+        )
+        
+        # Verificar resultado
+        if feature_result.get("status") == "error":
+            logger.error(f"Erro na criação da feature: {feature_result.get('message')}")
+            print(f"❌ Erro: {feature_result.get('message')}")
+            sys.exit(1)
+        
+        # Extrair informações do resultado
+        context_id = feature_result.get("context_id")
+        issue_number = feature_result.get("issue_number")
+        branch_name = feature_result.get("branch_name")
+        
+        # Exibir resultado
+        print("\n🎉 Feature criada com sucesso!\n")
+        print(f"📋 ID de Contexto: {context_id}")
+        print(f"🔢 Issue: #{issue_number}")
+        print(f"🌿 Branch: {branch_name}")
+        
+        # Salvar resultado se solicitado
+        if args.output:
+            with open(args.output, 'w', encoding='utf-8') as f:
+                json.dump(feature_result, f, indent=2)
+            print(f"\n💾 Resultado salvo em: {args.output}")
+        
+        logger.info(f"Processo concluído com sucesso: Issue #{issue_number}, Branch {branch_name}")
+        return 0
+        
     except KeyboardInterrupt:
         logger.warning("Processo interrompido pelo usuário")
-        sys.exit(0)
+        print("\n⚠️  Processo interrompido pelo usuário")
+        return 130
+        
     except Exception as e:
-        # Mascarar dados sensíveis no erro fatal
-        error_msg = mask_sensitive_data(str(e))
-        logger.critical(f"Erro fatal durante execução: {error_msg}", exc_info=True)
-        sys.exit(1)
+        logger.error(f"Erro no processo de criação de feature: {str(e)}", exc_info=True)
+        print(f"\n❌ Erro: {str(e)}")
+        return 1
+
+if __name__ == "__main__":
+    sys.exit(asyncio.run(main()))

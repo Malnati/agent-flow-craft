@@ -14,6 +14,7 @@ from apps.agent_manager.agents.local_agent_runner import LocalAgentRunner, Agent
 import asyncio
 from datetime import datetime
 from openai import OpenAI
+import warnings
 
 # Tente importar funções de mascaramento de dados sensíveis
 try:
@@ -96,8 +97,28 @@ def read_project_file():
         logger.info("FIM - read_project_file")
 
 class FeatureCreationAgent(AssistantAgent):
+    """
+    DEPRECATED: Esta classe está marcada para remoção. 
+    Use FeatureCoordinatorAgent em conjunto com ConceptGenerationAgent e GitHubIntegrationAgent.
+    
+    O FeatureCoordinatorAgent separa responsabilidades e usa um sistema de contexto para transferência 
+    de dados entre agentes especializados. Isso melhora a manutenibilidade e extensibilidade.
+    """
+    
     def __init__(self, github_token, repo_owner, repo_name):
+        # Exibir aviso de deprecação
+        warnings.warn(
+            "FeatureCreationAgent está depreciado. Migre para o novo FeatureCoordinatorAgent que " +
+            "gerencia agentes especializados como ConceptGenerationAgent e GitHubIntegrationAgent.", 
+            DeprecationWarning, 
+            stacklevel=2
+        )
+        
         self.logger = get_logger(__name__)
+        self.logger.warning(
+            "DEPRECIADO - FeatureCreationAgent.__init__ | " +
+            "Esta classe será removida em versões futuras. Use FeatureCoordinatorAgent."
+        )
         self.logger.info(f"INÍCIO - FeatureCreationAgent.__init__ | Parâmetros: owner={repo_owner}, repo={repo_name}")
         
         try:
