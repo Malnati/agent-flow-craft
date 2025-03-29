@@ -4,6 +4,43 @@
 
 ---
 
+## 📦 Instalação
+
+Você pode instalar o AgentFlowCraft diretamente via pip:
+
+```bash
+# Instalar a versão mais recente do PyPI
+pip install agent-flow-craft
+
+# Ou instalar a versão de desenvolvimento diretamente do GitHub
+pip install git+https://github.com/Malnati/agent-flow-craft.git
+```
+
+Para desenvolvimento local, recomendamos clonar o repositório:
+
+```bash
+# Clonar o repositório
+git clone https://github.com/Malnati/agent-flow-craft.git
+cd agent-flow-craft
+
+# Instalar em modo de desenvolvimento
+pip install -e .
+```
+
+Após a instalação, certifique-se de configurar as variáveis de ambiente necessárias:
+
+```bash
+# Para integração com GitHub
+export GITHUB_TOKEN=seu_token_aqui
+export GITHUB_OWNER=seu_usuario_github
+export GITHUB_REPO=nome_do_repositorio
+
+# Para uso da API OpenAI
+export OPENAI_API_KEY=seu_token_openai
+```
+
+---
+
 ## 📋 Comandos do Makefile
 
 O projeto disponibiliza diversos comandos através do Makefile para facilitar o uso dos agentes e a execução de tarefas comuns.
