@@ -1,6 +1,6 @@
 .PHONY: install setup test lint format start-agent update-docs-index clean clean-pycache all create-venv \
 	pack deploy undeploy install-cursor install-simple-mcp help build publish version version-info find-commit update-changelog compare-versions test-mcp-e2e \
-	start-concept-agent start-concept-guardrail-agent start-github-agent start-coordinator-agent start-context-manager start-validator start-tdd-criteria-agent start-tdd-guardrail-agent
+	start-concept-agent start-concept-guardrail-agent start-github-agent start-coordinator-agent start-context-manager start-validator start-tdd-criteria-agent start-tdd-guardrail-agent setup-env clean-cache
 
 VERSION := $(shell python3 -c "import time; print(time.strftime('%Y.%m.%d'))")
 BUILD_DIR := ./dist
@@ -624,3 +624,10 @@ compare-versions:
 			print(log); \
 		except Exception as e: \
 			print(f'Erro ao obter log de commits: {e}')" 
+
+setup-env:
+	@mkdir -p out build
+	@export PYTHONPYCACHEPREFIX=$(PWD)/out
+
+clean-cache:
+	@rm -rf out/__pycache__ build/__pycache__ 
