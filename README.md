@@ -69,6 +69,11 @@ make start-agent prompt="<descricao>" project_dir="<diretório>" [model="<modelo
 ```
 **Exemplo:** `make start-agent prompt="Implementar sistema de login" project_dir="/Users/mal/GitHub/agent-flow-craft-aider" model="gpt-4-turbo"`
 
+**Chamada direta (sem Makefile):**
+```bash
+python -B src/scripts/run_coordinator_agent.py "Implementar sistema de login" --project_dir="/Users/mal/GitHub/agent-flow-craft-aider" --model="gpt-4-turbo"
+```
+
 **Tarefas executadas:**
 1. Inicializa o FeatureCoordinatorAgent com os parâmetros fornecidos
 2. Configura o modelo OpenAI especificado no ConceptGenerationAgent interno
@@ -82,6 +87,11 @@ make start-agent prompt="<descricao>" project_dir="<diretório>" [model="<modelo
 make start-concept-agent prompt="<descricao>" [output="<arquivo_saida>"] [context_dir="<dir_contexto>"] [project_dir="<dir_projeto>"] [model="<modelo_openai>"]
 ```
 **Exemplo:** `make start-concept-agent prompt="Adicionar autenticação via OAuth" project_dir="/Users/mal/GitHub/agent-flow-craft-aider" context_dir="agent_context"`
+
+**Chamada direta (sem Makefile):**
+```bash
+python -B src/scripts/run_concept_agent.py "Adicionar autenticação via OAuth" --project_dir="/Users/mal/GitHub/agent-flow-craft-aider" --context_dir="agent_context" --model="gpt-4-turbo"
+```
 
 **Tarefas executadas:**
 1. Inicializa o ConceptGenerationAgent com o token OpenAI e modelo especificados
@@ -97,6 +107,11 @@ make start-github-agent context_id="<id>" [project_dir="<diretório>"] [context_
 ```
 **Exemplo:** `make start-github-agent context_id="feature_concept_20240601_123456" project_dir="/Users/mal/GitHub/agent-flow-craft-aider" owner="Malnati" repo="agent-flow-craft-aider"`
 
+**Chamada direta (sem Makefile):**
+```bash
+python -B src/scripts/run_github_agent.py "feature_concept_20240601_123456" --project_dir="/Users/mal/GitHub/agent-flow-craft-aider" --owner="Malnati" --repo="agent-flow-craft-aider" --context_dir="agent_context"
+```
+
 **Tarefas executadas:**
 1. Inicializa o GitHubIntegrationAgent com token, owner e repo especificados
 2. Carrega o conceito de feature previamente gerado usando o context_id fornecido
@@ -111,6 +126,11 @@ make start-github-agent context_id="<id>" [project_dir="<diretório>"] [context_
 make start-coordinator-agent prompt="<descricao>" [project_dir="<diretório>"] [plan_file="<arquivo>"] [output="<arquivo>"] [context_dir="<diretório>"] [github_token="<token>"] [openai_token="<token>"] [model="<modelo_openai>"]
 ```
 **Exemplo:** `make start-coordinator-agent prompt="Implementar sistema de notificações" project_dir="/Users/mal/GitHub/agent-flow-craft-aider" model="gpt-4-turbo"`
+
+**Chamada direta (sem Makefile):**
+```bash
+python -B src/scripts/run_coordinator_agent.py "Implementar sistema de notificações" --project_dir="/Users/mal/GitHub/agent-flow-craft-aider" --model="gpt-4-turbo" --context_dir="agent_context"
+```
 
 **Tarefas executadas:**
 1. Inicializa o FeatureCoordinatorAgent com tokens e diretórios configurados
@@ -129,6 +149,11 @@ make start-context-manager operation="<lista|obter|criar|atualizar|excluir>" [co
 ```
 **Exemplo:** `make start-context-manager operation="listar" context_dir="agent_context" limit=5`
 
+**Chamada direta (sem Makefile):**
+```bash
+python -B src/scripts/run_context_manager.py "listar" --context_dir="agent_context" --limit=5
+```
+
 **Tarefas executadas:**
 1. Inicializa o ContextManager com o diretório de contexto especificado
 2. Baseado na operação solicitada, executa uma das seguintes ações:
@@ -146,6 +171,11 @@ make start-context-manager operation="<lista|obter|criar|atualizar|excluir>" [co
 make start-validator plan_file="<arquivo_plano.json>" [output="<arquivo_saida>"] [requirements="<arquivo_requisitos>"] [context_dir="<dir_contexto>"] [project_dir="<dir_projeto>"] [model="<modelo_openai>"]
 ```
 **Exemplo:** `make start-validator plan_file="planos/feature_plan.json" project_dir="/Users/mal/GitHub/agent-flow-craft-aider" model="gpt-4-turbo"`
+
+**Chamada direta (sem Makefile):**
+```bash
+python -B src/scripts/run_plan_validator.py "planos/feature_plan.json" --project_dir="/Users/mal/GitHub/agent-flow-craft-aider" --model="gpt-4-turbo" --context_dir="agent_context"
+```
 
 **Tarefas executadas:**
 1. Inicializa o PlanValidator com as configurações fornecidas
