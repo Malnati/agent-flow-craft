@@ -1,11 +1,10 @@
 {
-  "context_id": "feature_concept_20250329_131518",
-  "issue_number": 40,
-  "branch_name": "feat/40/new-feature",
-  "plan_valid": true,
-  "github_integration_success": true,
-  "concept_improved": true,
-  "tdd_criteria": {
+  "id": "tdd_improved_20250329_131607",
+  "type": "tdd_improved_criteria",
+  "concept_id": "feature_concept_20250329_131518",
+  "original_criteria_id": "feature_concept_20250329_131518",
+  "created_at": "2025-03-29T13:16:07.323366",
+  "criteria": {
     "criteria": [
       {
         "id": "TDD-001",
@@ -61,45 +60,10 @@
         "Simular navegação do usuário em URLs com e sem parâmetros para verificar o comportamento do sistema"
       ]
     },
-    "context_id": "tdd_improved_20250329_131607",
+    "context_id": "feature_concept_20250329_131518",
     "original_criteria_id": "feature_concept_20250329_131518",
     "generated_at": "2025-03-29T13:16:07.321704",
     "model_used": "gpt-4-turbo",
     "improved": true
-  },
-  "tdd_criteria_id": "tdd_improved_20250329_131607",
-  "tdd_improved": true,
-  "validation_result": {
-    "is_valid": true,
-    "missing_items": [],
-    "entregaveis_encontrados": [
-      "desenvolvimento",
-      "validacao",
-      "persistencia",
-      "atualizacao_documentacao",
-      "atualizacao_readme"
-    ],
-    "detalhes_por_entregavel": [
-      {
-        "nome": "desenvolvimento",
-        "itens_ausentes": []
-      },
-      {
-        "nome": "validacao",
-        "itens_ausentes": []
-      },
-      {
-        "nome": "persistencia",
-        "itens_ausentes": []
-      },
-      {
-        "nome": "atualizacao_documentacao",
-        "itens_ausentes": []
-      },
-      {
-        "nome": "atualizacao_readme",
-        "itens_ausentes": []
-      }
-    ]
   }
 }

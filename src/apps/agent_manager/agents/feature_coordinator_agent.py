@@ -3,12 +3,15 @@ import json
 import asyncio
 from pathlib import Path
 from agent_platform.core.logger import get_logger, log_execution
+from agent_platform.core.utils import mask_sensitive_data, TokenValidator
 
 from apps.agent_manager.agents.concept_generation_agent import ConceptGenerationAgent
 from apps.agent_manager.agents.github_integration_agent import GitHubIntegrationAgent
 from apps.agent_manager.agents.context_manager import ContextManager
 from apps.agent_manager.agents.plan_validator import PlanValidator
 from apps.agent_manager.agents.tdd_criteria_agent import TDDCriteriaAgent
+from apps.agent_manager.agents.guardrails.out_guardrail_tdd_criteria_agent import OutGuardrailTDDCriteriaAgent
+from apps.agent_manager.agents.guardrails.out_guardrail_concept_generation_agent import OutGuardrailConceptGenerationAgent
 
 # Tente importar funções de mascaramento de dados sensíveis
 try:
@@ -39,6 +42,9 @@ class FeatureCoordinatorAgent:
             openai_token (str, optional): Token de acesso à API da OpenAI.
             github_token (str, optional): Token de acesso à API do GitHub.
             target_dir (str, optional): Diretório alvo do projeto.
+            
+        Raises:
+            ValueError: Se os tokens obrigatórios não forem fornecidos ou forem inválidos
         """
         self.logger = get_logger(__name__)
         self.logger.info(f"INÍCIO - {self.__class__.__name__}.__init__")
@@ -49,6 +55,15 @@ class FeatureCoordinatorAgent:
         self.target_dir = target_dir or os.getcwd()
         self.repo_owner = os.environ.get("GITHUB_OWNER", "")
         self.repo_name = os.environ.get("GITHUB_REPO", "")
+        
+        # Validar tokens obrigatórios
+        try:
+            TokenValidator.validate_openai_token(self.openai_token, required=True)
+            TokenValidator.validate_github_token(self.github_token, required=True)
+            self.logger.info("Todos os tokens validados com sucesso")
+        except ValueError as e:
+            self.logger.error(f"FALHA - Tokens obrigatórios inválidos: {str(e)}")
+            raise ValueError(f"Falha ao inicializar agente: {str(e)}")
         
         # Inicialização lazy dos agentes internos
         self._concept_agent = None
@@ -114,14 +129,36 @@ class FeatureCoordinatorAgent:
             self._tdd_criteria_agent = TDDCriteriaAgent(openai_token=self.openai_token)
         return self._tdd_criteria_agent
     
+    @property
+    def tdd_guardrail_agent(self):
+        """
+        Lazy loading do OutGuardrailTDDCriteriaAgent.
+        
+        Returns:
+            OutGuardrailTDDCriteriaAgent: Instância do agente de guardrail de critérios TDD
+        """
+        return OutGuardrailTDDCriteriaAgent(openai_token=self.openai_token)
+    
+    @property
+    def concept_guardrail_agent(self):
+        """
+        Lazy loading do OutGuardrailConceptGenerationAgent.
+        
+        Returns:
+            OutGuardrailConceptGenerationAgent: Instância do agente de guardrail de conceitos
+        """
+        return OutGuardrailConceptGenerationAgent(openai_token=self.openai_token)
+    
     @log_execution
     async def execute_feature_creation(self, prompt_text, execution_plan=None):
         """
         Coordena o fluxo completo de criação de feature:
         1. Gera conceito via OpenAI
-        2. Gera critérios TDD
-        3. Valida o plano de execução
-        4. Cria issue, branch e PR no GitHub
+        2. Valida e melhora o conceito se necessário (OutGuardrailConceptGenerationAgent)
+        3. Gera critérios TDD
+        4. Valida e melhora os critérios TDD (OutGuardrailTDDCriteriaAgent)
+        5. Valida o plano de execução
+        6. Cria issue, branch e PR no GitHub
         
         Args:
             prompt_text (str): Descrição da feature desejada
@@ -148,10 +185,76 @@ class FeatureCoordinatorAgent:
             }
             context_id = self.context_manager.create_context(concept_data, "feature_concept")
             
+            # Etapa 2.1: Validar e melhorar o conceito se necessário
+            self.logger.info("Validando e melhorando conceito")
+            try:
+                # Guardrail de conceitos
+                guardrail_result = self.concept_guardrail_agent.execute_concept_guardrail(
+                    concept.get("context_id"),
+                    prompt_text,
+                    self.target_dir
+                )
+                
+                # Verificar se o conceito foi melhorado
+                if guardrail_result.get("was_improved", False):
+                    self.logger.info("Conceito foi melhorado pelo guardrail")
+                    # Usar o conceito melhorado
+                    improved_concept = guardrail_result.get("improved_concept", concept)
+                    
+                    # Atualizar o contexto com o conceito melhorado
+                    self.context_manager.update_context(
+                        context_id,
+                        {"concept": improved_concept, "concept_improved": True},
+                        merge=True
+                    )
+                    
+                    # Atualizar o conceito ativo
+                    concept = improved_concept
+                else:
+                    self.logger.info("Conceito existente já adequado, nenhuma melhoria necessária")
+            except Exception as e:
+                self.logger.warning(f"Erro ao executar guardrail de conceito: {str(e)}. Continuando com o conceito original.")
+            
             # Etapa 3: Gerar critérios TDD
             self.logger.info("Gerando critérios TDD")
             tdd_criteria = self.tdd_criteria_agent.generate_tdd_criteria(context_id, self.target_dir)
+            criteria_id = None
+            
+            # Obter o ID do contexto dos critérios TDD
+            if "context_id" in tdd_criteria:
+                criteria_id = tdd_criteria.get("context_id")
+            else:
+                # Verificar se foi salvo em um arquivo de contexto
+                criteria_files = list(Path(self.context_dir).glob("tdd_criteria_*.json"))
+                if criteria_files:
+                    # Usar o arquivo mais recente
+                    criteria_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+                    criteria_id = criteria_files[0].stem
+            
             self.logger.info(f"Critérios TDD gerados com sucesso: {len(tdd_criteria.get('criteria', []))} critérios")
+            
+            # Etapa 3.1: Melhorar critérios TDD se necessário
+            if criteria_id:
+                self.logger.info("Validando e melhorando critérios TDD")
+                
+                # Guardrail de critérios TDD
+                guardrail_result = self.tdd_guardrail_agent.execute_tdd_guardrail(
+                    criteria_id, 
+                    context_id, 
+                    self.target_dir
+                )
+                
+                # Verificar se os critérios foram melhorados
+                if guardrail_result.get("was_improved", False):
+                    self.logger.info("Critérios TDD foram melhorados pelo guardrail")
+                    # Usar os critérios melhorados
+                    tdd_criteria = guardrail_result.get("criteria", tdd_criteria)
+                    # Atualizar o ID dos critérios melhorados
+                    criteria_id = guardrail_result.get("improved_criteria_id", criteria_id)
+                else:
+                    self.logger.info("Critérios TDD existentes já adequados, nenhuma melhoria necessária")
+            else:
+                self.logger.warning("Não foi possível determinar o ID dos critérios TDD, ignorando o guardrail")
             
             # Etapa 4: Validar o plano de execução
             if not execution_plan:
@@ -215,7 +318,10 @@ class FeatureCoordinatorAgent:
                 "branch_name": github_result.get("branch_name"),
                 "plan_valid": validation_result.get("is_valid", False),
                 "github_integration_success": github_result.get("status") != "error",
+                "concept_improved": 'guardrail_result' in locals() and guardrail_result.get("was_improved", False),
                 "tdd_criteria": tdd_criteria,
+                "tdd_criteria_id": criteria_id,
+                "tdd_improved": 'guardrail_result' in locals() and guardrail_result.get("was_improved", False) if 'guardrail_result' in locals() else False,
                 "validation_result": validation_result
             }
             

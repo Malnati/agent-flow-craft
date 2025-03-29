@@ -1,8 +1,8 @@
 {
-  "id": "tdd_criteria_20250329_010346",
+  "id": "tdd_criteria_20250329_100028",
   "type": "tdd_criteria",
-  "concept_id": "concept_20250329_010324",
-  "created_at": "2025-03-29T01:03:46.652099",
+  "concept_id": "concept_20250329_100020",
+  "created_at": "2025-03-29T10:00:28.636953",
   "criteria": {
     "criteria": [
       {
@@ -42,9 +42,9 @@
         "Teste de ponta a ponta do fluxo principal do usuário"
       ]
     },
-    "generated_at": "2025-03-29T01:03:46.651996",
+    "generated_at": "2025-03-29T10:00:28.636867",
     "source": "default_template",
     "note": "Critérios gerados automaticamente. Sugerimos personalizar para sua feature específica.",
-    "context_id": "concept_20250329_010324"
+    "context_id": "concept_20250329_100020"
   }
 }
