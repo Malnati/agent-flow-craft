@@ -1,0 +1,28 @@
+{
+  "id": "concept_20250328_211126",
+  "timestamp": "20250328_211126",
+  "prompt": "Implementar sistema de login",
+  "concept": {
+    "branch_type": "feat",
+    "issue_title": "Feature: Implementar sistema de login",
+    "issue_description": "Implementar sistema de login",
+    "generated_branch_suffix": "new-feature",
+    "execution_plan": {
+      "steps": [
+        "1. An\u00e1lise do c\u00f3digo",
+        "2. Implementa\u00e7\u00e3o",
+        "3. Testes",
+        "4. Documenta\u00e7\u00e3o"
+      ]
+    }
+  },
+  "status": "completed",
+  "error": "Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-dummy*********test. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}",
+  "github_result": {
+    "issue_number": 108,
+    "branch_name": "feat/108/new-feature",
+    "branch_created": true,
+    "plan_created": true,
+    "pr_created": true
+  }
+}
