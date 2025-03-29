@@ -101,7 +101,28 @@ python -B src/scripts/run_concept_agent.py "Adicionar autenticação via OAuth" 
 5. Salva o conceito gerado no diretório de contexto com um ID único
 6. Retorna o conceito completo com o context_id para uso posterior
 
-#### 3. Agente de integração com GitHub (GitHubIntegrationAgent)
+#### 3. Agente de geração de critérios TDD (TDDCriteriaAgent)
+```bash
+make start-tdd-criteria-agent context_id="<id_do_contexto>" project_dir="<diretório>" [output="<arquivo_saida>"] [context_dir="<dir_contexto>"] [model="<modelo_openai>"]
+```
+**Exemplo:** `make start-tdd-criteria-agent context_id="feature_concept_20240328_123456" project_dir="/Users/mal/GitHub/agent-flow-craft-aider" model="gpt-4-turbo"`
+
+**Chamada direta (sem Makefile):**
+```bash
+python -B src/scripts/run_tdd_criteria_agent.py "feature_concept_20240328_123456" --project_dir="/Users/mal/GitHub/agent-flow-craft-aider" --model="gpt-4-turbo" --context_dir="agent_context"
+```
+
+**Tarefas executadas:**
+1. Inicializa o TDDCriteriaAgent com o token OpenAI e modelo especificados
+2. Carrega o conceito da feature do arquivo de contexto especificado
+3. Lista arquivos de código-fonte relevantes no diretório do projeto
+4. Gera um prompt otimizado contendo o conceito e código-fonte relevante
+5. Envia o prompt para a API OpenAI para gerar critérios de aceitação TDD
+6. Estrutura a resposta em JSON incluindo critérios, plano de testes e casos de borda
+7. Salva os critérios no diretório de contexto com um ID único
+8. Retorna os critérios TDD completos para uso na implementação
+
+#### 4. Agente de integração com GitHub (GitHubIntegrationAgent)
 ```bash
 make start-github-agent context_id="<id>" [project_dir="<diretório>"] [context_dir="<diretório>"] [base_branch="<branch>"] [github_token="<token>"] [owner="<owner>"] [repo="<repo>"]
 ```
@@ -121,7 +142,7 @@ python -B src/scripts/run_github_agent.py "feature_concept_20240601_123456" --pr
 6. Cria um pull request no GitHub associado à issue e branch
 7. Retorna um JSON com issue_number, branch_name e status da integração
 
-#### 4. Agente coordenador (FeatureCoordinatorAgent)
+#### 5. Agente coordenador (FeatureCoordinatorAgent)
 ```bash
 make start-coordinator-agent prompt="<descricao>" [project_dir="<diretório>"] [plan_file="<arquivo>"] [output="<arquivo>"] [context_dir="<diretório>"] [github_token="<token>"] [openai_token="<token>"] [model="<modelo_openai>"]
 ```
@@ -143,7 +164,7 @@ python -B src/scripts/run_coordinator_agent.py "Implementar sistema de notifica�
 8. Orquestra todo o fluxo entre os diferentes agentes especializados
 9. Retorna um resultado consolidado com todas as informações do processo
 
-#### 5. Gerenciador de contexto (ContextManager)
+#### 6. Gerenciador de contexto (ContextManager)
 ```bash
 make start-context-manager operation="<lista|obter|criar|atualizar|excluir>" [context_id="<id>"] [data_file="<arquivo.json>"] [limit=10] [type="<tipo>"] [context_dir="<dir_contexto>"] [output="<arquivo>"]
 ```
@@ -166,7 +187,7 @@ python -B src/scripts/run_context_manager.py "listar" --context_dir="agent_conte
 3. Formata e exibe o resultado da operação solicitada
 4. Opcionalmente salva o resultado em um arquivo de saída
 
-#### 6. Validador de planos (PlanValidator)
+#### 7. Validador de planos (PlanValidator)
 ```bash
 make start-validator plan_file="<arquivo_plano.json>" [output="<arquivo_saida>"] [requirements="<arquivo_requisitos>"] [context_dir="<dir_contexto>"] [project_dir="<dir_projeto>"] [model="<modelo_openai>"]
 ```

@@ -8,6 +8,7 @@ from apps.agent_manager.agents.concept_generation_agent import ConceptGeneration
 from apps.agent_manager.agents.github_integration_agent import GitHubIntegrationAgent
 from apps.agent_manager.agents.context_manager import ContextManager
 from apps.agent_manager.agents.plan_validator import PlanValidator
+from apps.agent_manager.agents.tdd_criteria_agent import TDDCriteriaAgent
 
 # Tente importar funções de mascaramento de dados sensíveis
 try:
@@ -30,45 +31,52 @@ class FeatureCoordinatorAgent:
     Gerencia a criação de conceitos, validação de planos e integração com GitHub.
     """
     
-    def __init__(self, github_token=None, openai_token=None, repo_owner=None, repo_name=None, target_dir=None):
-        self.logger = get_logger(__name__)
-        self.logger.info(f"INÍCIO - FeatureCoordinatorAgent.__init__ | Repo: {repo_owner}/{repo_name}")
+    def __init__(self, openai_token=None, github_token=None, target_dir=None):
+        """
+        Inicializa o agente coordenador.
         
+        Args:
+            openai_token (str, optional): Token de acesso à API da OpenAI.
+            github_token (str, optional): Token de acesso à API do GitHub.
+            target_dir (str, optional): Diretório alvo do projeto.
+        """
+        self.logger = get_logger(__name__)
+        self.logger.info(f"INÍCIO - {self.__class__.__name__}.__init__")
+        
+        # Definir atributos
+        self.openai_token = openai_token or os.environ.get("OPENAI_API_KEY", "")
+        self.github_token = github_token or os.environ.get("GITHUB_TOKEN", "")
+        self.target_dir = target_dir or os.getcwd()
+        
+        # Inicialização lazy dos agentes internos
+        self._concept_agent = None
+        self._github_agent = None
+        self._plan_validator = None
+        self._tdd_criteria_agent = None
+        
+        # Status de tokens (logging seguro)
+        openai_token_status = "presente" if self.openai_token else "ausente"
+        github_token_status = "presente" if self.github_token else "ausente"
+        self.logger.info(f"Token OpenAI: {openai_token_status}")
+        self.logger.info(f"Token GitHub: {github_token_status}")
+        
+        # Informações do diretório alvo
+        self.logger.info(f"Diretório alvo: {self.target_dir}")
+        
+        # Configurar diretório de contexto (padrão ou personalizado)
+        self.context_dir = Path("agent_context")
+        self.context_dir.mkdir(parents=True, exist_ok=True)
+        self.logger.info(f"Diretório de contexto: {self.context_dir.resolve()}")
+        
+        # Inicializar gerenciador de contexto
         try:
-            # Inicializar tokens e configurações
-            self.github_token = github_token or os.environ.get('GITHUB_TOKEN', '')
-            self.openai_token = openai_token or os.environ.get('OPENAI_API_KEY', '')
-            self.repo_owner = repo_owner or os.environ.get('GITHUB_OWNER', '')
-            self.repo_name = repo_name or os.environ.get('GITHUB_REPO', '')
-            self.target_dir = target_dir
-            
-            # Logar status dos tokens sem expor dados sensíveis
-            if has_utils:
-                github_status = get_env_status('GITHUB_TOKEN')
-                openai_status = get_env_status('OPENAI_API_KEY')
-                self.logger.debug(f"Status do token GitHub: {github_status}")
-                self.logger.debug(f"Status do token OpenAI: {openai_status}")
-            else:
-                github_available = "disponível" if self.github_token else "ausente"
-                openai_available = "disponível" if self.openai_token else "ausente"
-                self.logger.debug(f"Status do token GitHub: {github_available}")
-                self.logger.debug(f"Status do token OpenAI: {openai_available}")
-            
-            # Inicializar gerenciador de contexto
-            self.context_manager = ContextManager()
-            
-            # Inicializar agentes especializados (lazy loading)
-            self._concept_agent = None
-            self._github_agent = None
-            self._plan_validator = None
-            
+            self.context_manager = ContextManager(base_dir=str(self.context_dir))
             self.logger.info("SUCESSO - FeatureCoordinatorAgent inicializado")
-            
         except Exception as e:
-            # Mascarar possíveis tokens na mensagem de erro
-            error_msg = mask_sensitive_data(str(e))
-            self.logger.error(f"FALHA - FeatureCoordinatorAgent.__init__ | Erro: {error_msg}", exc_info=True)
+            self.logger.error(f"FALHA - __init__ | Erro ao inicializar: {str(e)}", exc_info=True)
             raise
+        
+        self.logger.info(f"FIM - {self.__class__.__name__}.__init__")
     
     @property
     def concept_agent(self):
@@ -96,13 +104,21 @@ class FeatureCoordinatorAgent:
             self._plan_validator = PlanValidator()
         return self._plan_validator
     
+    @property
+    def tdd_criteria_agent(self):
+        """Lazy loading do agente de critérios TDD"""
+        if self._tdd_criteria_agent is None:
+            self._tdd_criteria_agent = TDDCriteriaAgent(openai_token=self.openai_token)
+        return self._tdd_criteria_agent
+    
     @log_execution
     async def execute_feature_creation(self, prompt_text, execution_plan=None):
         """
         Coordena o fluxo completo de criação de feature:
         1. Gera conceito via OpenAI
-        2. Valida o plano de execução
-        3. Cria issue, branch e PR no GitHub
+        2. Gera critérios TDD
+        3. Valida o plano de execução
+        4. Cria issue, branch e PR no GitHub
         
         Args:
             prompt_text (str): Descrição da feature desejada
@@ -129,7 +145,12 @@ class FeatureCoordinatorAgent:
             }
             context_id = self.context_manager.create_context(concept_data, "feature_concept")
             
-            # Etapa 3: Validar o plano de execução
+            # Etapa 3: Gerar critérios TDD
+            self.logger.info("Gerando critérios TDD")
+            tdd_criteria = self.tdd_criteria_agent.generate_tdd_criteria(context_id, self.target_dir)
+            self.logger.info(f"Critérios TDD gerados com sucesso: {len(tdd_criteria.get('criteria', []))} critérios")
+            
+            # Etapa 4: Validar o plano de execução
             if not execution_plan:
                 execution_plan = concept.get("execution_plan", {})
                 
@@ -171,7 +192,7 @@ class FeatureCoordinatorAgent:
                 # Usar o plano corrigido
                 execution_plan = corrected_plan
             
-            # Etapa 4: Processar conceito no GitHub
+            # Etapa 5: Processar conceito no GitHub
             self.logger.info("Processando conceito no GitHub")
             github_result = self.github_agent.process_concept(context_id)
             
@@ -190,7 +211,9 @@ class FeatureCoordinatorAgent:
                 "issue_number": github_result.get("issue_number"),
                 "branch_name": github_result.get("branch_name"),
                 "plan_valid": validation_result.get("is_valid", False),
-                "github_integration_success": github_result.get("status") != "error"
+                "github_integration_success": github_result.get("status") != "error",
+                "tdd_criteria": tdd_criteria,
+                "validation_result": validation_result
             }
             
             self.logger.info(f"SUCESSO - Fluxo de criação de feature concluído | Issue: #{result.get('issue_number')}")

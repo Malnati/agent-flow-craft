@@ -1,13 +1,22 @@
-from apps.agent_manager.agents.concept_generation_agent import ConceptGenerationAgent
-from apps.agent_manager.agents.github_integration_agent import GitHubIntegrationAgent
-from apps.agent_manager.agents.feature_coordinator_agent import FeatureCoordinatorAgent
-from apps.agent_manager.agents.context_manager import ContextManager
-from apps.agent_manager.agents.plan_validator import PlanValidator
+#!/usr/bin/env python3
+"""
+Exporta as classes de agentes disponíveis no módulo.
+"""
+
+from .feature_creation_agent import FeatureCreationAgent
+from .concept_generation_agent import ConceptGenerationAgent
+from .github_integration_agent import GitHubIntegrationAgent
+from .plan_validator import PlanValidator
+from .context_manager import ContextManager
+from .feature_coordinator_agent import FeatureCoordinatorAgent
+from .tdd_criteria_agent import TDDCriteriaAgent
 
 __all__ = [
+    'FeatureCreationAgent',
     'ConceptGenerationAgent',
     'GitHubIntegrationAgent',
-    'FeatureCoordinatorAgent',
+    'PlanValidator',
     'ContextManager',
-    'PlanValidator'
+    'FeatureCoordinatorAgent',
+    'TDDCriteriaAgent',
 ]
