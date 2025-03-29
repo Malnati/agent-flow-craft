@@ -2,6 +2,7 @@
 
 ### Planos de execução:
 
+
 <!-- A lista abaixo será gerada automaticamente -->
 - [101 feature plan](pr/101_feature_plan.md)
 - [104 feature plan](pr/104_feature_plan.md)
