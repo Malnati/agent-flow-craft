@@ -1,6 +1,6 @@
 .PHONY: install setup test lint format start-agent update-docs-index clean clean-pycache all create-venv \
 	pack deploy undeploy install-cursor install-simple-mcp help build publish version version-info find-commit update-changelog compare-versions test-mcp-e2e \
-	start-concept-agent start-github-agent start-coordinator-agent start-context-manager start-validator start-tdd-criteria-agent start-tdd-guardrail-agent
+	start-concept-agent start-concept-guardrail-agent start-github-agent start-coordinator-agent start-context-manager start-validator start-tdd-criteria-agent start-tdd-guardrail-agent
 
 VERSION := $(shell python3 -c "import time; print(time.strftime('%Y.%m.%d'))")
 BUILD_DIR := ./dist
@@ -47,7 +47,7 @@ help:
 	@echo "      3. Envia o prompt e contexto para a API OpenAI para gerar um conceito de feature"
 	@echo "      4. Estrutura a resposta em JSON com branch_type, issue_title, issue_description, etc."
 	@echo "      5. Salva o conceito gerado no diretório de contexto com um ID único"
-	@echo "      6. Retorna o conceito completo com o context_id para uso posterior"
+	@echo "      6. Retorna o conceito completo com the context_id for use later"
 	@echo ""
 	@echo "  make start-tdd-criteria-agent context_id=\"...\" project_dir=\"...\"  Inicia o agente de geração de critérios TDD (TDDCriteriaAgent)"
 	@echo "    Opções: [output=\"...\"] [context_dir=\"...\"] [openai_token=\"...\"] [model=\"<modelo_openai>\"]"
@@ -201,6 +201,26 @@ start-concept-agent: create-venv print-no-pycache-message
 		$(if $(project_dir),--project_dir "$(project_dir)",) \
 		$(if $(openai_token),--openai_token "$(openai_token)",) \
 		$(if $(model),--model "$(model)",)
+
+# Target para iniciar o agente guardrail de conceito (ConceptGuardrailAgent)
+start-concept-guardrail-agent: create-venv print-no-pycache-message
+	@if [ -z "$(concept_id)" ] || [ -z "$(prompt)" ]; then \
+		echo "Uso: make start-concept-guardrail-agent concept_id=\"<id_do_conceito>\" prompt=\"<prompt_original>\" [project_dir=\"<diretório>\"] [output=\"<arquivo_saida>\"] [context_dir=\"<dir_contexto>\"] [model=\"<modelo_openai>\"] [elevation_model=\"<modelo_elevacao>\"] [force=true]"; \
+		exit 1; \
+	fi
+	@echo "Executando guardrail de conceito com concept_id: \"$(concept_id)\" e prompt: \"$(prompt)\""
+	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_concept_guardrail_agent.py \
+		"$(concept_id)" \
+		"$(prompt)" \
+		$(if $(project_dir),--project_dir "$(project_dir)",) \
+		$(if $(output),--output "$(output)",) \
+		$(if $(context_dir),--context_dir "$(context_dir)",) \
+		$(if $(openai_token),--openai_token "$(openai_token)",) \
+		$(if $(model),--model "$(model)",) \
+		$(if $(elevation_model),--elevation_model "$(elevation_model)",) \
+		$(if $(force),--force,) \
+		$(if $(is_async),--async,) \
+		$(ARGS)
 
 # Target para iniciar o agente GitHub (GitHubIntegrationAgent)
 start-github-agent: check-env create-venv print-no-pycache-message
