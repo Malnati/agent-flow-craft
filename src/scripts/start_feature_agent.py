@@ -276,8 +276,9 @@ def parse_arguments():
     )
     
     parser.add_argument(
-        "--target",
-        help="Diretório alvo do repositório Git (opcional, usa diretório atual se não especificado)"
+        "--project_dir",
+        dest="target",
+        help="Diretório do projeto onde a feature será criada (opcional, usa diretório atual se não especificado)"
     )
     
     parser.add_argument(
