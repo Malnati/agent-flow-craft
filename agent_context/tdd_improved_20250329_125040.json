@@ -1,11 +1,10 @@
 {
-  "context_id": "feature_concept_20250329_124945",
-  "issue_number": 38,
-  "branch_name": "feat/38/new-feature",
-  "plan_valid": true,
-  "github_integration_success": true,
-  "concept_improved": true,
-  "tdd_criteria": {
+  "id": "tdd_improved_20250329_125040",
+  "type": "tdd_improved_criteria",
+  "concept_id": "feature_concept_20250329_124945",
+  "original_criteria_id": "feature_concept_20250329_124945",
+  "created_at": "2025-03-29T12:50:40.543536",
+  "criteria": {
     "criteria": [
       {
         "id": "TDD-001",
@@ -60,40 +59,10 @@
         "Simular um cenário completo de navegação onde parâmetros são passados via URL e capturados pelo hook useSearchParams, verificando a correta manipulação e exibição dos valores"
       ]
     },
-    "context_id": "tdd_improved_20250329_125040",
+    "context_id": "feature_concept_20250329_124945",
     "original_criteria_id": "feature_concept_20250329_124945",
     "generated_at": "2025-03-29T12:50:40.542149",
     "model_used": "gpt-4-turbo",
     "improved": true
-  },
-  "tdd_criteria_id": "tdd_improved_20250329_125040",
-  "tdd_improved": true,
-  "validation_result": {
-    "is_valid": true,
-    "missing_items": [],
-    "entregaveis_encontrados": [
-      "Criar um formulário de cadastro de componentes no StoryBook",
-      "Implementar a lógica para adicionar novos componentes ao StoryBook",
-      "Atualizar a documentação com instruções claras sobre como cadastrar novos componentes",
-      "Atualizar o README.md com informações sobre a nova funcionalidade e como utilizá-la"
-    ],
-    "detalhes_por_entregavel": [
-      {
-        "nome": "Criar um formulário de cadastro de componentes no StoryBook",
-        "itens_ausentes": []
-      },
-      {
-        "nome": "Implementar a lógica para adicionar novos componentes ao StoryBook",
-        "itens_ausentes": []
-      },
-      {
-        "nome": "Atualizar a documentação com instruções claras sobre como cadastrar novos componentes",
-        "itens_ausentes": []
-      },
-      {
-        "nome": "Atualizar o README.md com informações sobre a nova funcionalidade e como utilizá-la",
-        "itens_ausentes": []
-      }
-    ]
   }
 }
