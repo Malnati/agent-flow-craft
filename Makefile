@@ -1,6 +1,6 @@
 .PHONY: install setup test lint format start-agent update-docs-index clean clean-pycache all create-venv \
 	pack deploy undeploy install-cursor install-simple-mcp help build publish version version-info find-commit update-changelog compare-versions test-mcp-e2e \
-	start-concept-agent start-concept-guardrail-agent start-github-agent start-coordinator-agent start-context-manager start-validator start-tdd-criteria-agent start-tdd-guardrail-agent setup-env clean-cache
+	start-concept-agent start-feature-concept-agent start-concept-guardrail-agent start-github-agent start-coordinator-agent start-context-manager start-validator start-tdd-criteria-agent start-tdd-guardrail-agent setup-env clean-cache
 
 VERSION := $(shell python3 -c "import time; print(time.strftime('%Y.%m.%d'))")
 BUILD_DIR := ./dist
@@ -34,9 +34,10 @@ help:
 	@echo "      1. Inicializa o FeatureCoordinatorAgent com os parâmetros fornecidos"
 	@echo "      2. Configura o modelo OpenAI especificado no ConceptGenerationAgent interno"
 	@echo "      3. Cria um diretório de contexto para armazenar os resultados"
-	@echo "      4. Gera um conceito de feature a partir do prompt usando a API OpenAI"
-	@echo "      5. Processa a criação da feature com base no conceito gerado"
-	@echo "      6. Retorna o resultado em JSON com informações da feature criada"
+	@echo "      4. Gera um conceito inicial a partir do prompt usando a API OpenAI"
+	@echo "      5. Transforma o conceito inicial em um feature_concept detalhado"
+	@echo "      6. Processa a criação da feature com base no conceito gerado"
+	@echo "      7. Retorna o resultado em JSON com informações da feature criada"
 	@echo ""
 	@echo "  make start-concept-agent prompt=\"...\"        Inicia o agente de geração de conceitos (ConceptGenerationAgent)"
 	@echo "    Opções: [output=\"...\"] [context_dir=\"...\"] [project_dir=\"...\"] [openai_token=\"...\"] [model=\"<modelo_openai>\"]"
@@ -44,10 +45,22 @@ help:
 	@echo "    Tarefas executadas:"
 	@echo "      1. Inicializa o ConceptGenerationAgent com o token OpenAI e modelo especificados"
 	@echo "      2. Obtém o log do Git do projeto (se disponível) para fornecer contexto"
-	@echo "      3. Envia o prompt e contexto para a API OpenAI para gerar um conceito de feature"
-	@echo "      4. Estrutura a resposta em JSON com branch_type, issue_title, issue_description, etc."
+	@echo "      3. Envia o prompt e contexto para a API OpenAI para gerar um conceito básico de feature"
+	@echo "      4. Estrutura a resposta em JSON com summary, description, key_goals, etc."
 	@echo "      5. Salva o conceito gerado no diretório de contexto com um ID único"
-	@echo "      6. Retorna o conceito completo com the context_id for use later"
+	@echo "      6. Retorna o conceito completo com o context_id para uso posterior"
+	@echo ""
+	@echo "  make start-feature-concept-agent concept_id=\"...\"  Inicia o agente de geração de feature concepts (FeatureConceptAgent)"
+	@echo "    Opções: [output=\"...\"] [context_dir=\"...\"] [project_dir=\"...\"] [openai_token=\"...\"] [model=\"<modelo_openai>\"]"
+	@echo "    Exemplo: make start-feature-concept-agent concept_id=\"concept_20240328_123456\" project_dir=\"/Users/mal/GitHub/agent-flow-craft-aider\" context_dir=\"agent_context\""
+	@echo "    Tarefas executadas:"
+	@echo "      1. Inicializa o FeatureConceptAgent com o token OpenAI e modelo especificados"
+	@echo "      2. Carrega o conceito básico do arquivo de contexto especificado"
+	@echo "      3. Analisa informações do diretório do projeto para contextualização"
+	@echo "      4. Envia o conceito e contexto para a API OpenAI para gerar um feature_concept detalhado"
+	@echo "      5. Estrutura a resposta em JSON com branch_type, issue_title, execution_plan, etc."
+	@echo "      6. Salva o feature_concept gerado no diretório de contexto com um ID único"
+	@echo "      7. Retorna o feature_concept completo com o context_id para uso posterior"
 	@echo ""
 	@echo "  make start-tdd-criteria-agent context_id=\"...\" project_dir=\"...\"  Inicia o agente de geração de critérios TDD (TDDCriteriaAgent)"
 	@echo "    Opções: [output=\"...\"] [context_dir=\"...\"] [openai_token=\"...\"] [model=\"<modelo_openai>\"]"
@@ -94,8 +107,8 @@ help:
 	@echo "      1. Inicializa o FeatureCoordinatorAgent com tokens e diretórios configurados"
 	@echo "      2. Configura o ConceptGenerationAgent interno com o modelo especificado"
 	@echo "      3. Obtém o log do Git para contexto da feature"
-	@echo "      4. Gera um conceito usando o ConceptGenerationAgent a partir do prompt"
-	@echo "      5. Salva o conceito no sistema de gerenciamento de contexto"
+	@echo "      4. Gera um conceito inicial usando o ConceptGenerationAgent a partir do prompt"
+	@echo "      5. Transforma o conceito em feature_concept usando o FeatureConceptAgent"
 	@echo "      6. Valida o plano de execução usando o PlanValidator"
 	@echo "      7. Processa o conceito no GitHub usando o GitHubIntegrationAgent"
 	@echo "      8. Orquestra todo o fluxo entre os diferentes agentes especializados"
@@ -197,6 +210,21 @@ start-concept-agent: create-venv print-no-pycache-message
 		"$(prompt)" \
 		$(if $(output),--output "$(output)",) \
 		$(if $(git_log_file),--git_log_file "$(git_log_file)",) \
+		$(if $(context_dir),--context_dir "$(context_dir)",) \
+		$(if $(project_dir),--project_dir "$(project_dir)",) \
+		$(if $(openai_token),--openai_token "$(openai_token)",) \
+		$(if $(model),--model "$(model)",)
+
+# Target para iniciar o agente de feature concept (FeatureConceptAgent)
+start-feature-concept-agent: create-venv print-no-pycache-message
+	@if [ -z "$(concept_id)" ]; then \
+		echo "Uso: make start-feature-concept-agent concept_id=\"<id_do_conceito>\" [output=\"<arquivo_saida>\"] [context_dir=\"<dir_contexto>\"] [project_dir=\"<dir_projeto>\"] [model=\"<modelo_openai>\"]"; \
+		exit 1; \
+	fi
+	@echo "Executando agente de feature concept com concept_id: \"$(concept_id)\""
+	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_feature_concept_agent.py \
+		"$(concept_id)" \
+		$(if $(output),--output "$(output)",) \
 		$(if $(context_dir),--context_dir "$(context_dir)",) \
 		$(if $(project_dir),--project_dir "$(project_dir)",) \
 		$(if $(openai_token),--openai_token "$(openai_token)",) \

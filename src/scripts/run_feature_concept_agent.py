@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Script para executar o ConceptGenerationAgent diretamente.
-Gera conceitos iniciais básicos a partir de prompts do usuário usando a OpenAI.
+Script para executar o FeatureConceptAgent diretamente.
+Transforma conceitos gerados em feature_concepts detalhados.
 """
 
 import os
@@ -15,8 +15,8 @@ from agent_platform.core.logger import get_logger, log_execution
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
-# Importar o agente de conceito
-from apps.agent_manager.agents import ConceptGenerationAgent
+# Importar o agente de feature concept
+from apps.agent_manager.agents import FeatureConceptAgent
 
 # Configurar logger
 logger = get_logger(__name__)
@@ -43,13 +43,13 @@ def parse_arguments():
         argparse.Namespace: Argumentos da linha de comando
     """
     parser = argparse.ArgumentParser(
-        description="Executa o ConceptGenerationAgent para gerar conceitos iniciais",
+        description="Executa o FeatureConceptAgent para transformar conceitos em feature_concepts detalhados",
         formatter_class=argparse.RawTextHelpFormatter
     )
     
     parser.add_argument(
-        "prompt",
-        help="Descrição da feature a ser conceituada (texto ou caminho para arquivo .txt)"
+        "concept_id",
+        help="ID do conceito a ser processado (ex: concept_20240328_123456)"
     )
     
     parser.add_argument(
@@ -64,13 +64,8 @@ def parse_arguments():
     )
     
     parser.add_argument(
-        "--git_log_file",
-        help="Arquivo com log do Git para contexto (opcional)"
-    )
-    
-    parser.add_argument(
         "--output",
-        help="Arquivo de saída para o conceito gerado (opcional)"
+        help="Arquivo de saída para o feature concept gerado (opcional)"
     )
     
     parser.add_argument(
@@ -104,21 +99,7 @@ def main():
         
         logger.info(f"Argumentos: {masked_args}")
         
-        # Verificar prompt - pode ser texto diretamente ou arquivo
-        prompt_text = args.prompt
-        if os.path.isfile(prompt_text):
-            with open(prompt_text, 'r', encoding='utf-8') as f:
-                prompt_text = f.read().strip()
-            logger.info(f"Prompt carregado do arquivo: {args.prompt}")
-        
-        # Verificar log do Git - pode ser arquivo ou None
-        git_log = None
-        if args.git_log_file and os.path.isfile(args.git_log_file):
-            with open(args.git_log_file, 'r', encoding='utf-8') as f:
-                git_log = f.read().strip()
-            logger.info(f"Log do Git carregado do arquivo: {args.git_log_file}")
-        
-        # Inicializar agente de conceito
+        # Inicializar agente de feature concept
         openai_token = args.openai_token or os.environ.get('OPENAI_API_KEY', '')
         if not openai_token:
             logger.warning("Token OpenAI não fornecido. Algumas funcionalidades podem estar limitadas.")
@@ -133,53 +114,41 @@ def main():
         logger.info(f"Utilizando diretório de contexto: {context_dir} (absoluto: {context_dir.resolve()})")
         
         # Inicializar o agente com o diretório de contexto personalizado
-        agent = ConceptGenerationAgent(openai_token=openai_token, model=args.model)
+        agent = FeatureConceptAgent(openai_token=openai_token, model=args.model)
         # Definir diretório de contexto explicitamente
         agent.context_dir = context_dir
         logger.info(f"Diretório de contexto do agente configurado: {agent.context_dir}")
         logger.info(f"Modelo OpenAI configurado: {args.model}")
         
         # Verificar diretório do projeto se fornecido
+        project_dir = None
         if args.project_dir:
             project_dir = Path(args.project_dir)
             if not project_dir.exists():
                 logger.warning(f"Diretório de projeto não encontrado: {project_dir}")
             else:
                 logger.info(f"Utilizando diretório de projeto: {project_dir}")
-                # Se necessário, pode-se adicionar lógica específica ao diretório do projeto aqui
-                
-        # Gerar conceito
-        logger.info("Gerando conceito inicial com base no prompt...")
-        concept = agent.generate_concept(prompt_text, git_log)
+                project_dir = str(project_dir)
         
-        # Verificar se o contexto foi salvo
-        logger.info(f"Verificando arquivos no diretório de contexto: {context_dir}")
-        if context_dir.exists():
-            files = list(context_dir.glob("*.json"))
-            logger.info(f"Arquivos encontrados: {files}")
-            if not files:
-                logger.warning(f"Nenhum arquivo de contexto encontrado em {context_dir}")
-                
-                # Tentar salvar manualmente
-                logger.info("Tentando salvar contexto manualmente...")
-                context_id = agent._save_concept_to_context(concept, prompt_text)
-                logger.info(f"Contexto salvo manualmente com ID: {context_id}")
-        else:
-            logger.error(f"Diretório de contexto não existe: {context_dir}")
+        # Processar conceito
+        logger.info(f"Processando conceito com ID: {args.concept_id}...")
+        feature_concept = agent.process_concept(args.concept_id, project_dir)
         
-        # Exibir conceito
-        print("\n🧠 Conceito inicial gerado:\n")
-        print(json.dumps(concept, indent=2, ensure_ascii=False))
+        # Verificar se o feature concept foi criado
+        if not feature_concept:
+            logger.error(f"Falha ao processar conceito: {args.concept_id}")
+            print(f"\n❌ Erro: Falha ao processar conceito: {args.concept_id}")
+            return 1
         
-        # Exibir próximo passo
-        print("\n✅ Para transformar este conceito em um feature_concept detalhado, execute:")
-        print(f"make start-feature-concept-agent concept_id=\"{concept.get('context_id')}\" project_dir=\"{args.project_dir or '.'}\"\n")
+        # Exibir feature concept
+        print("\n🧠 Feature Concept gerado:\n")
+        print(json.dumps(feature_concept, indent=2, ensure_ascii=False))
         
-        # Salvar conceito se solicitado
+        # Salvar feature concept se solicitado
         if args.output:
             with open(args.output, 'w', encoding='utf-8') as f:
-                json.dump(concept, f, indent=2, ensure_ascii=False)
-            print(f"\n💾 Conceito salvo em: {args.output}")
+                json.dump(feature_concept, f, indent=2, ensure_ascii=False)
+            print(f"\n💾 Feature Concept salvo em: {args.output}")
         
         # Retorno bem-sucedido
         return 0
@@ -190,7 +159,7 @@ def main():
         return 130
         
     except Exception as e:
-        logger.error(f"Erro ao gerar conceito: {str(e)}", exc_info=True)
+        logger.error(f"Erro ao processar conceito: {str(e)}", exc_info=True)
         print(f"\n❌ Erro: {str(e)}")
         return 1
 

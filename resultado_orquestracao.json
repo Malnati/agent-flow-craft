@@ -1,0 +1,105 @@
+{
+  "context_id": "feature_concept_20250329_133215",
+  "issue_number": 42,
+  "branch_name": "feat/42/new-feature",
+  "plan_valid": true,
+  "github_integration_success": true,
+  "concept_improved": true,
+  "tdd_criteria": {
+    "criteria": [
+      {
+        "id": "TDD-001",
+        "component": "useSearchParams Hook",
+        "description": "Validar o comportamento do hook useSearchParams quando um parâmetro é fornecido",
+        "given": "O hook useSearchParams é chamado com um parâmetro específico",
+        "when": "O parâmetro é válido e está presente na URL",
+        "then": "O hook deve retornar o valor do parâmetro",
+        "edge_cases": [
+          "Parâmetro não está presente na URL",
+          "Parâmetro com múltiplos valores"
+        ],
+        "examples": [
+          {
+            "input": "?param=value",
+            "output": "value"
+          }
+        ]
+      },
+      {
+        "id": "TDD-002",
+        "component": "useSearchParams Hook",
+        "description": "Validar o comportamento do hook useSearchParams quando um parâmetro obrigatório está ausente",
+        "given": "O hook useSearchParams é chamado com um parâmetro específico",
+        "when": "O parâmetro não está presente na URL",
+        "then": "O hook deve lançar um erro indicando que o parâmetro é obrigatório",
+        "edge_cases": [
+          "URL completamente vazia",
+          "URL com outros parâmetros, mas não o especificado"
+        ],
+        "examples": [
+          {
+            "input": "?otherparam=othervalue",
+            "output": "Error: paramName is required"
+          }
+        ]
+      }
+    ],
+    "test_plan": {
+      "unit_tests": [
+        "Testar useSearchParams com um parâmetro válido e verificar se o valor correto é retornado",
+        "Testar useSearchParams com um parâmetro ausente e verificar se o erro correto é lançado"
+      ],
+      "integration_tests": [
+        "Testar a integração do hook useSearchParams com componentes que dependem de parâmetros URL para funcionar corretamente"
+      ],
+      "e2e_tests": [
+        "Simular navegação do usuário em uma aplicação que utiliza o hook useSearchParams para garantir que os parâmetros são processados corretamente em diferentes cenários de navegação"
+      ]
+    },
+    "context_id": "tdd_improved_20250329_133306",
+    "original_criteria_id": "feature_concept_20250329_133215",
+    "generated_at": "2025-03-29T13:33:06.144490",
+    "model_used": "gpt-4-turbo",
+    "improved": true
+  },
+  "tdd_criteria_id": "tdd_improved_20250329_133306",
+  "tdd_improved": true,
+  "validation_result": {
+    "is_valid": true,
+    "missing_items": [],
+    "entregaveis_encontrados": [
+      "implement_user_profile_form",
+      "create_database_model",
+      "implement_field_validation",
+      "display_error_messages",
+      "update_documentation",
+      "update_readme"
+    ],
+    "detalhes_por_entregavel": [
+      {
+        "nome": "implement_user_profile_form",
+        "itens_ausentes": []
+      },
+      {
+        "nome": "create_database_model",
+        "itens_ausentes": []
+      },
+      {
+        "nome": "implement_field_validation",
+        "itens_ausentes": []
+      },
+      {
+        "nome": "display_error_messages",
+        "itens_ausentes": []
+      },
+      {
+        "nome": "update_documentation",
+        "itens_ausentes": []
+      },
+      {
+        "nome": "update_readme",
+        "itens_ausentes": []
+      }
+    ]
+  }
+}
