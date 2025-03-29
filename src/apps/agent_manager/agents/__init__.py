@@ -10,13 +10,14 @@ from .plan_validator import PlanValidator
 from .context_manager import ContextManager
 from .feature_coordinator_agent import FeatureCoordinatorAgent
 from .tdd_criteria_agent import TDDCriteriaAgent
+from .tdd_guardrail_agent import TDDGuardrailAgent
 
 __all__ = [
-    'FeatureCreationAgent',
+    'ContextManager',
     'ConceptGenerationAgent',
     'GitHubIntegrationAgent',
-    'PlanValidator',
-    'ContextManager',
     'FeatureCoordinatorAgent',
+    'PlanValidator',
     'TDDCriteriaAgent',
+    'TDDGuardrailAgent',
 ]

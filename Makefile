@@ -1,6 +1,6 @@
 .PHONY: install setup test lint format start-agent update-docs-index clean clean-pycache all create-venv \
 	pack deploy undeploy install-cursor install-simple-mcp help build publish version version-info find-commit update-changelog compare-versions test-mcp-e2e \
-	start-concept-agent start-github-agent start-coordinator-agent start-context-manager start-validator start-tdd-criteria-agent
+	start-concept-agent start-github-agent start-coordinator-agent start-context-manager start-validator start-tdd-criteria-agent start-tdd-guardrail-agent
 
 VERSION := $(shell python3 -c "import time; print(time.strftime('%Y.%m.%d'))")
 BUILD_DIR := ./dist
@@ -61,6 +61,19 @@ help:
 	@echo "      6. Estrutura a resposta em JSON incluindo critérios, plano de testes e casos de borda"
 	@echo "      7. Salva os critérios no diretório de contexto com um ID único"
 	@echo "      8. Retorna os critérios TDD completos para uso na implementação"
+	@echo ""
+	@echo "  make start-tdd-guardrail-agent criteria_id=\"...\" concept_id=\"...\" project_dir=\"...\"  Inicia o agente guardrail de critérios TDD (TDDGuardrailAgent)"
+	@echo "    Opções: [output=\"...\"] [context_dir=\"...\"] [openai_token=\"...\"] [model=\"<modelo_openai>\"]"
+	@echo "    Exemplo: make start-tdd-guardrail-agent criteria_id=\"tdd_criteria_20240328_123456\" concept_id=\"feature_concept_20240328_123456\" project_dir=\"/Users/mal/GitHub/agent-flow-craft-aider\" model=\"gpt-4-turbo\""
+	@echo "    Tarefas executadas:"
+	@echo "      1. Inicializa o TDDGuardrailAgent com o token OpenAI e modelo especificados"
+	@echo "      2. Carrega os critérios TDD e o conceito da feature dos arquivos de contexto especificados"
+	@echo "      3. Avalia a qualidade dos critérios TDD existentes (pontuação, problemas, etc.)"
+	@echo "      4. Verifica se os critérios incluem elementos de UI (que devem ser evitados)"
+	@echo "      5. Se necessário, gera um prompt otimizado para melhorar os critérios"
+	@echo "      6. Solicita à API OpenAI critérios TDD aprimorados, focados em API/CLI (não em UI)"
+	@echo "      7. Salva os critérios melhorados no diretório de contexto com um ID único"
+	@echo "      8. Retorna uma avaliação completa e os critérios TDD aprimorados"
 	@echo ""
 	@echo "  make start-github-agent context_id=\"...\"      Inicia o agente de integração com GitHub (GitHubIntegrationAgent)"
 	@echo "    Opções: [project_dir=\"...\"] [context_dir=\"...\"] [base_branch=\"...\"] [github_token=\"...\"] [owner=\"...\"] [repo=\"...\"]"
@@ -272,6 +285,23 @@ start-tdd-criteria-agent: create-venv print-no-pycache-message
 	@echo "Executando gerador de critérios TDD com context_id: \"$(context_id)\""
 	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_tdd_criteria_agent.py \
 		"$(context_id)" \
+		--project_dir "$(project_dir)" \
+		$(if $(output),--output "$(output)",) \
+		$(if $(context_dir),--context_dir "$(context_dir)",) \
+		$(if $(openai_token),--openai_token "$(openai_token)",) \
+		$(if $(model),--model "$(model)",) \
+		$(ARGS)
+
+# Target para guardrail de critérios TDD (TDDGuardrailAgent)
+start-tdd-guardrail-agent: create-venv print-no-pycache-message
+	@if [ -z "$(criteria_id)" ] || [ -z "$(concept_id)" ] || [ -z "$(project_dir)" ]; then \
+		echo "Uso: make start-tdd-guardrail-agent criteria_id=\"<id_dos_criterios>\" concept_id=\"<id_do_conceito>\" project_dir=\"<diretório>\" [output=\"<arquivo_saida>\"] [context_dir=\"<dir_contexto>\"] [model=\"<modelo_openai>\"]"; \
+		exit 1; \
+	fi
+	@echo "Executando guardrail de critérios TDD com criteria_id: \"$(criteria_id)\" e concept_id: \"$(concept_id)\""
+	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_tdd_guardrail_agent.py \
+		"$(criteria_id)" \
+		"$(concept_id)" \
 		--project_dir "$(project_dir)" \
 		$(if $(output),--output "$(output)",) \
 		$(if $(context_dir),--context_dir "$(context_dir)",) \

@@ -1,10 +1,9 @@
 {
-  "context_id": "feature_concept_20250329_094147",
-  "issue_number": 123,
-  "branch_name": "feat/123/new-feature",
-  "plan_valid": false,
-  "github_integration_success": true,
-  "tdd_criteria": {
+  "id": "tdd_criteria_20250329_094147",
+  "type": "tdd_criteria",
+  "concept_id": "feature_concept_20250329_094147",
+  "created_at": "2025-03-29T09:41:47.187906",
+  "criteria": {
     "criteria": [
       {
         "id": "TDD-001",
@@ -47,11 +46,5 @@
     "source": "default_template",
     "note": "Critérios gerados automaticamente. Sugerimos personalizar para sua feature específica.",
     "context_id": "feature_concept_20250329_094147"
-  },
-  "validation_result": {
-    "is_valid": false,
-    "missing_items": [
-      "Token da OpenAI ausente"
-    ]
   }
 }

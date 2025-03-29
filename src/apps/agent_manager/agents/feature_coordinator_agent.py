@@ -9,6 +9,7 @@ from apps.agent_manager.agents.github_integration_agent import GitHubIntegration
 from apps.agent_manager.agents.context_manager import ContextManager
 from apps.agent_manager.agents.plan_validator import PlanValidator
 from apps.agent_manager.agents.tdd_criteria_agent import TDDCriteriaAgent
+from apps.agent_manager.agents.tdd_guardrail_agent import TDDGuardrailAgent
 
 # Tente importar funções de mascaramento de dados sensíveis
 try:
@@ -55,6 +56,7 @@ class FeatureCoordinatorAgent:
         self._github_agent = None
         self._plan_validator = None
         self._tdd_criteria_agent = None
+        self._tdd_guardrail_agent = None
         
         # Status de tokens (logging seguro)
         openai_token_status = "presente" if self.openai_token else "ausente"
@@ -114,14 +116,22 @@ class FeatureCoordinatorAgent:
             self._tdd_criteria_agent = TDDCriteriaAgent(openai_token=self.openai_token)
         return self._tdd_criteria_agent
     
+    @property
+    def tdd_guardrail_agent(self):
+        """Lazy loading do agente guardrail de critérios TDD"""
+        if self._tdd_guardrail_agent is None:
+            self._tdd_guardrail_agent = TDDGuardrailAgent(openai_token=self.openai_token)
+        return self._tdd_guardrail_agent
+    
     @log_execution
     async def execute_feature_creation(self, prompt_text, execution_plan=None):
         """
         Coordena o fluxo completo de criação de feature:
         1. Gera conceito via OpenAI
         2. Gera critérios TDD
-        3. Valida o plano de execução
-        4. Cria issue, branch e PR no GitHub
+        3. Valida e melhora os critérios TDD
+        4. Valida o plano de execução
+        5. Cria issue, branch e PR no GitHub
         
         Args:
             prompt_text (str): Descrição da feature desejada
@@ -151,7 +161,43 @@ class FeatureCoordinatorAgent:
             # Etapa 3: Gerar critérios TDD
             self.logger.info("Gerando critérios TDD")
             tdd_criteria = self.tdd_criteria_agent.generate_tdd_criteria(context_id, self.target_dir)
+            criteria_id = None
+            
+            # Obter o ID do contexto dos critérios TDD
+            if "context_id" in tdd_criteria:
+                criteria_id = tdd_criteria.get("context_id")
+            else:
+                # Verificar se foi salvo em um arquivo de contexto
+                criteria_files = list(Path(self.context_dir).glob("tdd_criteria_*.json"))
+                if criteria_files:
+                    # Usar o arquivo mais recente
+                    criteria_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+                    criteria_id = criteria_files[0].stem
+            
             self.logger.info(f"Critérios TDD gerados com sucesso: {len(tdd_criteria.get('criteria', []))} critérios")
+            
+            # Etapa 3.1: Melhorar critérios TDD se necessário
+            if criteria_id:
+                self.logger.info("Validando e melhorando critérios TDD")
+                
+                # Guardrail de critérios TDD
+                guardrail_result = self.tdd_guardrail_agent.execute_tdd_guardrail(
+                    criteria_id, 
+                    context_id, 
+                    self.target_dir
+                )
+                
+                # Verificar se os critérios foram melhorados
+                if guardrail_result.get("was_improved", False):
+                    self.logger.info("Critérios TDD foram melhorados pelo guardrail")
+                    # Usar os critérios melhorados
+                    tdd_criteria = guardrail_result.get("criteria", tdd_criteria)
+                    # Atualizar o ID dos critérios melhorados
+                    criteria_id = guardrail_result.get("improved_criteria_id", criteria_id)
+                else:
+                    self.logger.info("Critérios TDD existentes já adequados, nenhuma melhoria necessária")
+            else:
+                self.logger.warning("Não foi possível determinar o ID dos critérios TDD, ignorando o guardrail")
             
             # Etapa 4: Validar o plano de execução
             if not execution_plan:
@@ -216,6 +262,8 @@ class FeatureCoordinatorAgent:
                 "plan_valid": validation_result.get("is_valid", False),
                 "github_integration_success": github_result.get("status") != "error",
                 "tdd_criteria": tdd_criteria,
+                "tdd_criteria_id": criteria_id,
+                "tdd_improved": guardrail_result.get("was_improved", False) if 'guardrail_result' in locals() else False,
                 "validation_result": validation_result
             }
             
