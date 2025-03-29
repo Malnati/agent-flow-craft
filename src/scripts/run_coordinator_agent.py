@@ -68,8 +68,18 @@ def parse_arguments():
     )
     
     parser.add_argument(
+        "--owner",
+        help="Proprietário do repositório GitHub (opcional, usa variável de ambiente GITHUB_OWNER se não especificado)"
+    )
+    
+    parser.add_argument(
+        "--repo",
+        help="Nome do repositório GitHub (opcional, usa variável de ambiente GITHUB_REPO se não especificado)"
+    )
+    
+    parser.add_argument(
         "--openai_token",
-        help="Token de acesso à API da OpenAI (opcional, usa variável de ambiente OPENAI_API_KEY se não especificado)"
+        help="Token de acesso à OpenAI (opcional, usa variável de ambiente OPENAI_API_KEY se não especificado)"
     )
     
     parser.add_argument(
@@ -129,6 +139,12 @@ def main():
             github_token=github_token,
             target_dir=target_dir
         )
+        
+        # Se fornecidos, substituir os valores padrão
+        if args.owner:
+            agent.repo_owner = args.owner
+        if args.repo:
+            agent.repo_name = args.repo
         
         # Configurar o diretório de contexto do agente
         if hasattr(agent, 'context_dir'):

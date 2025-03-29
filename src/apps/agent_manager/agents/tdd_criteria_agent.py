@@ -333,7 +333,16 @@ Cada critério deve:
             # Verifica se tem token OpenAI
             if not self.openai_token:
                 self.logger.warning("Token OpenAI ausente. Usando critérios padrão.")
-                return self._create_default_criteria()
+                default_criteria = self._create_default_criteria()
+                
+                # Adiciona metadados aos critérios padrão
+                default_criteria["context_id"] = context_id
+                
+                # Salva os critérios padrão no diretório de contexto
+                criteria_id = f"tdd_criteria_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                self._save_criteria_to_context(criteria_id, default_criteria, context_id)
+                
+                return default_criteria
                 
             # Carrega o conceito pelo context_id
             concept_data = self.load_concept(context_id)
