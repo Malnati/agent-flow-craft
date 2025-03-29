@@ -1,11 +1,9 @@
 {
-  "context_id": "feature_concept_20250329_123503",
-  "issue_number": 32,
-  "branch_name": "feat/32/new-feature",
-  "plan_valid": false,
-  "github_integration_success": true,
-  "concept_improved": false,
-  "tdd_criteria": {
+  "id": "tdd_criteria_20250329_122652",
+  "type": "tdd_criteria",
+  "concept_id": "feature_concept_20250329_122652",
+  "created_at": "2025-03-29T12:26:52.511586",
+  "criteria": {
     "criteria": [
       {
         "id": "TDD-001",
@@ -44,17 +42,9 @@
         "Teste de ponta a ponta do fluxo principal do usuário"
       ]
     },
-    "generated_at": "2025-03-29T12:35:03.343705",
+    "generated_at": "2025-03-29T12:26:52.511487",
     "source": "default_template",
     "note": "Critérios gerados automaticamente. Sugerimos personalizar para sua feature específica.",
-    "context_id": "feature_concept_20250329_123503"
-  },
-  "tdd_criteria_id": "feature_concept_20250329_123503",
-  "tdd_improved": false,
-  "validation_result": {
-    "is_valid": false,
-    "missing_items": [
-      "Token da OpenAI ausente"
-    ]
+    "context_id": "feature_concept_20250329_122652"
   }
 }
