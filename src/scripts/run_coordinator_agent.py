@@ -125,10 +125,9 @@ def main():
         
         # Inicializar agente coordenador
         agent = FeatureCoordinatorAgent(
-            openai_api_key=openai_token,
+            openai_token=openai_token,
             github_token=github_token,
-            target_dir=target_dir,
-            model=args.model
+            target_dir=target_dir
         )
         
         # Configurar o diretório de contexto do agente
@@ -136,6 +135,11 @@ def main():
             agent.context_dir = context_dir
         elif hasattr(agent, 'set_context_dir'):
             agent.set_context_dir(str(context_dir))
+            
+        # Configurar o modelo, se possível
+        if hasattr(agent, 'concept_agent') and hasattr(agent.concept_agent, 'set_model'):
+            agent.concept_agent.set_model(args.model)
+            logger.info(f"Modelo configurado para ConceptAgent: {args.model}")
         
         # Carregar plano de execução se especificado
         execution_plan = None
@@ -158,6 +162,7 @@ def main():
         # Processar a feature
         logger.info(f"Iniciando processamento da feature com prompt: {args.prompt}")
         print(f"\n🚀 Iniciando criação da feature: '{args.prompt}'")
+        print(f"⚙️  Modelo OpenAI: {args.model} (será usado no agente de conceito)")
         
         if execution_plan:
             print(f"📋 Usando plano de execução de: {args.plan_file}")
