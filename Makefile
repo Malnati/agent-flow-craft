@@ -27,17 +27,17 @@ help:
 	@echo "  make update-docs-index        Atualiza o índice da documentação automaticamente"
 	@echo ""
 	@echo "Agentes disponíveis:"
-	@echo "  make start-agent prompt=\"...\" execution_plan=\"...\" target=\"...\"  Inicia o agente de criação de features (FeatureCoordinatorAgent)"
+	@echo "  make start-agent prompt=\"...\" execution_plan=\"...\" project_dir=\"...\"  Inicia o agente de criação de features (FeatureCoordinatorAgent)"
 	@echo "    Opções: [output=\"...\"] [context_dir=\"...\"] [project_dir=\"...\"] [openai_token=\"...\"]"
 	@echo ""
 	@echo "  make start-concept-agent prompt=\"...\"        Inicia o agente de geração de conceitos (ConceptGenerationAgent)"
 	@echo "    Opções: [output=\"...\"] [context_dir=\"...\"] [project_dir=\"...\"] [openai_token=\"...\"]"
 	@echo ""
 	@echo "  make start-github-agent context_id=\"...\"      Inicia o agente de integração com GitHub (GitHubIntegrationAgent)"
-	@echo "    Opções: [target=\"...\"] [context_dir=\"...\"] [base_branch=\"...\"] [github_token=\"...\"] [owner=\"...\"] [repo=\"...\"]"
+	@echo "    Opções: [project_dir=\"...\"] [context_dir=\"...\"] [base_branch=\"...\"] [github_token=\"...\"] [owner=\"...\"] [repo=\"...\"]"
 	@echo ""
 	@echo "  make start-coordinator-agent prompt=\"...\"    Inicia o agente coordenador (FeatureCoordinatorAgent)"
-	@echo "    Opções: [plan_file=\"...\"] [target=\"...\"] [output=\"...\"] [context_dir=\"...\"] [github_token=\"...\"] [openai_token=\"...\"]"
+	@echo "    Opções: [plan_file=\"...\"] [project_dir=\"...\"] [output=\"...\"] [context_dir=\"...\"] [github_token=\"...\"] [openai_token=\"...\"]"
 	@echo ""
 	@echo "  make start-context-manager operation=\"...\"   Executa operação do gerenciador de contexto (listar, obter, criar, etc.)"
 	@echo "    Opções: [context_id=\"...\"] [data_file=\"...\"] [limit=10] [type=\"...\"] [context_dir=\"...\"] [output=\"...\"]"
@@ -106,58 +106,36 @@ start-concept-agent: create-venv print-no-pycache-message
 		$(if $(openai_token),--openai_token "$(openai_token)",)
 
 # Target para iniciar o agente GitHub (GitHubIntegrationAgent)
-start-github-agent: create-venv print-no-pycache-message
+start-github-agent: check-env create-venv print-no-pycache-message
 	@if [ -z "$(context_id)" ]; then \
-		echo "Uso: make start-github-agent context_id=\"<id_do_contexto>\" [target=\"<diretorio_git>\"] [context_dir=\"<dir_contexto>\"] [base_branch=\"<branch_base>\"]"; \
+		echo "Uso: make start-github-agent context_id=\"<id>\" [project_dir=\"<diretório>\"] [context_dir=\"<diretório>\"] [base_branch=\"<branch>\"] [github_token=\"<token>\"] [owner=\"<owner>\"] [repo=\"<repo>\"]"; \
 		exit 1; \
-	fi
-	@echo "Executando agente GitHub com contexto: \"$(context_id)\""
-	@if [ ! -z "$(target)" ]; then \
-		echo "Diretório alvo: \"$(target)\""; \
 	fi
 	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_github_agent.py \
 		"$(context_id)" \
-		$(if $(target),--target "$(target)",) \
-		$(if $(output),--output "$(output)",) \
+		$(if $(project_dir),--project_dir "$(project_dir)",) \
 		$(if $(context_dir),--context_dir "$(context_dir)",) \
 		$(if $(base_branch),--base_branch "$(base_branch)",) \
 		$(if $(github_token),--github_token "$(github_token)",) \
 		$(if $(owner),--owner "$(owner)",) \
-		$(if $(repo),--repo "$(repo)",)
+		$(if $(repo),--repo "$(repo)",) \
+		$(ARGS)
 
 # Target para iniciar o agente coordenador (FeatureCoordinatorAgent)
-start-coordinator-agent: create-venv print-no-pycache-message
+start-coordinator-agent: check-env create-venv print-no-pycache-message
 	@if [ -z "$(prompt)" ]; then \
-		echo "Uso: make start-coordinator-agent prompt=\"<descricao>\" [plan_file=\"<arquivo_plano>\"] [target=\"<diretorio_git>\"] [output=\"<arquivo_saida>\"] [context_dir=\"<dir_contexto>\"]"; \
+		echo "Uso: make start-coordinator-agent prompt=\"<descricao>\" [project_dir=\"<diretório>\"] [plan_file=\"<arquivo>\"] [output=\"<arquivo>\"] [context_dir=\"<diretório>\"] [github_token=\"<token>\"] [openai_token=\"<token>\"]"; \
 		exit 1; \
 	fi
-	@echo "Executando agente coordenador com prompt: \"$(prompt)\""
-	@if [ ! -z "$(target)" ]; then \
-		echo "Diretório alvo: \"$(target)\""; \
-	fi
-	@if [ ! -z "$(plan_file)" ]; then \
-		echo "Arquivo de plano: \"$(plan_file)\""; \
-		$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/start_feature_agent.py \
-			"$(prompt)" \
-			"$(plan_file)" \
-			$(if $(target),--target "$(target)",) \
-			$(if $(output),--output "$(output)",) \
-			$(if $(context_dir),--context_dir "$(context_dir)",) \
-			$(if $(github_token),--github_token "$(github_token)",) \
-			$(if $(openai_token),--openai_token "$(openai_token)",) \
-			$(if $(owner),--owner "$(owner)",) \
-			$(if $(repo),--repo "$(repo)",); \
-	else \
-		$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/start_feature_agent.py \
-			"$(prompt)" \
-			$(if $(target),--target "$(target)",) \
-			$(if $(output),--output "$(output)",) \
-			$(if $(context_dir),--context_dir "$(context_dir)",) \
-			$(if $(github_token),--github_token "$(github_token)",) \
-			$(if $(openai_token),--openai_token "$(openai_token)",) \
-			$(if $(owner),--owner "$(owner)",) \
-			$(if $(repo),--repo "$(repo)",); \
-	fi
+	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_coordinator_agent.py \
+		"$(prompt)" \
+		$(if $(plan_file),--plan_file "$(plan_file)",) \
+		$(if $(project_dir),--project_dir "$(project_dir)",) \
+		$(if $(output),--output "$(output)",) \
+		$(if $(context_dir),--context_dir "$(context_dir)",) \
+		$(if $(github_token),--github_token "$(github_token)",) \
+		$(if $(openai_token),--openai_token "$(openai_token)",) \
+		$(ARGS)
 
 # Target para gerenciador de contexto (ContextManager)
 start-context-manager: create-venv print-no-pycache-message
@@ -227,21 +205,16 @@ build: create-venv
 	@echo "Construindo pacote..."
 	$(ACTIVATE) && $(PYTHON_ENV) python -m build
 
-# Target para iniciar o agente de feature
+# Target para iniciar o agente de criação de features (FeatureAgent)
 start-agent: check-env create-venv print-no-pycache-message
-	@if [ -z "$(prompt)" ] || [ -z "$(execution_plan)" ] || [ -z "$(target)" ]; then \
-		echo "Uso: make start-agent prompt=\"<descricao>\" execution_plan=\"<plano de execucao>\" target=\"<target>\""; \
+	@if [ -z "$(prompt)" ] || [ -z "$(execution_plan)" ] || [ -z "$(project_dir)" ]; then \
+		echo "Uso: make start-agent prompt=\"<descricao>\" execution_plan=\"<plano de execucao>\" project_dir=\"<diretório>\""; \
 		exit 1; \
 	fi
-	@# Criar versão segura dos argumentos sem exibir tokens
-	@echo "Executando agente com prompt: \"$(prompt)\""
-	@echo "Diretório alvo: \"$(target)\""
-	@echo "Executando comando com argumentos sensíveis mascarados..."
-	@# Executar o comando sem exibir tokens
-	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/start_feature_agent.py \
+	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/apps/feature_creation/start.py \
 		"$(prompt)" \
 		"$(execution_plan)" \
-		--target "$(target)" \
+		--project_dir "$(project_dir)" \
 		$(ARGS)
 
 # Atualiza o índice da documentação automaticamente
