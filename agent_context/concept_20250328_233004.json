@@ -1,12 +1,12 @@
 {
-  "id": "concept_20250328_214039",
-  "timestamp": "20250328_214039",
-  "prompt": "Criar sistema de notifica\u00e7\u00f5es",
+  "id": "concept_20250328_233004",
+  "timestamp": "20250328_233004",
+  "prompt": "Implementar login do google",
   "concept": {
     "branch_type": "feat",
-    "issue_title": "Feature: Criar sistema de notifica\u00e7\u00f5es",
-    "issue_description": "Criar sistema de notifica\u00e7\u00f5es",
-    "generated_branch_suffix": "implementar-criar-sistema-de-not",
+    "issue_title": "Feature: Implementar login do google",
+    "issue_description": "Implementar login do google",
+    "generated_branch_suffix": "implementar-login-do-google",
     "execution_plan": {
       "steps": [
         "1. An\u00e1lise dos requisitos do sistema de login",
