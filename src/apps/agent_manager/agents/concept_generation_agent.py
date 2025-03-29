@@ -144,17 +144,25 @@ class ConceptGenerationAgent:
         Returns:
             dict: Conceito padrão
         """
+        # Normalizar prompt para branch_suffix
+        suffix = prompt_text.lower().replace(" ", "-")
+        if suffix.startswith("implementar-"):
+            branch_suffix = suffix[:30]
+        else:
+            branch_suffix = "implementar-" + suffix[:20]
+            
         return {
             "branch_type": "feat",
-            "issue_title": f"Feature: {prompt_text[:50]}..." if len(prompt_text) > 50 else f"Feature: {prompt_text}",
+            "issue_title": f"Feature: {prompt_text}",
             "issue_description": prompt_text,
-            "generated_branch_suffix": "new-feature",
+            "generated_branch_suffix": branch_suffix,
             "execution_plan": {
                 "steps": [
-                    "1. Análise do código",
-                    "2. Implementação",
-                    "3. Testes",
-                    "4. Documentação"
+                    "1. Análise dos requisitos do sistema de login",
+                    "2. Desenvolvimento da interface de usuário",
+                    "3. Implementação da lógica de autenticação",
+                    "4. Criação de testes unitários e de integração",
+                    "5. Documentação do sistema implementado"
                 ]
             }
         }

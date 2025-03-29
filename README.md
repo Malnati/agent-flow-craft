@@ -367,3 +367,142 @@ Para facilitar a execução de tarefas comuns no projeto, utilize os comandos ab
 > 
 > # Os comandos gerenciam automaticamente o ambiente virtual Python
 > ```
+
+# Agent Flow Craft
+
+Agent Flow Craft é uma plataforma para orquestração de agentes especializados que trabalham juntos para criar features em projetos de software.
+
+## Funcionalidades
+
+- Geração de conceitos de features baseados em prompts do usuário
+- Validação de planos de execução
+- Criação automática de issues, branches e PRs no GitHub
+- Sistema de contexto para transferência de dados entre agentes
+- Agentes especializados e autônomos que podem trabalhar juntos ou separadamente
+
+## Arquitetura
+
+O sistema é composto por vários agentes especializados:
+
+1. **ConceptGenerationAgent**: Gera conceitos de features a partir de prompts do usuário usando a OpenAI
+2. **PlanValidator**: Valida planos de execução de features
+3. **GitHubIntegrationAgent**: Integra com o GitHub para criar issues, branches e PRs
+4. **ContextManager**: Gerencia a transferência de dados entre agentes
+5. **FeatureCoordinatorAgent**: Coordena o fluxo de trabalho entre os agentes especializados
+
+## Instalação
+
+```bash
+# Clonar o repositório
+git clone https://github.com/seu-usuario/agent-flow-craft.git
+cd agent-flow-craft
+
+# Instalar o projeto
+make install
+```
+
+## Configuração
+
+Configure as variáveis de ambiente necessárias:
+
+```bash
+# Credenciais GitHub
+export GITHUB_TOKEN=seu_token_github
+export GITHUB_OWNER=seu_usuario_github
+export GITHUB_REPO=nome_do_repositorio
+
+# Credenciais OpenAI
+export OPENAI_API_KEY=seu_token_openai
+```
+
+## Uso
+
+### Agente Coordenador (Fluxo Completo)
+
+Para executar o fluxo completo de criação de feature:
+
+```bash
+make start-coordinator-agent prompt="Implementar sistema de login com autenticação de dois fatores" \
+  target="/caminho/para/repositorio" \
+  output="resultado.json"
+```
+
+Opcionalmente, você pode fornecer um arquivo de plano:
+
+```bash
+make start-coordinator-agent prompt="Implementar sistema de login com autenticação de dois fatores" \
+  plan_file="plano.json" \
+  target="/caminho/para/repositorio"
+```
+
+### Agentes Individuais
+
+Você pode executar cada agente especializado de forma autônoma:
+
+#### Agente de Geração de Conceitos
+
+```bash
+make start-concept-agent prompt="Implementar sistema de login com autenticação de dois fatores" \
+  output="conceito.json"
+```
+
+#### Agente de Integração GitHub
+
+```bash
+make start-github-agent context_id="feature_concept_20240328_123456" \
+  target="/caminho/para/repositorio"
+```
+
+#### Gerenciador de Contexto
+
+```bash
+# Listar contextos
+make start-context-manager operation=lista limit=5 type="feature_concept"
+
+# Obter um contexto específico
+make start-context-manager operation=obter context_id="feature_concept_20240328_123456"
+
+# Criar um novo contexto
+make start-context-manager operation=criar data_file="dados.json" type="feature_concept"
+
+# Atualizar um contexto
+make start-context-manager operation=atualizar context_id="feature_concept_20240328_123456" \
+  data_file="novos_dados.json" merge=true
+
+# Excluir um contexto
+make start-context-manager operation=excluir context_id="feature_concept_20240328_123456"
+
+# Limpar contextos antigos
+make start-context-manager operation=limpar days=30
+```
+
+#### Validador de Planos
+
+```bash
+make start-validator plan_file="plano.json" output="validacao.json"
+```
+
+## Fluxo de Trabalho
+
+O fluxo completo usando o FeatureCoordinatorAgent segue estas etapas:
+
+1. Geração de conceito a partir do prompt do usuário (ConceptGenerationAgent)
+2. Validação e correção do plano de execução (PlanValidator)
+3. Criação de issue, branch e PR no GitHub (GitHubIntegrationAgent)
+4. Transferência de dados entre as etapas usando contextos (ContextManager)
+
+Os desenvolvedores podem intervir em qualquer ponto do processo, usando os agentes individuais para modificar ou complementar partes específicas do fluxo.
+
+## Contribuição
+
+Contribuições são bem-vindas! Por favor, siga estas etapas:
+
+1. Fork o projeto
+2. Crie sua branch de feature (`git checkout -b feature/amazing-feature`)
+3. Faça commit das suas mudanças (`git commit -m 'Add some amazing feature'`)
+4. Push para a branch (`git push origin feature/amazing-feature`)
+5. Abra um Pull Request
+
+## Licença
+
+Este projeto está licenciado sob a licença MIT - veja o arquivo LICENSE para mais detalhes.
