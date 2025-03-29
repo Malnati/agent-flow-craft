@@ -64,6 +64,17 @@ def parse_arguments():
     )
     
     parser.add_argument(
+        "--elevation_model",
+        help="Modelo alternativo para elevação em caso de falha (opcional)"
+    )
+    
+    parser.add_argument(
+        "--force", 
+        action="store_true",
+        help="Força o uso direto do modelo de elevação, ignorando o modelo padrão"
+    )
+    
+    parser.add_argument(
         "--git_log_file",
         help="Arquivo com log do Git para contexto (opcional)"
     )
@@ -133,11 +144,23 @@ def main():
         logger.info(f"Utilizando diretório de contexto: {context_dir} (absoluto: {context_dir.resolve()})")
         
         # Inicializar o agente com o diretório de contexto personalizado
-        agent = ConceptGenerationAgent(openai_token=openai_token, model=args.model)
+        agent = ConceptGenerationAgent(
+            openai_token=openai_token, 
+            model=args.model,
+            elevation_model=args.elevation_model,
+            force=args.force
+        )
+        
         # Definir diretório de contexto explicitamente
         agent.context_dir = context_dir
         logger.info(f"Diretório de contexto do agente configurado: {agent.context_dir}")
         logger.info(f"Modelo OpenAI configurado: {args.model}")
+        
+        # Mostrar informações sobre elevação, se configurada
+        if args.elevation_model:
+            logger.info(f"Modelo de elevação configurado: {args.elevation_model}")
+            if args.force:
+                logger.info(f"Modo force ativado: usando diretamente o modelo de elevação")
         
         # Verificar diretório do projeto se fornecido
         if args.project_dir:

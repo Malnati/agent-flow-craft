@@ -91,6 +91,17 @@ def parse_arguments():
         help="Modelo da OpenAI a ser utilizado (padrão: gpt-4-turbo)"
     )
     
+    parser.add_argument(
+        "--elevation_model",
+        help="Modelo alternativo para elevação em caso de falha (opcional)"
+    )
+    
+    parser.add_argument(
+        "--force", 
+        action="store_true",
+        help="Força o uso direto do modelo de elevação, ignorando o modelo padrão"
+    )
+    
     return parser.parse_args()
 
 def main():
@@ -172,6 +183,35 @@ def main():
         if hasattr(agent, 'concept_agent') and hasattr(agent.concept_agent, 'set_model'):
             agent.concept_agent.set_model(args.model)
             logger.info(f"Modelo configurado para ConceptAgent: {args.model}")
+            
+        # Configurar o modelo de elevação, se fornecido
+        if args.elevation_model:
+            if hasattr(agent, 'concept_agent') and hasattr(agent.concept_agent, 'set_elevation_model'):
+                agent.concept_agent.set_elevation_model(args.elevation_model)
+                logger.info(f"Modelo de elevação configurado para ConceptAgent: {args.elevation_model}")
+            
+            # Configurar elevation model para outros agentes usados internamente
+            for agent_attr in ['feature_concept_agent', 'tdd_criteria_agent', 'github_agent']:
+                if hasattr(agent, agent_attr) and hasattr(getattr(agent, agent_attr), 'set_elevation_model'):
+                    getattr(agent, agent_attr).set_elevation_model(args.elevation_model)
+                    logger.info(f"Modelo de elevação configurado para {agent_attr}: {args.elevation_model}")
+        
+        # Configurar o modo force, se ativado
+        if args.force:
+            logger.info("Modo force ativado: usando diretamente o modelo de elevação")
+            
+            # Aplicar force em todos os agentes internos que suportam
+            for agent_attr in ['concept_agent', 'feature_concept_agent', 'tdd_criteria_agent', 'github_agent']:
+                if hasattr(agent, agent_attr):
+                    agent_instance = getattr(agent, agent_attr)
+                    if hasattr(agent_instance, 'force'):
+                        agent_instance.force = True
+                        logger.info(f"Modo force configurado para {agent_attr}")
+                    
+                    # Se temos modelo de elevação, usar diretamente como modelo principal
+                    if args.elevation_model and hasattr(agent_instance, 'set_model') and hasattr(agent_instance, 'model'):
+                        agent_instance.set_model(args.elevation_model)
+                        logger.info(f"Substituído modelo principal de {agent_attr} para {args.elevation_model} devido ao modo force")
         
         # Carregar plano de execução se especificado
         execution_plan = None
@@ -195,6 +235,11 @@ def main():
         logger.info(f"Iniciando processamento da feature com prompt: {args.prompt}")
         print(f"\n🚀 Iniciando criação da feature: '{args.prompt}'")
         print(f"⚙️  Modelo OpenAI: {args.model} (será usado no agente de conceito)")
+        
+        if args.elevation_model:
+            print(f"🔄 Modelo de elevação: {args.elevation_model}")
+            if args.force:
+                print(f"⚡ Modo force ativado: usando diretamente o modelo de elevação")
         
         if execution_plan:
             print(f"📋 Usando plano de execução de: {args.plan_file}")

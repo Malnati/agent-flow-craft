@@ -29,7 +29,7 @@ class ConceptGenerationAgent:
     utilizando a OpenAI para processar a solicitação do usuário.
     """
     
-    def __init__(self, openai_token=None, model="gpt-4"):
+    def __init__(self, openai_token=None, model="gpt-4", elevation_model=None, force=False):
         self.logger = get_logger(__name__)
         self.logger.info("INÍCIO - ConceptGenerationAgent.__init__")
         
@@ -38,6 +38,13 @@ class ConceptGenerationAgent:
             self.context_dir = Path('agent_context')
             self.context_dir.mkdir(exist_ok=True)
             self.model = model
+            self.elevation_model = elevation_model
+            self.force = force
+            
+            # Se force=True e temos um modelo de elevação, usamos ele diretamente
+            if self.force and self.elevation_model:
+                self.logger.info(f"Modo force ativado. Usando diretamente o modelo de elevação: {self.elevation_model}")
+                self.model = self.elevation_model
             
             # Logar status do token sem expor dados sensíveis
             if has_utils:
@@ -48,6 +55,8 @@ class ConceptGenerationAgent:
                 self.logger.debug(f"Status do token OpenAI: {token_available}")
             
             self.logger.info(f"Modelo OpenAI configurado: {self.model}")
+            if self.elevation_model:
+                self.logger.info(f"Modelo de elevação configurado: {self.elevation_model}")
             
             if not self.openai_token:
                 self.logger.warning("ALERTA - Token OpenAI ausente | Funcionalidades limitadas")
@@ -71,6 +80,33 @@ class ConceptGenerationAgent:
         self.model = model
         self.logger.info(f"SUCESSO - Modelo alterado para: {self.model}")
         return self.model
+    
+    def set_elevation_model(self, elevation_model):
+        """
+        Define o modelo de elevação a ser utilizado.
+        
+        Args:
+            elevation_model (str): Nome do modelo de elevação
+        """
+        self.logger.info(f"INÍCIO - set_elevation_model | Modelo anterior: {self.elevation_model} | Novo modelo: {elevation_model}")
+        self.elevation_model = elevation_model
+        self.logger.info(f"SUCESSO - Modelo de elevação alterado para: {self.elevation_model}")
+        return self.elevation_model
+    
+    def use_elevation_model(self):
+        """
+        Troca para o modelo de elevação em caso de falha do modelo principal.
+        
+        Returns:
+            bool: True se a elevação foi possível, False caso contrário
+        """
+        if not self.elevation_model:
+            self.logger.warning("Modelo de elevação não configurado, não é possível elevar")
+            return False
+            
+        self.logger.info(f"Elevando de {self.model} para {self.elevation_model}")
+        self.model = self.elevation_model
+        return True
     
     @log_execution
     def generate_concept(self, prompt_text, git_log=None):
@@ -114,17 +150,43 @@ class ConceptGenerationAgent:
             }}
             """
             
-            response = client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": context},
-                    {"role": "user", "content": prompt_text}
-                ],
-                temperature=0.7,
-                max_tokens=2000
-            )
-            
-            suggestion = response.choices[0].message.content
+            try:
+                response = client.chat.completions.create(
+                    model=self.model,
+                    messages=[
+                        {"role": "system", "content": context},
+                        {"role": "user", "content": prompt_text}
+                    ],
+                    temperature=0.7,
+                    max_tokens=2000
+                )
+                
+                suggestion = response.choices[0].message.content
+                
+            except Exception as model_error:
+                self.logger.warning(f"Erro ao usar o modelo {self.model}: {str(model_error)}")
+                
+                # Tentar elevar para modelo mais potente se configurado
+                if self.elevation_model and self.model != self.elevation_model:
+                    self.logger.info(f"Tentando elevação para o modelo {self.elevation_model}")
+                    self.model = self.elevation_model
+                    
+                    # Tentar novamente com o modelo de elevação
+                    response = client.chat.completions.create(
+                        model=self.model,
+                        messages=[
+                            {"role": "system", "content": context},
+                            {"role": "user", "content": prompt_text}
+                        ],
+                        temperature=0.7,
+                        max_tokens=2000
+                    )
+                    
+                    suggestion = response.choices[0].message.content
+                    self.logger.info(f"Geração bem-sucedida após elevação para {self.model}")
+                else:
+                    # Se não temos modelo de elevação ou já estamos usando ele, propagar o erro
+                    raise model_error
             
             # Mascarar possíveis dados sensíveis na resposta
             safe_suggestion = mask_sensitive_data(suggestion[:100])
@@ -248,13 +310,8 @@ class ConceptGenerationAgent:
             with open(context_file, 'r', encoding='utf-8') as f:
                 context_data = json.load(f)
                 
-            if "concept" not in context_data:
-                self.logger.error(f"Conceito não encontrado no contexto: {context_id}")
-                return None
+            return context_data
                 
-            self.logger.info(f"Conceito recuperado com sucesso: {context_id}")
-            return context_data["concept"]
-            
         except Exception as e:
-            self.logger.error(f"Erro ao recuperar conceito: {str(e)}", exc_info=True)
+            self.logger.error(f"Erro ao carregar conceito: {str(e)}", exc_info=True)
             return None 
