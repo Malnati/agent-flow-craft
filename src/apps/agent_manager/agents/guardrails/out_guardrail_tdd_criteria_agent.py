@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-TDDGuardrailAgent: Agente guardrail responsável por verificar e aprimorar os critérios de aceitação TDD.
+OutGuardrailTDDCriteriaAgent: Agente guardrail responsável por verificar e aprimorar os critérios de aceitação TDD.
 
 Este agente atua após o TDDCriteriaAgent, avaliando se os critérios gerados
 atendem a requisitos de qualidade. Se necessário, regenera um prompt otimizado
@@ -72,7 +72,7 @@ except ImportError:
             return mask_str
         return data
 
-class TDDGuardrailAgent:
+class OutGuardrailTDDCriteriaAgent:
     """
     Agente guardrail responsável por verificar e aprimorar os critérios de aceitação TDD.
     
@@ -83,7 +83,7 @@ class TDDGuardrailAgent:
     
     def __init__(self, openai_token=None, model="gpt-4-turbo"):
         """
-        Inicializa o agente TDDGuardrailAgent.
+        Inicializa o agente OutGuardrailTDDCriteriaAgent.
         
         Args:
             openai_token (str, optional): Token de acesso à API da OpenAI. Padrão é None,

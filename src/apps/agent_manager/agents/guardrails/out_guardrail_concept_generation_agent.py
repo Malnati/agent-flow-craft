@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-ConceptGuardrailAgent: Agente guardrail responsável por validar e aprimorar os conceitos de feature.
+OutGuardrailConceptGenerationAgent: Agente guardrail responsável por validar e aprimorar os conceitos de feature.
 
 Este agente atua após o ConceptGenerationAgent, avaliando se o conceito gerado (concept.json) 
 segue um fluxo determinístico claro. Se necessário, regenera um prompt otimizado
@@ -85,7 +85,7 @@ except ImportError:
         def __init__(self, *args, **kwargs):
             pass
 
-class ConceptGuardrailAgent(BaseAgent):
+class OutGuardrailConceptGenerationAgent(BaseAgent):
     """
     Agente guardrail responsável por validar e aprimorar os conceitos de feature.
     
@@ -96,7 +96,7 @@ class ConceptGuardrailAgent(BaseAgent):
     
     def __init__(self, openai_token=None, model="gpt-4-turbo"):
         """
-        Inicializa o agente ConceptGuardrailAgent.
+        Inicializa o agente OutGuardrailConceptGenerationAgent.
         
         Args:
             openai_token (str, optional): Token de acesso à API da OpenAI. Padrão é None,
