@@ -29,7 +29,7 @@ class ConceptGenerationAgent:
     usando a OpenAI.
     """
     
-    def __init__(self, openai_token=None):
+    def __init__(self, openai_token=None, model="gpt-4"):
         self.logger = get_logger(__name__)
         self.logger.info("INÍCIO - ConceptGenerationAgent.__init__")
         
@@ -37,6 +37,7 @@ class ConceptGenerationAgent:
             self.openai_token = openai_token or os.environ.get('OPENAI_API_KEY', '')
             self.context_dir = Path('agent_context')
             self.context_dir.mkdir(exist_ok=True)
+            self.model = model
             
             # Logar status do token sem expor dados sensíveis
             if has_utils:
@@ -45,6 +46,8 @@ class ConceptGenerationAgent:
             else:
                 token_available = "disponível" if self.openai_token else "ausente"
                 self.logger.debug(f"Status do token OpenAI: {token_available}")
+            
+            self.logger.info(f"Modelo OpenAI configurado: {self.model}")
             
             if not self.openai_token:
                 self.logger.warning("ALERTA - Token OpenAI ausente | Funcionalidades limitadas")
@@ -56,6 +59,18 @@ class ConceptGenerationAgent:
             error_msg = mask_sensitive_data(str(e))
             self.logger.error(f"FALHA - ConceptGenerationAgent.__init__ | Erro: {error_msg}", exc_info=True)
             raise
+    
+    def set_model(self, model):
+        """
+        Define o modelo da OpenAI a ser utilizado.
+        
+        Args:
+            model (str): Nome do modelo da OpenAI (ex: gpt-3.5-turbo, gpt-4)
+        """
+        self.logger.info(f"INÍCIO - set_model | Modelo anterior: {self.model} | Novo modelo: {model}")
+        self.model = model
+        self.logger.info(f"SUCESSO - Modelo alterado para: {self.model}")
+        return self.model
     
     @log_execution
     def generate_concept(self, prompt_text, git_log=None):
@@ -101,7 +116,7 @@ class ConceptGenerationAgent:
             """
             
             response = client.chat.completions.create(
-                model="gpt-4",
+                model=self.model,
                 messages=[
                     {"role": "system", "content": context},
                     {"role": "user", "content": prompt_text}

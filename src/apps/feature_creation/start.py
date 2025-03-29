@@ -125,9 +125,8 @@ def main():
         # Inicializar agente de feature
         agent = FeatureCoordinatorAgent(
             github_token=github_token,
-            openai_api_key=openai_token,
-            target_dir=project_dir,
-            model=args.model
+            openai_token=openai_token,
+            target_dir=project_dir
         )
         
         # Configurar o diretório de contexto do agente
@@ -139,7 +138,12 @@ def main():
         # Executar a criação da feature
         logger.info(f"Iniciando criação da feature com prompt: {args.prompt}")
         print(f"\n🚀 Iniciando criação da feature: '{args.prompt}'")
-        print(f"⚙️  Modelo OpenAI: {args.model}")
+        print(f"⚙️  Modelo OpenAI: {args.model} (será usado por agentes internos)")
+        
+        # Se o agente concept_agent suportar o modelo, configurar
+        if hasattr(agent, 'concept_agent') and hasattr(agent.concept_agent, 'set_model'):
+            agent.concept_agent.set_model(args.model)
+            logger.info(f"Modelo configurado para ConceptAgent: {args.model}")
         
         # Chamar o método de criação de feature
         result = agent.create_feature(args.prompt)
