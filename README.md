@@ -122,7 +122,28 @@ python -B src/scripts/run_tdd_criteria_agent.py "feature_concept_20240328_123456
 7. Salva os critérios no diretório de contexto com um ID único
 8. Retorna os critérios TDD completos para uso na implementação
 
-#### 4. Agente de integração com GitHub (GitHubIntegrationAgent)
+#### 4. Agente guardrail de critérios TDD (TDDGuardrailAgent)
+```bash
+make start-tdd-guardrail-agent criteria_id="<id_dos_criterios>" concept_id="<id_do_conceito>" project_dir="<diretório>" [output="<arquivo_saida>"] [context_dir="<dir_contexto>"] [model="<modelo_openai>"]
+```
+**Exemplo:** `make start-tdd-guardrail-agent criteria_id="tdd_criteria_20240328_123456" concept_id="feature_concept_20240328_123456" project_dir="/Users/mal/GitHub/agent-flow-craft-aider" model="gpt-4-turbo"`
+
+**Chamada direta (sem Makefile):**
+```bash
+python -B src/scripts/run_tdd_guardrail_agent.py "tdd_criteria_20240328_123456" "feature_concept_20240328_123456" --project_dir="/Users/mal/GitHub/agent-flow-craft-aider" --model="gpt-4-turbo" --context_dir="agent_context"
+```
+
+**Tarefas executadas:**
+1. Inicializa o TDDGuardrailAgent com o token OpenAI e modelo especificados
+2. Carrega os critérios TDD e o conceito da feature dos arquivos de contexto especificados
+3. Avalia a qualidade dos critérios TDD existentes (pontuação, problemas, etc.)
+4. Verifica se os critérios incluem elementos de UI (que devem ser evitados)
+5. Se necessário, gera um prompt otimizado para melhorar os critérios
+6. Solicita à API OpenAI critérios TDD aprimorados, focados em API/CLI (não em UI)
+7. Salva os critérios melhorados no diretório de contexto com um ID único
+8. Retorna uma avaliação completa e os critérios TDD aprimorados
+
+#### 5. Agente de integração com GitHub (GitHubIntegrationAgent)
 ```bash
 make start-github-agent context_id="<id>" [project_dir="<diretório>"] [context_dir="<diretório>"] [base_branch="<branch>"] [github_token="<token>"] [owner="<owner>"] [repo="<repo>"]
 ```
@@ -142,7 +163,7 @@ python -B src/scripts/run_github_agent.py "feature_concept_20240601_123456" --pr
 6. Cria um pull request no GitHub associado à issue e branch
 7. Retorna um JSON com issue_number, branch_name e status da integração
 
-#### 5. Agente coordenador (FeatureCoordinatorAgent)
+#### 6. Agente coordenador (FeatureCoordinatorAgent)
 ```bash
 make start-coordinator-agent prompt="<descricao>" [project_dir="<diretório>"] [plan_file="<arquivo>"] [output="<arquivo>"] [context_dir="<diretório>"] [github_token="<token>"] [openai_token="<token>"] [model="<modelo_openai>"]
 ```
@@ -164,7 +185,7 @@ python -B src/scripts/run_coordinator_agent.py "Implementar sistema de notifica�
 8. Orquestra todo o fluxo entre os diferentes agentes especializados
 9. Retorna um resultado consolidado com todas as informações do processo
 
-#### 6. Gerenciador de contexto (ContextManager)
+#### 7. Gerenciador de contexto (ContextManager)
 ```bash
 make start-context-manager operation="<lista|obter|criar|atualizar|excluir>" [context_id="<id>"] [data_file="<arquivo.json>"] [limit=10] [type="<tipo>"] [context_dir="<dir_contexto>"] [output="<arquivo>"]
 ```
@@ -187,7 +208,7 @@ python -B src/scripts/run_context_manager.py "listar" --context_dir="agent_conte
 3. Formata e exibe o resultado da operação solicitada
 4. Opcionalmente salva o resultado em um arquivo de saída
 
-#### 7. Validador de planos (PlanValidator)
+#### 8. Validador de planos (PlanValidator)
 ```bash
 make start-validator plan_file="<arquivo_plano.json>" [output="<arquivo_saida>"] [requirements="<arquivo_requisitos>"] [context_dir="<dir_contexto>"] [project_dir="<dir_projeto>"] [model="<modelo_openai>"]
 ```
