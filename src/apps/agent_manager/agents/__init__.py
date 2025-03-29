@@ -1,25 +1,32 @@
 #!/usr/bin/env python3
 """
-Exporta as classes de agentes disponíveis no módulo.
+Módulo de agentes para o sistema de criação e gestão de features.
 """
 
-from .feature_creation_agent import FeatureCreationAgent
 from .concept_generation_agent import ConceptGenerationAgent
-from .concept_guardrail_agent import ConceptGuardrailAgent
-from .github_integration_agent import GitHubIntegrationAgent
-from .plan_validator import PlanValidator
 from .context_manager import ContextManager
+from .plan_validator import PlanValidator
 from .feature_coordinator_agent import FeatureCoordinatorAgent
+from .guardrails.out_guardrail_concept_generation_agent import OutGuardrailConceptGenerationAgent
+from .github_integration_agent import GitHubIntegrationAgent
+from .linter_agent import LinterAgent
+from .testing_agent import TestingAgent
 from .tdd_criteria_agent import TDDCriteriaAgent
-from .tdd_guardrail_agent import TDDGuardrailAgent
+from .builder_agent import BuilderAgent
+from .guardrails.out_guardrail_tdd_criteria_agent import OutGuardrailTDDCriteriaAgent
+from .code_documentation_agent import CodeDocumentationAgent
 
 __all__ = [
-    'ContextManager',
     'ConceptGenerationAgent',
-    'ConceptGuardrailAgent',
-    'GitHubIntegrationAgent',
-    'FeatureCoordinatorAgent',
+    'ContextManager',
     'PlanValidator',
+    'OutGuardrailConceptGenerationAgent',
+    'FeatureCoordinatorAgent',
+    'GitHubIntegrationAgent',
+    'LinterAgent',
+    'TestingAgent',
     'TDDCriteriaAgent',
-    'TDDGuardrailAgent',
+    'OutGuardrailTDDCriteriaAgent',
+    'BuilderAgent',
+    'CodeDocumentationAgent',
 ]

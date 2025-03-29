@@ -10,8 +10,8 @@ from apps.agent_manager.agents.github_integration_agent import GitHubIntegration
 from apps.agent_manager.agents.context_manager import ContextManager
 from apps.agent_manager.agents.plan_validator import PlanValidator
 from apps.agent_manager.agents.tdd_criteria_agent import TDDCriteriaAgent
-from apps.agent_manager.agents.tdd_guardrail_agent import TDDGuardrailAgent
-from apps.agent_manager.agents.concept_guardrail_agent import ConceptGuardrailAgent
+from apps.agent_manager.agents.guardrails.out_guardrail_tdd_criteria_agent import OutGuardrailTDDCriteriaAgent
+from apps.agent_manager.agents.guardrails.out_guardrail_concept_generation_agent import OutGuardrailConceptGenerationAgent
 
 # Tente importar funções de mascaramento de dados sensíveis
 try:
@@ -132,31 +132,31 @@ class FeatureCoordinatorAgent:
     @property
     def tdd_guardrail_agent(self):
         """
-        Lazy loading do TDDGuardrailAgent.
+        Lazy loading do OutGuardrailTDDCriteriaAgent.
         
         Returns:
-            TDDGuardrailAgent: Instância do agente de guardrail de critérios TDD
+            OutGuardrailTDDCriteriaAgent: Instância do agente de guardrail de critérios TDD
         """
-        return TDDGuardrailAgent(openai_token=self.openai_token)
+        return OutGuardrailTDDCriteriaAgent(openai_token=self.openai_token)
     
     @property
     def concept_guardrail_agent(self):
         """
-        Lazy loading do ConceptGuardrailAgent.
+        Lazy loading do OutGuardrailConceptGenerationAgent.
         
         Returns:
-            ConceptGuardrailAgent: Instância do agente de guardrail de conceitos
+            OutGuardrailConceptGenerationAgent: Instância do agente de guardrail de conceitos
         """
-        return ConceptGuardrailAgent(openai_token=self.openai_token)
+        return OutGuardrailConceptGenerationAgent(openai_token=self.openai_token)
     
     @log_execution
     async def execute_feature_creation(self, prompt_text, execution_plan=None):
         """
         Coordena o fluxo completo de criação de feature:
         1. Gera conceito via OpenAI
-        2. Valida e melhora o conceito se necessário (ConceptGuardrailAgent)
+        2. Valida e melhora o conceito se necessário (OutGuardrailConceptGenerationAgent)
         3. Gera critérios TDD
-        4. Valida e melhora os critérios TDD (TDDGuardrailAgent)
+        4. Valida e melhora os critérios TDD (OutGuardrailTDDCriteriaAgent)
         5. Valida o plano de execução
         6. Cria issue, branch e PR no GitHub
         
