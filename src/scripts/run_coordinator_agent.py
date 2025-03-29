@@ -9,7 +9,10 @@ import sys
 import json
 import argparse
 from pathlib import Path
+from typing import Dict, Any, List, Optional, Union
+
 from agent_platform.core.logger import get_logger, log_execution
+from agent_platform.core.utils import TokenValidator
 
 # Adicionar o diretório base ao path para permitir importações
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -92,10 +95,13 @@ def parse_arguments():
 
 def main():
     """
-    Função principal de execução do script.
+    Função principal que coordena a execução.
+    
+    Returns:
+        int: Código de saída (0 para sucesso, 1 para erro)
     """
     try:
-        # Analisar argumentos
+        # Obter argumentos da linha de comando
         args = parse_arguments()
         
         # Mascarar dados sensíveis para logging
@@ -111,11 +117,21 @@ def main():
         github_token = args.github_token or os.environ.get('GITHUB_TOKEN', '')
         openai_token = args.openai_token or os.environ.get('OPENAI_API_KEY', '')
         
-        if not github_token:
-            logger.warning("Token GitHub não fornecido. Algumas funcionalidades podem estar limitadas.")
-        
-        if not openai_token:
-            logger.warning("Token OpenAI não fornecido. Algumas funcionalidades podem estar limitadas.")
+        # Validar tokens obrigatórios
+        try:
+            TokenValidator.validate_openai_token(openai_token, required=True)
+            TokenValidator.validate_github_token(github_token, required=True)
+            logger.info("Todos os tokens validados com sucesso")
+        except ValueError as e:
+            logger.error(f"Tokens obrigatórios inválidos: {str(e)}")
+            print(f"\n❌ Erro: Tokens obrigatórios inválidos: {str(e)}")
+            print("\nPara executar o agente, você precisa definir as seguintes variáveis de ambiente:")
+            print("  OPENAI_API_KEY - Token da API da OpenAI")
+            print("  GITHUB_TOKEN - Token do GitHub com permissões para criar issues e branches")
+            print("\nExemplo:")
+            print("  export OPENAI_API_KEY='sk-....'")
+            print("  export GITHUB_TOKEN='ghp_....'")
+            return 1
         
         # Verificar diretório do projeto
         target_dir = args.target or os.getcwd()

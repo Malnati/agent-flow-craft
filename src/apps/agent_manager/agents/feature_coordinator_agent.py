@@ -3,6 +3,7 @@ import json
 import asyncio
 from pathlib import Path
 from agent_platform.core.logger import get_logger, log_execution
+from agent_platform.core.utils import mask_sensitive_data, TokenValidator
 
 from apps.agent_manager.agents.concept_generation_agent import ConceptGenerationAgent
 from apps.agent_manager.agents.github_integration_agent import GitHubIntegrationAgent
@@ -41,6 +42,9 @@ class FeatureCoordinatorAgent:
             openai_token (str, optional): Token de acesso à API da OpenAI.
             github_token (str, optional): Token de acesso à API do GitHub.
             target_dir (str, optional): Diretório alvo do projeto.
+            
+        Raises:
+            ValueError: Se os tokens obrigatórios não forem fornecidos ou forem inválidos
         """
         self.logger = get_logger(__name__)
         self.logger.info(f"INÍCIO - {self.__class__.__name__}.__init__")
@@ -51,6 +55,15 @@ class FeatureCoordinatorAgent:
         self.target_dir = target_dir or os.getcwd()
         self.repo_owner = os.environ.get("GITHUB_OWNER", "")
         self.repo_name = os.environ.get("GITHUB_REPO", "")
+        
+        # Validar tokens obrigatórios
+        try:
+            TokenValidator.validate_openai_token(self.openai_token, required=True)
+            TokenValidator.validate_github_token(self.github_token, required=True)
+            self.logger.info("Todos os tokens validados com sucesso")
+        except ValueError as e:
+            self.logger.error(f"FALHA - Tokens obrigatórios inválidos: {str(e)}")
+            raise ValueError(f"Falha ao inicializar agente: {str(e)}")
         
         # Inicialização lazy dos agentes internos
         self._concept_agent = None

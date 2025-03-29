@@ -73,7 +73,19 @@ except ImportError:
             return mask_str
         return data
 
-class ConceptGuardrailAgent:
+# Importar utilidades e classe base
+try:
+    from agent_platform.core.utils import mask_sensitive_data, TokenValidator
+    from apps.agent_manager.agents.base_agent import BaseAgent
+    has_utils = True
+except ImportError:
+    has_utils = False
+    # Definição simplificada para quando BaseAgent não estiver disponível
+    class BaseAgent:
+        def __init__(self, *args, **kwargs):
+            pass
+
+class ConceptGuardrailAgent(BaseAgent):
     """
     Agente guardrail responsável por validar e aprimorar os conceitos de feature.
     
@@ -90,8 +102,13 @@ class ConceptGuardrailAgent:
             openai_token (str, optional): Token de acesso à API da OpenAI. Padrão é None,
                                          nesse caso usará a variável de ambiente OPENAI_API_KEY.
             model (str, optional): Modelo OpenAI a ser utilizado. Padrão é "gpt-4-turbo".
+                                         
+        Raises:
+            ValueError: Se o token OpenAI não for fornecido ou for inválido
         """
-        self.logger = get_logger(__name__)
+        # Inicializa a classe base
+        super().__init__(openai_token=openai_token, name=__name__)
+        
         self.logger.info(f"INÍCIO - {self.__class__.__name__}.__init__")
         
         self.context_dir = Path("agent_context")
@@ -114,6 +131,16 @@ class ConceptGuardrailAgent:
         tracemalloc.start()
         
         self.logger.info(f"FIM - {self.__class__.__name__}.__init__")
+    
+    def validate_required_tokens(self):
+        """
+        Valida se os tokens obrigatórios estão presentes para este agente.
+        
+        Raises:
+            ValueError: Se o token OpenAI estiver ausente ou inválido
+        """
+        # Este agente precisa apenas do token OpenAI
+        TokenValidator.validate_openai_token(self.openai_token, required=True)
     
     def set_model(self, model):
         """
