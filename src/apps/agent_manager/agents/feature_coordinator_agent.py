@@ -10,6 +10,7 @@ from apps.agent_manager.agents.context_manager import ContextManager
 from apps.agent_manager.agents.plan_validator import PlanValidator
 from apps.agent_manager.agents.tdd_criteria_agent import TDDCriteriaAgent
 from apps.agent_manager.agents.tdd_guardrail_agent import TDDGuardrailAgent
+from apps.agent_manager.agents.concept_guardrail_agent import ConceptGuardrailAgent
 
 # Tente importar funções de mascaramento de dados sensíveis
 try:
@@ -56,7 +57,6 @@ class FeatureCoordinatorAgent:
         self._github_agent = None
         self._plan_validator = None
         self._tdd_criteria_agent = None
-        self._tdd_guardrail_agent = None
         
         # Status de tokens (logging seguro)
         openai_token_status = "presente" if self.openai_token else "ausente"
@@ -118,20 +118,34 @@ class FeatureCoordinatorAgent:
     
     @property
     def tdd_guardrail_agent(self):
-        """Lazy loading do agente guardrail de critérios TDD"""
-        if self._tdd_guardrail_agent is None:
-            self._tdd_guardrail_agent = TDDGuardrailAgent(openai_token=self.openai_token)
-        return self._tdd_guardrail_agent
+        """
+        Lazy loading do TDDGuardrailAgent.
+        
+        Returns:
+            TDDGuardrailAgent: Instância do agente de guardrail de critérios TDD
+        """
+        return TDDGuardrailAgent(openai_token=self.openai_token)
+    
+    @property
+    def concept_guardrail_agent(self):
+        """
+        Lazy loading do ConceptGuardrailAgent.
+        
+        Returns:
+            ConceptGuardrailAgent: Instância do agente de guardrail de conceitos
+        """
+        return ConceptGuardrailAgent(openai_token=self.openai_token)
     
     @log_execution
     async def execute_feature_creation(self, prompt_text, execution_plan=None):
         """
         Coordena o fluxo completo de criação de feature:
         1. Gera conceito via OpenAI
-        2. Gera critérios TDD
-        3. Valida e melhora os critérios TDD
-        4. Valida o plano de execução
-        5. Cria issue, branch e PR no GitHub
+        2. Valida e melhora o conceito se necessário (ConceptGuardrailAgent)
+        3. Gera critérios TDD
+        4. Valida e melhora os critérios TDD (TDDGuardrailAgent)
+        5. Valida o plano de execução
+        6. Cria issue, branch e PR no GitHub
         
         Args:
             prompt_text (str): Descrição da feature desejada
@@ -157,6 +171,36 @@ class FeatureCoordinatorAgent:
                 "git_log": git_log
             }
             context_id = self.context_manager.create_context(concept_data, "feature_concept")
+            
+            # Etapa 2.1: Validar e melhorar o conceito se necessário
+            self.logger.info("Validando e melhorando conceito")
+            try:
+                # Guardrail de conceitos
+                guardrail_result = self.concept_guardrail_agent.execute_concept_guardrail(
+                    concept.get("context_id"),
+                    prompt_text,
+                    self.target_dir
+                )
+                
+                # Verificar se o conceito foi melhorado
+                if guardrail_result.get("was_improved", False):
+                    self.logger.info("Conceito foi melhorado pelo guardrail")
+                    # Usar o conceito melhorado
+                    improved_concept = guardrail_result.get("improved_concept", concept)
+                    
+                    # Atualizar o contexto com o conceito melhorado
+                    self.context_manager.update_context(
+                        context_id,
+                        {"concept": improved_concept, "concept_improved": True},
+                        merge=True
+                    )
+                    
+                    # Atualizar o conceito ativo
+                    concept = improved_concept
+                else:
+                    self.logger.info("Conceito existente já adequado, nenhuma melhoria necessária")
+            except Exception as e:
+                self.logger.warning(f"Erro ao executar guardrail de conceito: {str(e)}. Continuando com o conceito original.")
             
             # Etapa 3: Gerar critérios TDD
             self.logger.info("Gerando critérios TDD")
@@ -261,9 +305,10 @@ class FeatureCoordinatorAgent:
                 "branch_name": github_result.get("branch_name"),
                 "plan_valid": validation_result.get("is_valid", False),
                 "github_integration_success": github_result.get("status") != "error",
+                "concept_improved": 'guardrail_result' in locals() and guardrail_result.get("was_improved", False),
                 "tdd_criteria": tdd_criteria,
                 "tdd_criteria_id": criteria_id,
-                "tdd_improved": guardrail_result.get("was_improved", False) if 'guardrail_result' in locals() else False,
+                "tdd_improved": 'guardrail_result' in locals() and guardrail_result.get("was_improved", False) if 'guardrail_result' in locals() else False,
                 "validation_result": validation_result
             }
             
