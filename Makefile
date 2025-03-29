@@ -27,23 +27,23 @@ help:
 	@echo "  make update-docs-index        Atualiza o índice da documentação automaticamente"
 	@echo ""
 	@echo "Agentes disponíveis:"
-	@echo "  make start-agent prompt=\"...\" execution_plan=\"...\" project_dir=\"...\"  Inicia o agente de criação de features (FeatureCoordinatorAgent)"
-	@echo "    Opções: [output=\"...\"] [context_dir=\"...\"] [project_dir=\"...\"] [openai_token=\"...\"]"
+	@echo "  make start-agent prompt=\"...\" project_dir=\"...\"  Inicia o agente de criação de features (FeatureCoordinatorAgent)"
+	@echo "    Opções: [output=\"...\"] [context_dir=\"...\"] [project_dir=\"...\"] [openai_token=\"...\"] [model=\"<modelo_openai>\"]"
 	@echo ""
 	@echo "  make start-concept-agent prompt=\"...\"        Inicia o agente de geração de conceitos (ConceptGenerationAgent)"
-	@echo "    Opções: [output=\"...\"] [context_dir=\"...\"] [project_dir=\"...\"] [openai_token=\"...\"]"
+	@echo "    Opções: [output=\"...\"] [context_dir=\"...\"] [project_dir=\"...\"] [openai_token=\"...\"] [model=\"<modelo_openai>\"]"
 	@echo ""
 	@echo "  make start-github-agent context_id=\"...\"      Inicia o agente de integração com GitHub (GitHubIntegrationAgent)"
 	@echo "    Opções: [project_dir=\"...\"] [context_dir=\"...\"] [base_branch=\"...\"] [github_token=\"...\"] [owner=\"...\"] [repo=\"...\"]"
 	@echo ""
 	@echo "  make start-coordinator-agent prompt=\"...\"    Inicia o agente coordenador (FeatureCoordinatorAgent)"
-	@echo "    Opções: [plan_file=\"...\"] [project_dir=\"...\"] [output=\"...\"] [context_dir=\"...\"] [github_token=\"...\"] [openai_token=\"...\"]"
+	@echo "    Opções: [plan_file=\"...\"] [project_dir=\"...\"] [output=\"...\"] [context_dir=\"...\"] [github_token=\"...\"] [openai_token=\"...\"] [model=\"<modelo_openai>\"]"
 	@echo ""
 	@echo "  make start-context-manager operation=\"...\"   Executa operação do gerenciador de contexto (listar, obter, criar, etc.)"
 	@echo "    Opções: [context_id=\"...\"] [data_file=\"...\"] [limit=10] [type=\"...\"] [context_dir=\"...\"] [output=\"...\"]"
 	@echo ""
 	@echo "  make start-validator plan_file=\"...\"         Executa o validador de planos em um arquivo JSON"
-	@echo "    Opções: [output=\"...\"] [requirements=\"...\"] [context_dir=\"...\"] [project_dir=\"...\"] [openai_token=\"...\"]"
+	@echo "    Opções: [output=\"...\"] [requirements=\"...\"] [context_dir=\"...\"] [project_dir=\"...\"] [openai_token=\"...\"] [model=\"<modelo_openai>\"]"
 	@echo ""
 	@echo "Outros comandos:"
 	@echo "  make pack --out=DIRECTORY     Empacota o projeto MCP para o diretório especificado"
@@ -90,10 +90,22 @@ check-env:
 		exit 1; \
 	fi
 
+# Target para iniciar o agente de criação de features (FeatureAgent)
+start-agent: check-env create-venv print-no-pycache-message
+	@if [ -z "$(prompt)" ] || [ -z "$(project_dir)" ]; then \
+		echo "Uso: make start-agent prompt=\"<descricao>\" project_dir=\"<diretório>\" [model=\"<modelo_openai>\"]"; \
+		exit 1; \
+	fi
+	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/apps/feature_creation/start.py \
+		"$(prompt)" \
+		--project_dir "$(project_dir)" \
+		$(if $(model),--model "$(model)",) \
+		$(ARGS)
+
 # Target para iniciar o agente conceito (ConceptGenerationAgent)
 start-concept-agent: create-venv print-no-pycache-message
 	@if [ -z "$(prompt)" ]; then \
-		echo "Uso: make start-concept-agent prompt=\"<descricao>\" [output=\"<arquivo_saida>\"] [context_dir=\"<dir_contexto>\"] [project_dir=\"<dir_projeto>\"]"; \
+		echo "Uso: make start-concept-agent prompt=\"<descricao>\" [output=\"<arquivo_saida>\"] [context_dir=\"<dir_contexto>\"] [project_dir=\"<dir_projeto>\"] [model=\"<modelo_openai>\"]"; \
 		exit 1; \
 	fi
 	@echo "Executando agente de conceito com prompt: \"$(prompt)\""
@@ -103,7 +115,8 @@ start-concept-agent: create-venv print-no-pycache-message
 		$(if $(git_log_file),--git_log_file "$(git_log_file)",) \
 		$(if $(context_dir),--context_dir "$(context_dir)",) \
 		$(if $(project_dir),--project_dir "$(project_dir)",) \
-		$(if $(openai_token),--openai_token "$(openai_token)",)
+		$(if $(openai_token),--openai_token "$(openai_token)",) \
+		$(if $(model),--model "$(model)",)
 
 # Target para iniciar o agente GitHub (GitHubIntegrationAgent)
 start-github-agent: check-env create-venv print-no-pycache-message
@@ -124,7 +137,7 @@ start-github-agent: check-env create-venv print-no-pycache-message
 # Target para iniciar o agente coordenador (FeatureCoordinatorAgent)
 start-coordinator-agent: check-env create-venv print-no-pycache-message
 	@if [ -z "$(prompt)" ]; then \
-		echo "Uso: make start-coordinator-agent prompt=\"<descricao>\" [project_dir=\"<diretório>\"] [plan_file=\"<arquivo>\"] [output=\"<arquivo>\"] [context_dir=\"<diretório>\"] [github_token=\"<token>\"] [openai_token=\"<token>\"]"; \
+		echo "Uso: make start-coordinator-agent prompt=\"<descricao>\" [project_dir=\"<diretório>\"] [plan_file=\"<arquivo>\"] [output=\"<arquivo>\"] [context_dir=\"<diretório>\"] [github_token=\"<token>\"] [openai_token=\"<token>\"] [model=\"<modelo_openai>\"]"; \
 		exit 1; \
 	fi
 	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_coordinator_agent.py \
@@ -135,6 +148,7 @@ start-coordinator-agent: check-env create-venv print-no-pycache-message
 		$(if $(context_dir),--context_dir "$(context_dir)",) \
 		$(if $(github_token),--github_token "$(github_token)",) \
 		$(if $(openai_token),--openai_token "$(openai_token)",) \
+		$(if $(model),--model "$(model)",) \
 		$(ARGS)
 
 # Target para gerenciador de contexto (ContextManager)
@@ -165,7 +179,7 @@ start-context-manager: create-venv print-no-pycache-message
 # Target para validador de planos (PlanValidator)
 start-validator: create-venv print-no-pycache-message
 	@if [ -z "$(plan_file)" ]; then \
-		echo "Uso: make start-validator plan_file=\"<arquivo_plano.json>\" [output=\"<arquivo_saida>\"] [requirements=\"<arquivo_requisitos>\"] [context_dir=\"<dir_contexto>\"] [project_dir=\"<dir_projeto>\"]"; \
+		echo "Uso: make start-validator plan_file=\"<arquivo_plano.json>\" [output=\"<arquivo_saida>\"] [requirements=\"<arquivo_requisitos>\"] [context_dir=\"<dir_contexto>\"] [project_dir=\"<dir_projeto>\"] [model=\"<modelo_openai>\"]"; \
 		exit 1; \
 	fi
 	@echo "Executando validador de planos com arquivo: \"$(plan_file)\""
@@ -175,7 +189,8 @@ start-validator: create-venv print-no-pycache-message
 		$(if $(output),--output "$(output)",) \
 		$(if $(context_dir),--context_dir "$(context_dir)",) \
 		$(if $(project_dir),--project_dir "$(project_dir)",) \
-		$(if $(openai_token),--openai_token "$(openai_token)",)
+		$(if $(openai_token),--openai_token "$(openai_token)",) \
+		$(if $(model),--model "$(model)",)
 
 # Instala as dependências do projeto via uv
 install: create-venv
@@ -204,18 +219,6 @@ build: create-venv
 	@mkdir -p $(BUILD_DIR)
 	@echo "Construindo pacote..."
 	$(ACTIVATE) && $(PYTHON_ENV) python -m build
-
-# Target para iniciar o agente de criação de features (FeatureAgent)
-start-agent: check-env create-venv print-no-pycache-message
-	@if [ -z "$(prompt)" ] || [ -z "$(execution_plan)" ] || [ -z "$(project_dir)" ]; then \
-		echo "Uso: make start-agent prompt=\"<descricao>\" execution_plan=\"<plano de execucao>\" project_dir=\"<diretório>\""; \
-		exit 1; \
-	fi
-	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/apps/feature_creation/start.py \
-		"$(prompt)" \
-		"$(execution_plan)" \
-		--project_dir "$(project_dir)" \
-		$(ARGS)
 
 # Atualiza o índice da documentação automaticamente
 update-docs-index: create-venv

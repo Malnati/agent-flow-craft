@@ -1,28 +1,30 @@
 #!/usr/bin/env python3
 """
-Script para executar o FeatureCoordinatorAgent diretamente.
-Coordena a criação de uma feature com base em um prompt ou plano existente.
+Script de inicialização para o FeatureAgent.
+Este script recebe um prompt e coordena o processo de criação de feature.
 """
 
 import os
 import sys
-import json
 import argparse
 from pathlib import Path
-from agent_platform.core.logger import get_logger, log_execution
+import logging
+import json
 
 # Adicionar o diretório base ao path para permitir importações
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
-# Importar o agente coordenador
+# Importar o agente de feature
 from apps.agent_manager.agents import FeatureCoordinatorAgent
-from apps.agent_manager.agents.context_manager import ContextManager
 
 # Configurar logger
-logger = get_logger(__name__)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger("FeatureAgent")
 
-@log_execution
 def parse_arguments():
     """
     Analisa os argumentos da linha de comando.
@@ -31,7 +33,7 @@ def parse_arguments():
         argparse.Namespace: Argumentos da linha de comando
     """
     parser = argparse.ArgumentParser(
-        description="Executa o FeatureCoordinatorAgent para criar uma feature",
+        description="Inicia o processo de criação de feature usando o FeatureAgent",
         formatter_class=argparse.RawTextHelpFormatter
     )
     
@@ -41,13 +43,7 @@ def parse_arguments():
     )
     
     parser.add_argument(
-        "--plan_file",
-        help="Arquivo JSON contendo o plano de execução (opcional)"
-    )
-    
-    parser.add_argument(
-        "--project_dir", 
-        dest="target",
+        "--project_dir",
         help="Diretório do projeto onde a feature será criada (opcional, usa diretório atual se não especificado)"
     )
     
@@ -90,44 +86,47 @@ def main():
         
         # Mascarar dados sensíveis para logging
         masked_args = vars(args).copy()
-        if args.github_token:
-            masked_args["github_token"] = f"{args.github_token[:4]}{'*' * 12}{args.github_token[-4:]}"
-        if args.openai_token:
-            masked_args["openai_token"] = f"{args.openai_token[:4]}{'*' * 12}{args.openai_token[-4:]}"
+        if 'github_token' in masked_args and masked_args['github_token']:
+            if len(masked_args['github_token']) > 10:
+                masked_args['github_token'] = f"{masked_args['github_token'][:4]}{'*' * 12}{masked_args['github_token'][-4:]}"
+            else:
+                masked_args['github_token'] = "***"
+        if 'openai_token' in masked_args and masked_args['openai_token']:
+            if len(masked_args['openai_token']) > 10:
+                masked_args['openai_token'] = f"{masked_args['openai_token'][:4]}{'*' * 12}{masked_args['openai_token'][-4:]}"
+            else:
+                masked_args['openai_token'] = "***"
         
         logger.info(f"Argumentos: {masked_args}")
         
-        # Inicializar tokens a partir dos argumentos ou variáveis de ambiente
+        # Inicializar tokens
         github_token = args.github_token or os.environ.get('GITHUB_TOKEN', '')
         openai_token = args.openai_token or os.environ.get('OPENAI_API_KEY', '')
         
+        # Verificar tokens
         if not github_token:
             logger.warning("Token GitHub não fornecido. Algumas funcionalidades podem estar limitadas.")
-        
         if not openai_token:
             logger.warning("Token OpenAI não fornecido. Algumas funcionalidades podem estar limitadas.")
         
         # Verificar diretório do projeto
-        target_dir = args.target or os.getcwd()
-        if not Path(target_dir).exists():
-            logger.error(f"Diretório do projeto não encontrado: {target_dir}")
-            print(f"❌ Erro: Diretório do projeto não encontrado: {target_dir}")
+        project_dir = args.project_dir or os.getcwd()
+        if not os.path.exists(project_dir):
+            logger.error(f"Diretório do projeto não encontrado: {project_dir}")
+            print(f"❌ Erro: Diretório do projeto não encontrado: {project_dir}")
             return 1
         
-        # Verificar e criar diretório de contexto se necessário
+        # Verificar e criar diretório de contexto
         context_dir = Path(args.context_dir)
         if not context_dir.exists():
             context_dir.mkdir(parents=True, exist_ok=True)
             logger.info(f"Diretório de contexto criado: {context_dir}")
         
-        # Inicializar gerenciador de contexto com o diretório personalizado
-        context_manager = ContextManager(base_dir=str(context_dir))
-        
-        # Inicializar agente coordenador
+        # Inicializar agente de feature
         agent = FeatureCoordinatorAgent(
-            openai_api_key=openai_token,
             github_token=github_token,
-            target_dir=target_dir,
+            openai_api_key=openai_token,
+            target_dir=project_dir,
             model=args.model
         )
         
@@ -137,34 +136,13 @@ def main():
         elif hasattr(agent, 'set_context_dir'):
             agent.set_context_dir(str(context_dir))
         
-        # Carregar plano de execução se especificado
-        execution_plan = None
-        if args.plan_file:
-            plan_path = Path(args.plan_file)
-            if not plan_path.exists():
-                logger.error(f"Arquivo de plano não encontrado: {args.plan_file}")
-                print(f"❌ Erro: Arquivo de plano não encontrado: {args.plan_file}")
-                return 1
-                
-            try:
-                with open(plan_path, 'r', encoding='utf-8') as f:
-                    execution_plan = json.load(f)
-                logger.info(f"Plano de execução carregado de: {args.plan_file}")
-            except Exception as e:
-                logger.error(f"Erro ao carregar arquivo de plano: {str(e)}")
-                print(f"❌ Erro ao carregar arquivo de plano: {str(e)}")
-                return 1
-        
-        # Processar a feature
-        logger.info(f"Iniciando processamento da feature com prompt: {args.prompt}")
+        # Executar a criação da feature
+        logger.info(f"Iniciando criação da feature com prompt: {args.prompt}")
         print(f"\n🚀 Iniciando criação da feature: '{args.prompt}'")
+        print(f"⚙️  Modelo OpenAI: {args.model}")
         
-        if execution_plan:
-            print(f"📋 Usando plano de execução de: {args.plan_file}")
-            result = agent.create_feature(args.prompt, execution_plan)
-        else:
-            print("📋 Gerando plano de execução automático...")
-            result = agent.create_feature(args.prompt)
+        # Chamar o método de criação de feature
+        result = agent.create_feature(args.prompt)
         
         # Verificar resultado
         if isinstance(result, dict) and result.get("status") == "error":

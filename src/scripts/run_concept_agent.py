@@ -58,6 +58,12 @@ def parse_arguments():
     )
     
     parser.add_argument(
+        "--model",
+        default="gpt-4-turbo",
+        help="Modelo da OpenAI a ser utilizado (padrão: gpt-4-turbo)"
+    )
+    
+    parser.add_argument(
         "--git_log_file",
         help="Arquivo com log do Git para contexto (opcional)"
     )
@@ -127,10 +133,11 @@ def main():
         logger.info(f"Criando diretório de contexto: {context_dir} (absoluto: {context_dir.resolve()})")
         
         # Inicializar o agente com o diretório de contexto personalizado
-        agent = ConceptGenerationAgent(openai_token=openai_token)
+        agent = ConceptGenerationAgent(openai_token=openai_token, model=args.model)
         # Definir diretório de contexto explicitamente
         agent.context_dir = context_dir
         logger.info(f"Diretório de contexto do agente configurado: {agent.context_dir}")
+        logger.info(f"Modelo OpenAI configurado: {args.model}")
         
         # Verificar diretório do projeto se fornecido
         if args.project_dir:

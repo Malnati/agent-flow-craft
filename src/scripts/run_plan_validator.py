@@ -58,6 +58,12 @@ def parse_arguments():
     )
     
     parser.add_argument(
+        "--model",
+        default="gpt-4-turbo",
+        help="Modelo da OpenAI a ser utilizado (padrão: gpt-4-turbo)"
+    )
+    
+    parser.add_argument(
         "--requirements",
         help="Arquivo com requisitos específicos para validação (opcional)"
     )
@@ -145,7 +151,7 @@ def main():
             
         # Validar plano
         logger.info("Validando plano...")
-        result = validator.validate(plan_content, openai_token, requirements=requirements_content)
+        result = validator.validate(plan_content, openai_token, requirements=requirements_content, model=args.model)
         
         # Verificar resultado
         is_valid = result.get("valid", False)
