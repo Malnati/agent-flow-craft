@@ -347,4 +347,46 @@ class FeatureCoordinatorAgent:
             self.logger.error(f"FALHA - list_features | Erro: {str(e)}", exc_info=True)
             return []
         finally:
-            self.logger.info("FIM - list_features") 
+            self.logger.info("FIM - list_features")
+
+    def create_feature(self, prompt_text, execution_plan=None):
+        """
+        Método de compatibilidade que chama execute_feature_creation.
+        Este método existe para fornecer uma API consistente com outros agentes.
+        
+        Args:
+            prompt_text (str): Descrição da feature desejada
+            execution_plan (dict, optional): Plano de execução pré-definido
+            
+        Returns:
+            dict: Resultado da criação da feature
+        """
+        self.logger.info(f"INÍCIO - create_feature | Prompt: {prompt_text[:100]}...")
+        try:
+            # Como execute_feature_creation é um método assíncrono,
+            # precisamos criar um evento assíncrono e executá-lo em um loop
+            import asyncio
+            
+            # Criar um novo loop de eventos se estiver em um thread diferente
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                
+            # Executar o método assíncrono e obter o resultado
+            result = loop.run_until_complete(
+                self.execute_feature_creation(prompt_text, execution_plan)
+            )
+            
+            self.logger.info("SUCESSO - create_feature")
+            return result
+        except Exception as e:
+            self.logger.error(f"FALHA - create_feature | Erro: {str(e)}", exc_info=True)
+            return {
+                "status": "error",
+                "message": str(e),
+                "prompt": prompt_text
+            }
+        finally:
+            self.logger.info("FIM - create_feature") 
