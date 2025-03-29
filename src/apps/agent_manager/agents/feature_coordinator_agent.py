@@ -47,6 +47,8 @@ class FeatureCoordinatorAgent:
         self.openai_token = openai_token or os.environ.get("OPENAI_API_KEY", "")
         self.github_token = github_token or os.environ.get("GITHUB_TOKEN", "")
         self.target_dir = target_dir or os.getcwd()
+        self.repo_owner = os.environ.get("GITHUB_OWNER", "")
+        self.repo_name = os.environ.get("GITHUB_REPO", "")
         
         # Inicialização lazy dos agentes internos
         self._concept_agent = None
@@ -59,6 +61,7 @@ class FeatureCoordinatorAgent:
         github_token_status = "presente" if self.github_token else "ausente"
         self.logger.info(f"Token OpenAI: {openai_token_status}")
         self.logger.info(f"Token GitHub: {github_token_status}")
+        self.logger.info(f"Repositório: {self.repo_owner}/{self.repo_name}")
         
         # Informações do diretório alvo
         self.logger.info(f"Diretório alvo: {self.target_dir}")
