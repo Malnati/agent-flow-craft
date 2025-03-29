@@ -4,6 +4,161 @@
 
 ---
 
+## 📦 Instalação
+
+Você pode instalar o AgentFlowCraft diretamente via pip:
+
+```bash
+# Instalar a versão mais recente do PyPI
+pip install agent-flow-craft
+
+# Ou instalar a versão de desenvolvimento diretamente do GitHub
+pip install git+https://github.com/Malnati/agent-flow-craft.git
+```
+
+Para desenvolvimento local, recomendamos clonar o repositório:
+
+```bash
+# Clonar o repositório
+git clone https://github.com/Malnati/agent-flow-craft.git
+cd agent-flow-craft
+
+# Instalar em modo de desenvolvimento
+pip install -e .
+```
+
+Após a instalação, certifique-se de configurar as variáveis de ambiente necessárias:
+
+```bash
+# Para integração com GitHub
+export GITHUB_TOKEN=seu_token_aqui
+export GITHUB_OWNER=seu_usuario_github
+export GITHUB_REPO=nome_do_repositorio
+
+# Para uso da API OpenAI
+export OPENAI_API_KEY=seu_token_openai
+```
+
+---
+
+## 📋 Comandos do Makefile
+
+O projeto disponibiliza diversos comandos através do Makefile para facilitar o uso dos agentes e a execução de tarefas comuns.
+
+### Comandos de desenvolvimento
+
+```bash
+make create-venv              # Cria ambiente virtual Python se não existir
+make install                  # Instala o projeto no ambiente virtual
+make setup                    # Instala o projeto em modo de desenvolvimento
+make test                     # Executa os testes do projeto
+make lint                     # Executa análise de lint para verificar estilo de código
+make format                   # Formata o código usando o Black
+make build                    # Empacota o projeto usando python -m build
+make clean                    # Remove arquivos temporários e de build
+make clean-pycache            # Remove apenas os diretórios __pycache__ e arquivos .pyc
+make all                      # Executa lint, test, formatação e atualização de docs
+make update-docs-index        # Atualiza o índice da documentação automaticamente
+```
+
+### Agentes disponíveis
+
+#### 1. Agente de criação de features (FeatureCoordinatorAgent)
+```bash
+make start-agent prompt="<descricao>" project_dir="<diretório>" [model="<modelo_openai>"]
+```
+**Exemplo:** `make start-agent prompt="Implementar sistema de login" project_dir="/Users/mal/GitHub/agent-flow-craft-aider" model="gpt-4-turbo"`
+
+**Tarefas executadas:**
+1. Inicializa o FeatureCoordinatorAgent com os parâmetros fornecidos
+2. Configura o modelo OpenAI especificado no ConceptGenerationAgent interno
+3. Cria um diretório de contexto para armazenar os resultados
+4. Gera um conceito de feature a partir do prompt usando a API OpenAI
+5. Processa a criação da feature com base no conceito gerado
+6. Retorna o resultado em JSON com informações da feature criada
+
+#### 2. Agente de geração de conceitos (ConceptGenerationAgent)
+```bash
+make start-concept-agent prompt="<descricao>" [output="<arquivo_saida>"] [context_dir="<dir_contexto>"] [project_dir="<dir_projeto>"] [model="<modelo_openai>"]
+```
+**Exemplo:** `make start-concept-agent prompt="Adicionar autenticação via OAuth" project_dir="/Users/mal/GitHub/agent-flow-craft-aider" context_dir="agent_context"`
+
+**Tarefas executadas:**
+1. Inicializa o ConceptGenerationAgent com o token OpenAI e modelo especificados
+2. Obtém o log do Git do projeto (se disponível) para fornecer contexto
+3. Envia o prompt e contexto para a API OpenAI para gerar um conceito de feature
+4. Estrutura a resposta em JSON com branch_type, issue_title, issue_description, etc.
+5. Salva o conceito gerado no diretório de contexto com um ID único
+6. Retorna o conceito completo com o context_id para uso posterior
+
+#### 3. Agente de integração com GitHub (GitHubIntegrationAgent)
+```bash
+make start-github-agent context_id="<id>" [project_dir="<diretório>"] [context_dir="<diretório>"] [base_branch="<branch>"] [github_token="<token>"] [owner="<owner>"] [repo="<repo>"]
+```
+**Exemplo:** `make start-github-agent context_id="feature_concept_20240601_123456" project_dir="/Users/mal/GitHub/agent-flow-craft-aider" owner="Malnati" repo="agent-flow-craft-aider"`
+
+**Tarefas executadas:**
+1. Inicializa o GitHubIntegrationAgent com token, owner e repo especificados
+2. Carrega o conceito de feature previamente gerado usando o context_id fornecido
+3. Cria uma nova issue no GitHub com o título e descrição do conceito
+4. Cria uma nova branch no repositório Git local baseada na issue
+5. Cria um arquivo de plano de execução no repositório detalhando a feature
+6. Cria um pull request no GitHub associado à issue e branch
+7. Retorna um JSON com issue_number, branch_name e status da integração
+
+#### 4. Agente coordenador (FeatureCoordinatorAgent)
+```bash
+make start-coordinator-agent prompt="<descricao>" [project_dir="<diretório>"] [plan_file="<arquivo>"] [output="<arquivo>"] [context_dir="<diretório>"] [github_token="<token>"] [openai_token="<token>"] [model="<modelo_openai>"]
+```
+**Exemplo:** `make start-coordinator-agent prompt="Implementar sistema de notificações" project_dir="/Users/mal/GitHub/agent-flow-craft-aider" model="gpt-4-turbo"`
+
+**Tarefas executadas:**
+1. Inicializa o FeatureCoordinatorAgent com tokens e diretórios configurados
+2. Configura o ConceptGenerationAgent interno com o modelo especificado
+3. Obtém o log do Git para contexto da feature
+4. Gera um conceito usando o ConceptGenerationAgent a partir do prompt
+5. Salva o conceito no sistema de gerenciamento de contexto
+6. Valida o plano de execução usando o PlanValidator
+7. Processa o conceito no GitHub usando o GitHubIntegrationAgent
+8. Orquestra todo o fluxo entre os diferentes agentes especializados
+9. Retorna um resultado consolidado com todas as informações do processo
+
+#### 5. Gerenciador de contexto (ContextManager)
+```bash
+make start-context-manager operation="<lista|obter|criar|atualizar|excluir>" [context_id="<id>"] [data_file="<arquivo.json>"] [limit=10] [type="<tipo>"] [context_dir="<dir_contexto>"] [output="<arquivo>"]
+```
+**Exemplo:** `make start-context-manager operation="listar" context_dir="agent_context" limit=5`
+
+**Tarefas executadas:**
+1. Inicializa o ContextManager com o diretório de contexto especificado
+2. Baseado na operação solicitada, executa uma das seguintes ações:
+   - lista: Lista os contextos disponíveis com limite e filtro por tipo
+   - obter: Recupera um contexto específico pelo ID
+   - criar: Cria um novo contexto a partir de um arquivo JSON
+   - atualizar: Atualiza um contexto existente com novos dados
+   - excluir: Remove um contexto pelo ID
+   - limpar: Remove contextos antigos com base em dias especificados
+3. Formata e exibe o resultado da operação solicitada
+4. Opcionalmente salva o resultado em um arquivo de saída
+
+#### 6. Validador de planos (PlanValidator)
+```bash
+make start-validator plan_file="<arquivo_plano.json>" [output="<arquivo_saida>"] [requirements="<arquivo_requisitos>"] [context_dir="<dir_contexto>"] [project_dir="<dir_projeto>"] [model="<modelo_openai>"]
+```
+**Exemplo:** `make start-validator plan_file="planos/feature_plan.json" project_dir="/Users/mal/GitHub/agent-flow-craft-aider" model="gpt-4-turbo"`
+
+**Tarefas executadas:**
+1. Inicializa o PlanValidator com as configurações fornecidas
+2. Carrega o plano de execução do arquivo JSON especificado
+3. Carrega os requisitos específicos de validação (se fornecidos)
+4. Usa a API OpenAI para analisar o plano contra os requisitos
+5. Avalia a qualidade e completude do plano de execução
+6. Identifica potenciais problemas e sugestões de melhoria
+7. Atribui uma pontuação de validação ao plano (de 0 a 10)
+8. Retorna um relatório detalhado com o resultado da validação
+
+---
+
 ## ✅ Status do projeto
 
 [![Verificação de Assets](https://github.com/Malnati/agent-flow-craft/actions/workflows/check-assets.yml/badge.svg)](https://github.com/Malnati/agent-flow-craft/actions/workflows/check-assets.yml)
