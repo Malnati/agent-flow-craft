@@ -323,8 +323,15 @@ class GitHubIntegrationAgent:
             with open(context_file, 'r', encoding='utf-8') as f:
                 context_data = json.load(f)
             
-            concept = context_data.get("concept", {})
+            # Verificar se o contexto contém concept ou feature_concept
+            concept = {}
             prompt_text = context_data.get("prompt", "")
+            
+            # Extrair dados do conceito conforme o tipo
+            if "feature_concept" in context_data:
+                concept = context_data.get("feature_concept", {})
+            else:
+                concept = context_data.get("concept", {})
             
             # Extrair dados do conceito
             branch_type = concept.get("branch_type", "feat")

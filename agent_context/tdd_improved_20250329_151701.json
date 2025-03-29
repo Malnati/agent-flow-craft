@@ -1,0 +1,101 @@
+{
+  "id": "tdd_improved_20250329_151701",
+  "type": "tdd_improved_criteria",
+  "concept_id": "feature_concept_20250329_151553",
+  "original_criteria_id": "feature_concept_20250329_151553",
+  "created_at": "2025-03-29T15:17:01.146603",
+  "criteria": {
+    "criteria": [
+      {
+        "id": "TDD-001",
+        "component": "FeatureConceptAgent",
+        "description": "Validar a inicialização do agente com token e modelo padrão",
+        "given": "Um token de API válido é fornecido",
+        "when": "O FeatureConceptAgent é inicializado",
+        "then": "O agente deve ser inicializado com o modelo 'gpt-4' e o token fornecido",
+        "edge_cases": [
+          "Token de API inválido ou nulo",
+          "Token de API expirado"
+        ],
+        "examples": [
+          {
+            "input": {
+              "openai_token": "test_token"
+            },
+            "output": {
+              "model": "gpt-4",
+              "openai_token": "test_token"
+            }
+          }
+        ]
+      },
+      {
+        "id": "TDD-002",
+        "component": "FeatureCreationAgent",
+        "description": "Verificar a criação de uma nova feature no GitHub",
+        "given": "Credenciais válidas do GitHub e um prompt de feature",
+        "when": "O método create_github_issue é chamado",
+        "then": "Uma nova issue deve ser criada no GitHub e retornar um status de sucesso",
+        "edge_cases": [
+          "Credenciais inválidas ou expiradas",
+          "Prompt de feature vazio ou nulo"
+        ],
+        "examples": [
+          {
+            "input": {
+              "github_credentials": {
+                "token": "valid_token"
+              },
+              "prompt": "Nova funcionalidade"
+            },
+            "output": {
+              "status": "success",
+              "message": "Issue created"
+            }
+          }
+        ]
+      },
+      {
+        "id": "TDD-003",
+        "component": "MCP Agent",
+        "description": "Validar a execução do MCP Agent para criação de features",
+        "given": "Um prompt de feature válido é fornecido",
+        "when": "O método create_feature é chamado",
+        "then": "Uma nova feature deve ser criada e o nome deve ser gerado corretamente",
+        "edge_cases": [
+          "Prompt de feature vazio ou nulo",
+          "Falha na comunicação com serviços externos"
+        ],
+        "examples": [
+          {
+            "input": {
+              "prompt": "Implementar login via OAuth"
+            },
+            "output": {
+              "feature_name": "implementar-login-via-oauth"
+            }
+          }
+        ]
+      }
+    ],
+    "test_plan": {
+      "unit_tests": [
+        "Testar a inicialização do FeatureConceptAgent com diferentes tokens",
+        "Testar a criação de issues no GitHub com diferentes credenciais",
+        "Testar a geração de nomes de features com diferentes prompts"
+      ],
+      "integration_tests": [
+        "Testar a integração do FeatureConceptAgent com o serviço OpenAI",
+        "Testar a integração do FeatureCreationAgent com a API do GitHub"
+      ],
+      "e2e_tests": [
+        "Testar o processo completo de criação de uma feature via MCP Agent"
+      ]
+    },
+    "context_id": "feature_concept_20250329_151553",
+    "original_criteria_id": "feature_concept_20250329_151553",
+    "generated_at": "2025-03-29T15:17:01.145408",
+    "model_used": "gpt-4-turbo",
+    "improved": true
+  }
+}

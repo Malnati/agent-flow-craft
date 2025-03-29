@@ -1,0 +1,75 @@
+{
+  "id": "tdd_criteria_20250329_151641",
+  "type": "tdd_criteria",
+  "concept_id": "feature_concept_20250329_151553",
+  "created_at": "2025-03-29T15:16:41.506028",
+  "criteria": {
+    "criteria": [
+      {
+        "id": "TDD-001",
+        "component": "Branch Naming",
+        "description": "Verificar se o nome da branch segue o padrão correto",
+        "given": "Um nome de branch é fornecido",
+        "when": "O nome da branch é processado pela função simple_slugify",
+        "then": "O nome da branch deve estar em minúsculas, sem caracteres especiais e espaços substituídos por hífens",
+        "edge_cases": [
+          "Nomes com caracteres especiais",
+          "Nomes com espaços múltiplos",
+          "Nomes com letras maiúsculas"
+        ]
+      },
+      {
+        "id": "TDD-002",
+        "component": "Version Generation",
+        "description": "Verificar se a geração de versão está correta",
+        "given": "Uma chamada à função get_version",
+        "when": "A função é executada sem uma variável de ambiente VERSION definida",
+        "then": "A versão gerada deve seguir o formato ano.mês.dia.devN",
+        "edge_cases": [
+          "Ausência do git no ambiente",
+          "Falha ao acessar o último commit"
+        ]
+      },
+      {
+        "id": "TDD-003",
+        "component": "Feature Concept Agent",
+        "description": "Verificar se o agente de conceito de feature inicializa corretamente",
+        "given": "Uma instância do FeatureConceptAgent é criada",
+        "when": "O agente é inicializado",
+        "then": "O token e o modelo padrão devem estar corretamente configurados",
+        "edge_cases": [
+          "Token inválido",
+          "Modelo não suportado"
+        ]
+      },
+      {
+        "id": "TDD-004",
+        "component": "MCP E2E",
+        "description": "Verificar se o teste end-to-end do MCP executa corretamente",
+        "given": "Um ambiente de teste configurado",
+        "when": "O teste e2e é executado",
+        "then": "O teste deve verificar a criação de uma nova feature via MCP e limpar o ambiente após a execução",
+        "edge_cases": [
+          "Falha na criação da feature",
+          "Falha na limpeza do ambiente de teste"
+        ]
+      }
+    ],
+    "test_plan": {
+      "unit_tests": [
+        "Testar a função simple_slugify com diferentes inputs para garantir a correta formatação do nome da branch",
+        "Testar a função get_version em diferentes condições de ambiente para garantir a correta geração de versões"
+      ],
+      "integration_tests": [
+        "Testar a integração da função simple_slugify com o sistema de criação de branches para garantir que todas as branches são criadas com nomes corretos",
+        "Testar a integração da função get_version com o sistema de deployment para garantir que as versões são aplicadas corretamente"
+      ],
+      "e2e_tests": [
+        "Executar um teste completo do ciclo de vida da feature desde a criação da branch até a geração da versão e deployment, verificando todos os componentes integrados"
+      ]
+    },
+    "context_id": "feature_concept_20250329_151553",
+    "generated_at": "2025-03-29T15:16:41.504995",
+    "model_used": "gpt-4-turbo"
+  }
+}
