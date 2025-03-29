@@ -199,7 +199,7 @@ start-agent: check-env create-venv print-no-pycache-message
 		$(if $(model),--model "$(model)",) \
 		$(ARGS)
 
-# Target para iniciar o agente conceito (ConceptGenerationAgent)
+# Target para iniciar o agente de geração de conceitos (ConceptGenerationAgent)
 start-concept-agent: create-venv print-no-pycache-message
 	@if [ -z "$(prompt)" ]; then \
 		echo "Uso: make start-concept-agent prompt=\"<descricao>\" [output=\"<arquivo_saida>\"] [context_dir=\"<dir_contexto>\"] [project_dir=\"<dir_projeto>\"] [model=\"<modelo_openai>\"]"; \
@@ -267,18 +267,20 @@ start-github-agent: check-env create-venv print-no-pycache-message
 		$(ARGS)
 
 # Target para iniciar o agente coordenador (FeatureCoordinatorAgent)
-start-coordinator-agent: check-env create-venv print-no-pycache-message
+start-coordinator-agent: create-venv print-no-pycache-message
 	@if [ -z "$(prompt)" ]; then \
-		echo "Uso: make start-coordinator-agent prompt=\"<descricao>\" [project_dir=\"<diretório>\"] [plan_file=\"<arquivo>\"] [output=\"<arquivo>\"] [context_dir=\"<diretório>\"] [github_token=\"<token>\"] [openai_token=\"<token>\"] [model=\"<modelo_openai>\"]"; \
+		echo "Uso: make start-coordinator-agent prompt=\"<descricao>\" [project_dir=\"<diretório>\"] [output=\"<arquivo_saida>\"] [context_dir=\"<dir_contexto>\"] [model=\"<modelo_openai>\"] [elevation_model=\"<modelo_elevação>\"]"; \
 		exit 1; \
 	fi
+	@echo "Executando agente coordenador com prompt: \"$(prompt)\""
 	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_coordinator_agent.py \
 		"$(prompt)" \
-		$(if $(plan_file),--plan_file "$(plan_file)",) \
 		$(if $(project_dir),--project_dir "$(project_dir)",) \
 		$(if $(output),--output "$(output)",) \
 		$(if $(context_dir),--context_dir "$(context_dir)",) \
 		$(if $(github_token),--github_token "$(github_token)",) \
+		$(if $(owner),--owner "$(owner)",) \
+		$(if $(repo),--repo "$(repo)",) \
 		$(if $(openai_token),--openai_token "$(openai_token)",) \
 		$(if $(model),--model "$(model)",) \
 		$(ARGS)
