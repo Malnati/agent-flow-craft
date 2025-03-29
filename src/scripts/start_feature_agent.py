@@ -292,6 +292,18 @@ def parse_arguments():
         help="Arquivo de saída para o resultado (opcional)"
     )
     
+    parser.add_argument(
+        "--context_dir",
+        default="agent_context",
+        help="Diretório para armazenar/acessar arquivos de contexto (padrão: agent_context)"
+    )
+    
+    parser.add_argument(
+        "--base_branch",
+        default="main",
+        help="Nome da branch base para criar a nova branch (padrão: main)"
+    )
+    
     return parser.parse_args()
 
 @log_execution
@@ -346,14 +358,25 @@ async def main():
                     execution_plan = {"steps": [line.strip() for line in args.plan.split('\n') if line.strip()]}
                     logger.info("Plano de execução fornecido como texto")
         
+        # Verificar e criar diretório de contexto se necessário
+        context_dir = Path(args.context_dir)
+        if not context_dir.exists():
+            context_dir.mkdir(parents=True, exist_ok=True)
+            logger.info(f"Diretório de contexto criado: {context_dir}")
+        
         # Inicializar agente de criação de features
         agent = FeatureCoordinatorAgent(
             github_token=args.github_token,
             openai_token=args.openai_token,
             repo_owner=args.owner,
             repo_name=args.repo,
-            target_dir=args.target
+            target_dir=args.target,
+            base_branch=args.base_branch
         )
+        
+        # Configurar o diretório de contexto do agente
+        if hasattr(agent, 'context_dir'):
+            agent.context_dir = context_dir
         
         # Executar criação de feature
         logger.info("Iniciando processo de criação de feature")

@@ -17,6 +17,7 @@ sys.path.insert(0, str(BASE_DIR))
 
 # Importar o agente GitHub
 from apps.agent_manager.agents import GitHubIntegrationAgent
+from apps.agent_manager.agents.context_manager import ContextManager
 
 # Configurar logger
 logger = get_logger(__name__)
@@ -77,6 +78,18 @@ def parse_arguments():
         help="Arquivo de saída para o resultado (opcional)"
     )
     
+    parser.add_argument(
+        "--context_dir",
+        default="agent_context",
+        help="Diretório para armazenar/acessar arquivos de contexto (padrão: agent_context)"
+    )
+    
+    parser.add_argument(
+        "--base_branch",
+        default="main",
+        help="Nome da branch base para criar a nova branch (padrão: main)"
+    )
+    
     return parser.parse_args()
 
 def main():
@@ -105,13 +118,37 @@ def main():
         
         if not github_token:
             logger.warning("Token GitHub não fornecido. Algumas funcionalidades podem estar limitadas.")
+        
+        # Verificar e criar diretório de contexto se necessário
+        context_dir = Path(args.context_dir)
+        if not context_dir.exists():
+            context_dir.mkdir(parents=True, exist_ok=True)
+            logger.info(f"Diretório de contexto criado: {context_dir}")
+        
+        # Inicializar gerenciador de contexto com o diretório personalizado
+        context_manager = ContextManager(base_dir=str(context_dir))
+        
+        # Verificar se o contexto existe
+        context_data = context_manager.get_context(args.context_id)
+        if not context_data:
+            logger.error(f"Contexto não encontrado: {args.context_id}")
+            print(f"❌ Erro: Contexto '{args.context_id}' não encontrado no diretório {context_dir}")
+            return 1
+        
+        logger.info(f"Contexto carregado: {args.context_id}")
             
+        # Inicializar o agente GitHub
         agent = GitHubIntegrationAgent(
             github_token=github_token,
             repo_owner=repo_owner,
             repo_name=repo_name,
-            target_dir=target_dir
+            target_dir=target_dir,
+            base_branch=args.base_branch
         )
+        
+        # Configurar o diretório de contexto do agente
+        if hasattr(agent, 'context_dir'):
+            agent.context_dir = context_dir
         
         # Processar conceito
         logger.info(f"Processando conceito do contexto: {args.context_id}")

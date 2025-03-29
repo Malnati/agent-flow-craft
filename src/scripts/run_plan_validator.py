@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Script para executar o PlanValidator diretamente.
-Valida planos de execução de features verificando se atendem aos requisitos.
+Valida um plano de execução para garantir que ele siga os requisitos definidos.
 """
 
 import os
@@ -49,12 +49,7 @@ def parse_arguments():
     
     parser.add_argument(
         "plan_file",
-        help="Arquivo com o plano de execução a ser validado (JSON ou TXT)"
-    )
-    
-    parser.add_argument(
-        "--requirements",
-        help="Arquivo YAML com requisitos de validação (opcional)"
+        help="Caminho para o arquivo JSON ou texto contendo o plano a ser validado"
     )
     
     parser.add_argument(
@@ -63,8 +58,24 @@ def parse_arguments():
     )
     
     parser.add_argument(
+        "--requirements",
+        help="Arquivo com requisitos específicos para validação (opcional)"
+    )
+    
+    parser.add_argument(
         "--output",
         help="Arquivo de saída para o resultado da validação (opcional)"
+    )
+    
+    parser.add_argument(
+        "--context_dir",
+        default="agent_context",
+        help="Diretório para armazenar/acessar arquivos de contexto (padrão: agent_context)"
+    )
+    
+    parser.add_argument(
+        "--project_dir",
+        help="Diretório do projeto onde o plano será aplicado (opcional)"
     )
     
     return parser.parse_args()
@@ -89,52 +100,75 @@ def main():
         
         # Verificar arquivo de plano
         if not os.path.isfile(args.plan_file):
-            raise ValueError(f"Arquivo de plano não encontrado: {args.plan_file}")
+            logger.error(f"Arquivo de plano não encontrado: {args.plan_file}")
+            print(f"❌ Erro: Arquivo de plano não encontrado: {args.plan_file}")
+            return 1
             
-        # Ler conteúdo do plano
+        # Carregar plano do arquivo
         with open(args.plan_file, 'r', encoding='utf-8') as f:
             plan_content = f.read().strip()
             
-        # Verificar se o conteúdo parece ser JSON
-        try:
-            json.loads(plan_content)
-            logger.info("Plano detectado como JSON")
-        except json.JSONDecodeError:
-            logger.info("Plano não está em formato JSON válido. Tratando como texto.")
+        # Verificar requisitos específicos
+        requirements_content = None
+        if args.requirements:
+            if os.path.isfile(args.requirements):
+                with open(args.requirements, 'r', encoding='utf-8') as f:
+                    requirements_content = f.read().strip()
+                logger.info(f"Requisitos carregados do arquivo: {args.requirements}")
+            else:
+                logger.warning(f"Arquivo de requisitos não encontrado: {args.requirements}")
+                
+        # Verificar e criar diretório de contexto se necessário
+        context_dir = Path(args.context_dir)
+        if not context_dir.exists():
+            context_dir.mkdir(parents=True, exist_ok=True)
+            logger.info(f"Diretório de contexto criado: {context_dir}")
+            
+        # Verificar diretório do projeto se fornecido
+        if args.project_dir:
+            project_dir = Path(args.project_dir)
+            if not project_dir.exists():
+                logger.warning(f"Diretório de projeto não encontrado: {project_dir}")
+            else:
+                logger.info(f"Utilizando diretório de projeto: {project_dir}")
         
-        # Inicializar validador
-        validator = PlanValidator(requirements_file=args.requirements)
-        
-        # Obter token da OpenAI
+        # Inicializar validador de planos
         openai_token = args.openai_token or os.environ.get('OPENAI_API_KEY', '')
         if not openai_token:
-            logger.warning("Token OpenAI não fornecido. Validação pode ser limitada.")
+            logger.warning("Token OpenAI não fornecido. Algumas funcionalidades podem estar limitadas.")
+            
+        validator = PlanValidator()
+        
+        # Configurar diretório de contexto se o validador suportar
+        if hasattr(validator, 'context_dir'):
+            validator.context_dir = context_dir
             
         # Validar plano
-        logger.info("Validando plano de execução...")
-        result = validator.validate(plan_content, openai_token)
+        logger.info("Validando plano...")
+        result = validator.validate(plan_content, openai_token, requirements=requirements_content)
+        
+        # Verificar resultado
+        is_valid = result.get("valid", False)
+        validation_score = result.get("score", 0)
+        issues = result.get("issues", [])
+        suggestions = result.get("suggestions", [])
         
         # Exibir resultado
-        is_valid = result.get("is_valid", False)
-        missing_items = result.get("missing_items", [])
-        
         print("\n🔍 Resultado da validação:\n")
         print(f"✅ Plano válido: {'Sim' if is_valid else 'Não'}")
+        print(f"🏆 Pontuação: {validation_score}/10")
         
-        if not is_valid:
-            print(f"\n❌ Itens ausentes ({len(missing_items)}):")
-            for item in missing_items:
-                print(f"- {item}")
-            
-            if "detalhes_por_entregavel" in result:
-                print("\n📋 Detalhes por entregável:")
-                for entregavel in result["detalhes_por_entregavel"]:
-                    nome = entregavel.get("nome", "Entregável sem nome")
-                    itens = entregavel.get("itens_ausentes", [])
-                    if itens:
-                        print(f"\n=> {nome}:")
-                        for item in itens:
-                            print(f"  - {item}")
+        if issues:
+            print("\n⚠️ Problemas encontrados:")
+            for i, issue in enumerate(issues, 1):
+                print(f"  {i}. {issue}")
+                
+        if suggestions:
+            print("\n💡 Sugestões de melhoria:")
+            for i, suggestion in enumerate(suggestions, 1):
+                print(f"  {i}. {suggestion}")
+                
+        print(f"\n📊 Avaliação: {result.get('evaluation', 'Não avaliado')}")
         
         # Salvar resultado se solicitado
         if args.output:
@@ -142,13 +176,8 @@ def main():
                 json.dump(result, f, indent=2, ensure_ascii=False)
             print(f"\n💾 Resultado salvo em: {args.output}")
         
-        # Retorno com base na validade
-        return 0 if is_valid else 2
-        
-    except ValueError as e:
-        logger.error(f"Erro de validação: {str(e)}")
-        print(f"\n❌ Erro: {str(e)}")
-        return 1
+        # Retorno bem-sucedido (mesmo se o plano não for válido)
+        return 0
         
     except KeyboardInterrupt:
         logger.warning("Processo interrompido pelo usuário")

@@ -74,7 +74,12 @@ class ConceptGenerationAgent:
         try:
             if not self.openai_token:
                 self.logger.error("Token OpenAI ausente")
-                return self._create_default_concept(prompt_text)
+                concept = self._create_default_concept(prompt_text)
+                # Salvar mesmo com erro
+                context_id = self._save_concept_to_context(concept, prompt_text, error="token_openai_ausente")
+                # Adicionar o context_id ao conceito retornado
+                concept["context_id"] = context_id
+                return concept
                 
             client = OpenAI(api_key=self.openai_token)
             
@@ -115,13 +120,19 @@ class ConceptGenerationAgent:
             try:
                 concept = json.loads(suggestion)
                 self.logger.debug("Conceito convertido com sucesso para JSON")
-                self._save_concept_to_context(concept, prompt_text)
+                # Salvar e obter o ID do contexto
+                context_id = self._save_concept_to_context(concept, prompt_text)
+                # Adicionar o context_id ao conceito retornado
+                concept["context_id"] = context_id
                 return concept
                 
             except json.JSONDecodeError:
                 self.logger.warning(f"Resposta não é um JSON válido. Criando JSON padrão.")
                 concept = self._create_default_concept(prompt_text)
-                self._save_concept_to_context(concept, prompt_text, error="formato_json_invalido")
+                # Salvar mesmo com erro de formato
+                context_id = self._save_concept_to_context(concept, prompt_text, error="formato_json_invalido")
+                # Adicionar o context_id ao conceito retornado 
+                concept["context_id"] = context_id
                 return concept
                 
         except Exception as e:
@@ -129,7 +140,10 @@ class ConceptGenerationAgent:
             error_msg = mask_sensitive_data(str(e))
             self.logger.error(f"FALHA - generate_concept | Erro: {error_msg}", exc_info=True)
             concept = self._create_default_concept(prompt_text)
-            self._save_concept_to_context(concept, prompt_text, error=str(e))
+            # Salvar com informação do erro
+            context_id = self._save_concept_to_context(concept, prompt_text, error=str(e))
+            # Adicionar o context_id ao conceito retornado
+            concept["context_id"] = context_id
             return concept
         finally:
             self.logger.info("FIM - generate_concept")
@@ -181,6 +195,16 @@ class ConceptGenerationAgent:
             context_id = f"concept_{timestamp}"
             context_file = self.context_dir / f"{context_id}.json"
             
+            self.logger.info(f"Tentando salvar contexto em: {context_file} (diretório: {self.context_dir.resolve()})")
+            
+            # Garantir que o diretório de contexto exista
+            if not self.context_dir.exists():
+                self.logger.info(f"Diretório não existe, criando: {self.context_dir}")
+                self.context_dir.mkdir(parents=True, exist_ok=True)
+                self.logger.info(f"Diretório de contexto criado: {self.context_dir}")
+            else:
+                self.logger.info(f"Diretório já existe: {self.context_dir}")
+            
             context_data = {
                 "id": context_id,
                 "timestamp": timestamp,
@@ -190,14 +214,15 @@ class ConceptGenerationAgent:
                 "error": error
             }
             
+            self.logger.info(f"Escrevendo arquivo: {context_file}")
             with open(context_file, 'w', encoding='utf-8') as f:
                 json.dump(context_data, f, indent=2)
                 
-            self.logger.info(f"Contexto salvo em {context_file}")
+            self.logger.info(f"Contexto salvo com sucesso em {context_file}")
             return context_id
             
         except Exception as e:
-            self.logger.error(f"Erro ao salvar contexto: {str(e)}")
+            self.logger.error(f"Erro ao salvar contexto: {str(e)}", exc_info=True)
             return None
 
     @log_execution

@@ -67,6 +67,17 @@ def parse_arguments():
         help="Arquivo de saída para o conceito gerado (opcional)"
     )
     
+    parser.add_argument(
+        "--context_dir",
+        default="agent_context",
+        help="Diretório para armazenar/acessar arquivos de contexto (padrão: agent_context)"
+    )
+    
+    parser.add_argument(
+        "--project_dir",
+        help="Diretório do projeto onde o conceito será aplicado (opcional)"
+    )
+    
     return parser.parse_args()
 
 def main():
@@ -105,12 +116,49 @@ def main():
         openai_token = args.openai_token or os.environ.get('OPENAI_API_KEY', '')
         if not openai_token:
             logger.warning("Token OpenAI não fornecido. Algumas funcionalidades podem estar limitadas.")
-            
-        agent = ConceptGenerationAgent(openai_token=openai_token)
         
+        # Criar diretório de contexto se não existir
+        context_dir = Path(args.context_dir)
+        if not context_dir.exists():
+            context_dir.mkdir(parents=True, exist_ok=True)
+            logger.info(f"Diretório de contexto criado: {context_dir}")
+        
+        # Configurar diretório de contexto
+        logger.info(f"Criando diretório de contexto: {context_dir} (absoluto: {context_dir.resolve()})")
+        
+        # Inicializar o agente com o diretório de contexto personalizado
+        agent = ConceptGenerationAgent(openai_token=openai_token)
+        # Definir diretório de contexto explicitamente
+        agent.context_dir = context_dir
+        logger.info(f"Diretório de contexto do agente configurado: {agent.context_dir}")
+        
+        # Verificar diretório do projeto se fornecido
+        if args.project_dir:
+            project_dir = Path(args.project_dir)
+            if not project_dir.exists():
+                logger.warning(f"Diretório de projeto não encontrado: {project_dir}")
+            else:
+                logger.info(f"Utilizando diretório de projeto: {project_dir}")
+                # Se necessário, pode-se adicionar lógica específica ao diretório do projeto aqui
+                
         # Gerar conceito
         logger.info("Gerando conceito com base no prompt...")
         concept = agent.generate_concept(prompt_text, git_log)
+        
+        # Verificar se o contexto foi salvo
+        logger.info(f"Verificando arquivos no diretório de contexto: {context_dir}")
+        if context_dir.exists():
+            files = list(context_dir.glob("*.json"))
+            logger.info(f"Arquivos encontrados: {files}")
+            if not files:
+                logger.warning(f"Nenhum arquivo de contexto encontrado em {context_dir}")
+                
+                # Tentar salvar manualmente
+                logger.info("Tentando salvar contexto manualmente...")
+                context_id = agent._save_concept_to_context(concept, prompt_text)
+                logger.info(f"Contexto salvo manualmente com ID: {context_id}")
+        else:
+            logger.error(f"Diretório de contexto não existe: {context_dir}")
         
         # Exibir conceito
         print("\n🧠 Conceito gerado:\n")
