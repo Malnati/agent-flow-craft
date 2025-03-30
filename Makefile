@@ -162,11 +162,11 @@ create-venv:
 		echo "Criando ambiente virtual Python..."; \
 		$(PYTHON) -m venv $(VENV_DIR); \
 		$(ACTIVATE) && pip install --upgrade pip; \
-		$(ACTIVATE) && pip install pyyaml requests click pyautogen openai python-slugify; \
+		$(ACTIVATE) && pip install pyyaml requests click pyautogen openai python-slugify build; \
 		echo "export PYTHONDONTWRITEBYTECODE=1" >> $(VENV_DIR)/bin/activate; \
 	else \
 		echo "Ambiente virtual já existe."; \
-		$(ACTIVATE) && pip install -q pyyaml requests click pyautogen openai python-slugify; \
+		$(ACTIVATE) && pip install -q pyyaml requests click pyautogen openai python-slugify build; \
 	fi
 
 check-env:
