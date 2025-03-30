@@ -5,8 +5,8 @@ import sys
 from unittest.mock import patch, MagicMock
 from pathlib import Path
 
-# Adicionar o diretório src ao sys.path
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+# Adicionar o diretório raiz ao sys.path para importações relativas corretas
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from apps.agent_manager.agents.feature_concept_agent import FeatureConceptAgent
 
