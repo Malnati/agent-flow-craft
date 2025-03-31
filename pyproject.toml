@@ -1,6 +1,6 @@
 [project]
 name = "agent-flow-craft"
-version = "1.0.0"
+version = "1.0.1"  # Esta versão será sobrescrita pelo setup.py
 description = "Automatização do fluxo de criação de features via agentes e integração com o GitHub e OpenAI."
 authors = [{ name = "Malnati", email = "ricardomalnati@gmail.com" }]
 requires-python = ">=3.8"
@@ -72,6 +72,3 @@ envdir = "out/tox_envs"
 
 [tool.nox]
 envdir = "out/nox_envs"
-
-[tool.setuptools.dynamic]
-version = {attr = "setuptools.find_packages.get_version"}
