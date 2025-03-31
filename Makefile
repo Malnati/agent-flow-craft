@@ -501,7 +501,7 @@ print-no-pycache-message:
 test-mcp-e2e: create-venv
 	@echo "\n🧪 Executando teste e2e para o MCP..."
 	@echo "\n🔧 Configurando ambiente de teste..."
-	$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python src/scripts/setup_mcp_test.py
+	$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python src/apps/mdc/scripts/setup_cursor_env.py
 	@echo "\n🚀 Executando teste..."
 	$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python src/tests/test_mcp_e2e.py
 	@echo "\n✅ Teste e2e do MCP concluído!"
