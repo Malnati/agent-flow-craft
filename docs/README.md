@@ -22,6 +22,7 @@ Este diretório contém toda a documentação oficial do projeto, incluindo plan
 ### Planos de execução disponíveis (`docs/pr/`):
 
 
+
 <!-- A lista abaixo será gerada automaticamente -->
 - [101 feature plan](pr/101_feature_plan.md)
 - [104 feature plan](pr/104_feature_plan.md)
@@ -46,6 +47,7 @@ Este diretório contém toda a documentação oficial do projeto, incluindo plan
 - [13 feature plan](pr/13_feature_plan.md)
 - [141 feature plan](pr/141_feature_plan.md)
 - [143 feature plan](pr/143_feature_plan.md)
+- [145 feature plan](pr/145_feature_plan.md)
 - [15 feature plan](pr/15_feature_plan.md)
 - [17 feature plan](pr/17_feature_plan.md)
 - [1 fluxo criacao de features](pr/1_fluxo_criacao_de_features.md)
