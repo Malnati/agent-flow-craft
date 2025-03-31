@@ -1,7 +1,7 @@
 .PHONY: install setup test lint format start-agent update-docs-index clean clean-pycache all create-venv \
 	pack deploy undeploy install-cursor install-simple-mcp help build publish version version-info find-commit update-changelog compare-versions test-mcp-e2e \
 	start-concept-agent start-feature-concept-agent start-concept-guardrail-agent start-github-agent start-coordinator-agent start-context-manager start-validator start-tdd-criteria-agent start-tdd-guardrail-agent setup-env clean-cache \
-	start-refactor-agent
+	start-refactor-agent start-autoflake-agent
 
 VERSION := $(shell python3 -c "import time; print(time.strftime('%Y.%m.%d'))")
 BUILD_DIR := ./dist
@@ -161,6 +161,11 @@ help:
 	@echo "  make start-refactor-agent project_dir=<diretório_do_projeto> [scope=<arquivo_ou_diretório>] [level=<leve|moderado|agressivo>] [dry_run=true] [output=<arquivo_saída>]"
 	@echo "Exemplo:"
 	@echo "  make start-refactor-agent project_dir=/caminho/do/projeto scope=src/main.py level=moderado output=resultados.json"
+	@echo ""
+	@echo "AutoflakeAgent: Limpeza de código usando Autoflake"
+	@echo "  make start-autoflake-agent project_dir=<diretório_do_projeto> [scope=<arquivo_ou_diretório>] [aggressiveness=<1|2|3>] [dry_run=true] [output=<arquivo_saída>]"
+	@echo "Exemplo:"
+	@echo "  make start-autoflake-agent project_dir=/caminho/do/projeto scope=src/modulo aggressiveness=3 output=resultado_limpeza.json"
 
 # Verifica se ambiente virtual existe e cria se necessário
 create-venv:
@@ -703,3 +708,25 @@ start-refactor-agent:
 		$(if $(dry_run),--dry_run) \
 		$(if $(force),--force) \
 		$(if $(output),--output "$(output)",--output "refactor_result.json") 
+
+#######################################################
+# AutoflakeAgent: Limpeza de código usando Autoflake
+#######################################################
+
+start-autoflake-agent:
+	@echo "Iniciando agente de limpeza de código com Autoflake"
+	@echo "------------------------------------------------------"
+	@echo "Uso:"
+	@echo "  make start-autoflake-agent project_dir=<diretório_do_projeto> [scope=<arquivo_ou_diretório>] [aggressiveness=<1|2|3>] [dry_run=true] [output=<arquivo_saída>]"
+	@echo "Exemplo:"
+	@echo "  make start-autoflake-agent project_dir=/caminho/do/projeto scope=src/modulo aggressiveness=3 output=resultado_limpeza.json"
+	@echo "------------------------------------------------------"
+	@test -n "$(project_dir)" || (echo "❌ Erro: 'project_dir' é obrigatório"; exit 1)
+	@python src/scripts/run_autoflake_agent.py \
+		--project_dir "$(project_dir)" \
+		$(if $(scope),--scope "$(scope)") \
+		$(if $(aggressiveness),--aggressiveness "$(aggressiveness)") \
+		$(if $(dry_run),--dry_run) \
+		$(if $(force),--force) \
+		$(if $(prompt),--prompt "$(prompt)") \
+		$(if $(output),--output "$(output)",--output "autoflake_result.json") 

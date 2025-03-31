@@ -1,1 +1,2 @@
-rope>=1.13.0 
+rope>=1.13.0
+autoflake>=2.2.0 

@@ -790,42 +790,46 @@ O projeto inclui os seguintes agentes:
 - **TDDCriteriaAgent**: Gera critérios de TDD para features
 - **TDDGuardrailAgent**: Valida e melhora critérios de TDD
 - **RefactorAgent**: Automatiza refatoração de código usando a biblioteca Rope
+- **AutoflakeAgent**: Limpa código automaticamente removendo imports não utilizados e variáveis não usadas
 
-## Uso do Agente de Refatoração (RefactorAgent)
+## Uso do AutoflakeAgent
 
-O RefactorAgent permite automatizar a refatoração de código Python usando a biblioteca Rope. O agente pode analisar arquivos e aplicar várias técnicas de refatoração como organização de imports, renomeação de variáveis, e extração de métodos.
+O AutoflakeAgent permite automatizar a limpeza de código Python, removendo imports não utilizados, variáveis não usadas e expandindo imports com asterisco.
 
 ### Parâmetros
 
-- `project_dir`: Diretório do projeto a ser refatorado (obrigatório)
-- `scope`: Arquivo ou diretório específico a ser refatorado, relativo ao diretório do projeto (opcional)
-- `level`: Nível de refatoração - leve, moderado ou agressivo (padrão: moderado)
+- `project_dir`: Diretório do projeto a ser analisado (obrigatório)
+- `scope`: Arquivo ou diretório específico a ser limpo, relativo ao diretório do projeto (opcional)
+- `aggressiveness`: Nível de agressividade - 1 (leve), 2 (moderado) ou 3 (agressivo) (padrão: 2)
 - `dry_run`: Executa em modo de simulação, sem aplicar mudanças (opcional)
 - `force`: Força a execução ignorando restrições de segurança (opcional)
-- `output`: Arquivo de saída para o resultado da refatoração (padrão: refactor_result.json)
+- `output`: Arquivo de saída para o resultado da limpeza (padrão: autoflake_result.json)
+- `prompt`: Descrição textual da operação (usado apenas para registro)
 
 ### Exemplo via Makefile
 
 ```bash
-make start-refactor-agent project_dir=/caminho/do/projeto scope=src/main.py level=moderado output=resultado_refatoracao.json
+make start-autoflake-agent project_dir=/caminho/do/projeto scope=src/modulo aggressiveness=3 output=resultado_limpeza.json
 ```
 
 ### Exemplo via Linha de Comando
 
 ```bash
-python src/scripts/start_refactor_agent.py --project_dir /caminho/do/projeto --scope src/main.py --level moderado --output resultado_refatoracao.json
+python src/scripts/run_autoflake_agent.py --project_dir /caminho/do/projeto --scope src/modulo --aggressiveness 3 --output resultado_limpeza.json
 ```
 
-### Níveis de Refatoração
+### Níveis de Agressividade
 
-- **Leve**: Aplicação mínima de refatorações, focando apenas na organização de imports e renomeação de variáveis com nomes muito curtos.
-- **Moderado**: Nível intermediário que inclui organização de imports, renomeação de variáveis e extração de expressões complexas para variáveis.
-- **Agressivo**: Aplicação completa de refatorações, incluindo todas as do nível moderado mais extração de código duplicado para métodos e outras técnicas avançadas.
+- **Leve (1)**: Remove apenas imports não utilizados
+- **Moderado (2)**: Remove imports não utilizados e variáveis não usadas
+- **Agressivo (3)**: Remove imports não utilizados, variáveis não usadas e expande imports com asterisco
 
 ### Modo Dry-Run
 
-O modo dry-run permite visualizar quais mudanças seriam aplicadas sem efetivamente modificar os arquivos. Útil para avaliar o impacto antes de aplicar as refatorações:
+O modo dry-run permite visualizar quais mudanças seriam aplicadas sem efetivamente modificar os arquivos:
 
 ```bash
-make start-refactor-agent project_dir=/caminho/do/projeto dry_run=true
+make start-autoflake-agent project_dir=/caminho/do/projeto dry_run=true
 ```
+
+Para mais detalhes e exemplos, consulte a [documentação completa](docs/examples/autoflake_agent_example.md).
