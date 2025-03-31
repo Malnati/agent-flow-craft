@@ -1,47 +1,23 @@
-# Documentação
+# 📚 Documentação do AgentFlowCraft
 
-### Planos de execução:
+Este diretório contém toda a documentação oficial do projeto, incluindo planos de execução, guias técnicos e arquivos de apoio à comunidade.
 
+## 📂 Estrutura da documentação
 
+- `pr/` — Contém planos de execução específicos relacionados a Pull Requests criados automaticamente pelos agentes.
+- `assets/` — Imagens e diagramas utilizados na documentação e no README do repositório.
+- `examples/` — Exemplos de agentes, fluxos e configurações que servem como base para novos desenvolvimentos.
+- `guides/` — (Em breve) Tutoriais e guias de uso detalhados do projeto e agentes.
 
+## 📑 Índice automático da documentação
 
+### Arquivos principais:
+- [README principal do projeto](../README.md)
+- [Roadmap](../roadmap.md)
+- [Contributing Guide](../CONTRIBUTING.md)
+- [Código de Conduta](../CODE_OF_CONDUCT.md)
+- [Política de Segurança](../SECURITY.md)
+- [Changelog](../CHANGELOG.md)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+### Planos de execução disponíveis (`docs/pr/`):
 <!-- A lista abaixo será gerada automaticamente -->
-- [101 feature plan](pr/101_feature_plan.md)
-- [104 feature plan](pr/104_feature_plan.md)
-- [106 feature plan](pr/106_feature_plan.md)
-- [108 feature plan](pr/108_feature_plan.md)
-- [110 feature plan](pr/110_feature_plan.md)
-- [112 feature plan](pr/112_feature_plan.md)
-- [114 feature plan](pr/114_feature_plan.md)
-- [117 feature plan](pr/117_feature_plan.md)
-- [119 feature plan](pr/119_feature_plan.md)
-- [121 feature plan](pr/121_feature_plan.md)
-- [123 feature plan](pr/123_feature_plan.md)
-- [125 feature plan](pr/125_feature_plan.md)
-- [127 feature plan](pr/127_feature_plan.md)
-- [129 feature plan](pr/129_feature_plan.md)
-- [131 feature plan](pr/131_feature_plan.md)
-- [133 feature plan](pr/133_feature_plan.md)
-- [135 feature plan](pr/135_feature_plan.md)
-- [137 feature plan](pr/137_feature_plan.md)
-- [139 feature plan](pr/139_feature_plan.md)
-- [87 feature plan](pr/87_feature_plan.md)
-- [89 feature plan](pr/89_feature_plan.md)
-- [91 feature plan](pr/91_feature_plan.md)
-- [94 feature plan](pr/94_feature_plan.md)
-- [97 feature plan](pr/97_feature_plan.md)

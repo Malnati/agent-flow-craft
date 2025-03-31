@@ -9,7 +9,7 @@ import time
 import re
 
 # Diretório base do projeto
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
 LOG_DIR = os.path.join(BASE_DIR, 'logs')
 
 # Garantir que o diretório de logs existe
