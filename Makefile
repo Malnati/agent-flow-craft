@@ -387,7 +387,7 @@ install: create-venv
 # Instala as dependências do projeto em modo de desenvolvimento
 setup: install
 	@echo "Configurando ambiente"
-	$(ACTIVATE) && $(PYTHON_ENV) uv pip install -e .[dev]
+	$(ACTIVATE) && $(PYTHON_ENV) pip install -e .[dev]
 
 # Executa todos os testes unitários
 test: create-venv
@@ -406,6 +406,8 @@ build: create-venv
 	@echo "Limpando diretório de distribuição..."
 	@rm -rf $(BUILD_DIR)
 	@mkdir -p $(BUILD_DIR)
+	@echo "Instalando dependências de build..."
+	$(ACTIVATE) && $(PYTHON_ENV) pip install -e .[dev]
 	@echo "Construindo pacote..."
 	$(ACTIVATE) && $(PYTHON_ENV) python -m build
 
@@ -462,10 +464,10 @@ deploy: create-venv
 	@echo "\n✅ Implantação concluída com sucesso!"
 
 # Instalar no diretório do MCP do Cursor
-install-cursor:
+install-cursor: create-venv
 	@echo "Instalando no diretório MCP do Cursor..."
 	@mkdir -p $(HOME)/.cursor/mcp/src
-	@pip install -e . --target=$(HOME)/.cursor/mcp/src
+	@$(ACTIVATE) && $(PYTHON_ENV) pip install -e . --target=$(HOME)/.cursor/mcp/src
 	@echo "Configurando arquivo MCP..."
 	@cp -f .cursor/config.json $(HOME)/.cursor/mcp.json
 	@echo "Configurando permissões de execução..."
@@ -557,8 +559,8 @@ publish: build
 		echo "export PyPI_TOKEN=seu_token_aqui"; \
 		exit 1; \
 	fi
-	@echo "Instalando twine no ambiente virtual..."
-	$(ACTIVATE) && $(PYTHON_ENV) pip install twine
+	@echo "Verificando dependências de publicação..."
+	$(ACTIVATE) && $(PYTHON_ENV) pip install -e .[dev]
 	@echo "Publicando no PyPI..."
 	@echo "A versão do pacote será gerada como: YYYY.MM.DD.devN"
 	@echo "Onde N é um número único derivado do timestamp e hash do commit."
