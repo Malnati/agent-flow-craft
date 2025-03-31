@@ -2,7 +2,7 @@ import os
 import sys
 import unittest
 import coverage
-from agent_platform.core.logger import get_logger, log_execution
+from src.core.core.logger import get_logger, log_execution
 from pathlib import Path
 
 logger = get_logger(__name__)

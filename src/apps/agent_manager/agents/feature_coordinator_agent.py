@@ -2,8 +2,8 @@ import os
 import json
 import asyncio
 from pathlib import Path
-from agent_platform.core.logger import get_logger, log_execution
-from agent_platform.core.utils import mask_sensitive_data, TokenValidator
+from src.core.core.logger import get_logger, log_execution
+from src.core.core.utils import mask_sensitive_data, TokenValidator
 
 from apps.agent_manager.agents.concept_generation_agent import ConceptGenerationAgent
 from apps.agent_manager.agents.feature_concept_agent import FeatureConceptAgent
@@ -16,7 +16,7 @@ from apps.agent_manager.agents.guardrails.out_guardrail_concept_generation_agent
 
 # Tente importar funções de mascaramento de dados sensíveis
 try:
-    from agent_platform.core.utils import mask_sensitive_data, get_env_status
+    from src.core.core.utils import mask_sensitive_data, get_env_status
     has_utils = True
 except ImportError:
     has_utils = False

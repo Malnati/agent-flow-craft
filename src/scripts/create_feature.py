@@ -1,6 +1,6 @@
 import asyncio
 import os
-from core.apps.agent_manager.agents.feature_creation_agent import FeatureCreationAgent
+from src.core.apps.agent_manager.agents.feature_creation_agent import FeatureCreationAgent
 
 async def criar_nova_feature(prompt_text):
     # Configurar tokens

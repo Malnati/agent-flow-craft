@@ -11,8 +11,8 @@ import argparse
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Union
 
-from agent_platform.core.logger import get_logger, log_execution
-from agent_platform.core.utils import TokenValidator
+from src.core.core.logger import get_logger, log_execution
+from src.core.core.utils import TokenValidator
 
 # Adicionar o diretório base ao path para permitir importações
 BASE_DIR = Path(__file__).resolve().parent.parent
