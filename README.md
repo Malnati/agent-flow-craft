@@ -776,3 +776,56 @@ Contribuições são bem-vindas! Por favor, siga estas etapas:
 ## Licença
 
 Este projeto está licenciado sob a licença MIT - veja o arquivo LICENSE para mais detalhes.
+
+## Agentes Disponíveis
+
+O projeto inclui os seguintes agentes:
+
+- **ConceptAgent**: Gera conceitos de features com base em prompts
+- **ConceptGuardrailAgent**: Valida e melhora conceitos de features gerados pelo ConceptAgent
+- **FeatureConceptAgent**: Cria definição completa de features
+- **GitHubIntegrationAgent**: Cria issues e branches no GitHub para features
+- **FeatureCoordinatorAgent**: Orquestra todos os agentes para automatizar a geração de features completas
+- **ContextManager**: Gerencia contexto para rastreio de features
+- **TDDCriteriaAgent**: Gera critérios de TDD para features
+- **TDDGuardrailAgent**: Valida e melhora critérios de TDD
+- **RefactorAgent**: Automatiza refatoração de código usando a biblioteca Rope
+
+## Uso do Agente de Refatoração (RefactorAgent)
+
+O RefactorAgent permite automatizar a refatoração de código Python usando a biblioteca Rope. O agente pode analisar arquivos e aplicar várias técnicas de refatoração como organização de imports, renomeação de variáveis, e extração de métodos.
+
+### Parâmetros
+
+- `project_dir`: Diretório do projeto a ser refatorado (obrigatório)
+- `scope`: Arquivo ou diretório específico a ser refatorado, relativo ao diretório do projeto (opcional)
+- `level`: Nível de refatoração - leve, moderado ou agressivo (padrão: moderado)
+- `dry_run`: Executa em modo de simulação, sem aplicar mudanças (opcional)
+- `force`: Força a execução ignorando restrições de segurança (opcional)
+- `output`: Arquivo de saída para o resultado da refatoração (padrão: refactor_result.json)
+
+### Exemplo via Makefile
+
+```bash
+make start-refactor-agent project_dir=/caminho/do/projeto scope=src/main.py level=moderado output=resultado_refatoracao.json
+```
+
+### Exemplo via Linha de Comando
+
+```bash
+python src/scripts/start_refactor_agent.py --project_dir /caminho/do/projeto --scope src/main.py --level moderado --output resultado_refatoracao.json
+```
+
+### Níveis de Refatoração
+
+- **Leve**: Aplicação mínima de refatorações, focando apenas na organização de imports e renomeação de variáveis com nomes muito curtos.
+- **Moderado**: Nível intermediário que inclui organização de imports, renomeação de variáveis e extração de expressões complexas para variáveis.
+- **Agressivo**: Aplicação completa de refatorações, incluindo todas as do nível moderado mais extração de código duplicado para métodos e outras técnicas avançadas.
+
+### Modo Dry-Run
+
+O modo dry-run permite visualizar quais mudanças seriam aplicadas sem efetivamente modificar os arquivos. Útil para avaliar o impacto antes de aplicar as refatorações:
+
+```bash
+make start-refactor-agent project_dir=/caminho/do/projeto dry_run=true
+```

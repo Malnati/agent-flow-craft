@@ -1,6 +1,7 @@
 .PHONY: install setup test lint format start-agent update-docs-index clean clean-pycache all create-venv \
 	pack deploy undeploy install-cursor install-simple-mcp help build publish version version-info find-commit update-changelog compare-versions test-mcp-e2e \
-	start-concept-agent start-feature-concept-agent start-concept-guardrail-agent start-github-agent start-coordinator-agent start-context-manager start-validator start-tdd-criteria-agent start-tdd-guardrail-agent setup-env clean-cache
+	start-concept-agent start-feature-concept-agent start-concept-guardrail-agent start-github-agent start-coordinator-agent start-context-manager start-validator start-tdd-criteria-agent start-tdd-guardrail-agent setup-env clean-cache \
+	start-refactor-agent
 
 VERSION := $(shell python3 -c "import time; print(time.strftime('%Y.%m.%d'))")
 BUILD_DIR := ./dist
@@ -155,6 +156,11 @@ help:
 	@echo "  make update-changelog version=X.Y.Z.devN  Atualiza o CHANGELOG.md com informações da versão"
 	@echo "  make compare-versions from=X.Y.Z.devN to=X.Y.Z.devN  Compara as mudanças entre duas versões"
 	@echo "  make test-mcp-e2e              Executa o teste e2e do MCP"
+	@echo ""
+	@echo "RefactorAgent: Refatoração de código usando Rope"
+	@echo "  make start-refactor-agent project_dir=<diretório_do_projeto> [scope=<arquivo_ou_diretório>] [level=<leve|moderado|agressivo>] [dry_run=true] [output=<arquivo_saída>]"
+	@echo "Exemplo:"
+	@echo "  make start-refactor-agent project_dir=/caminho/do/projeto scope=src/main.py level=moderado output=resultados.json"
 
 # Verifica se ambiente virtual existe e cria se necessário
 create-venv:
@@ -676,3 +682,24 @@ setup-env:
 
 clean-cache:
 	@rm -rf out/__pycache__ build/__pycache__ 
+
+#######################################################
+# RefactorAgent: Refatoração de código usando Rope
+#######################################################
+
+start-refactor-agent:
+	@echo "Iniciando agente de refatoração de código"
+	@echo "------------------------------------------------------"
+	@echo "Uso:"
+	@echo "  make start-refactor-agent project_dir=<diretório_do_projeto> [scope=<arquivo_ou_diretório>] [level=<leve|moderado|agressivo>] [dry_run=true] [output=<arquivo_saída>]"
+	@echo "Exemplo:"
+	@echo "  make start-refactor-agent project_dir=/caminho/do/projeto scope=src/main.py level=moderado output=resultados.json"
+	@echo "------------------------------------------------------"
+	@test -n "$(project_dir)" || (echo "❌ Erro: 'project_dir' é obrigatório"; exit 1)
+	@python src/scripts/start_refactor_agent.py \
+		--project_dir "$(project_dir)" \
+		$(if $(scope),--scope "$(scope)") \
+		$(if $(level),--level "$(level)") \
+		$(if $(dry_run),--dry_run) \
+		$(if $(force),--force) \
+		$(if $(output),--output "$(output)",--output "refactor_result.json") 
