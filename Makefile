@@ -1,7 +1,7 @@
 .PHONY: install setup test lint format start-agent update-docs-index clean clean-pycache all create-venv \
 	pack deploy undeploy install-cursor install-simple-mcp help build publish version version-info find-commit update-changelog compare-versions test-mcp-e2e \
 	start-concept-agent start-feature-concept-agent start-concept-guardrail-agent start-github-agent start-coordinator-agent start-context-manager start-validator start-tdd-criteria-agent start-tdd-guardrail-agent setup-env clean-cache \
-	start-refactor-agent
+	start-refactor-agent test-refactor-file-ops
 
 VERSION := $(shell python3 -c "import time; print(time.strftime('%Y.%m.%d'))")
 BUILD_DIR := ./dist
@@ -429,6 +429,11 @@ clean: clean-pycache
 	@rm -rf $(BUILD_DIR)/
 	@rm -rf *.egg-info/
 	@echo "Limpeza concluída!"
+
+# Testar operações de arquivo do RefactorAgent
+test-refactor-file-ops: create-venv
+	@echo "Executando testes de operações de arquivo do RefactorAgent..."
+	$(ACTIVATE) && $(PYTHON_ENV) python src/scripts/test_refactor_file_ops.py
 
 # Executa lint, test, formatação e atualização de docs
 all: lint test format update-docs-index

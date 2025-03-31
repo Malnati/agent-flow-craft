@@ -7,6 +7,7 @@ import re
 import sys
 import logging
 import time
+import shutil
 from pathlib import Path
 from typing import Dict, List, Tuple, Any, Optional, Set, Union
 
@@ -452,3 +453,123 @@ class RefactorAgent(BaseAgent):
         # Rope não tem suporte nativo para diff
         # Esta é uma implementação simplificada que pode ser expandida
         return "Diff não disponível nesta versão" 
+        
+    def move_with_backup(self, source_path: str, target_path: str) -> bool:
+        """
+        Move um arquivo mantendo backup do original no diretório bak/.
+        
+        Args:
+            source_path: Caminho de origem do arquivo
+            target_path: Caminho de destino do arquivo
+            
+        Returns:
+            bool: True se a operação foi bem-sucedida
+        """
+        try:
+            self.trace(f"Movendo arquivo com backup: {source_path} → {target_path}")
+            
+            # Criar diretório bak/ se não existir
+            bak_dir = os.path.join(self.project_dir, "bak")
+            os.makedirs(bak_dir, exist_ok=True)
+            
+            # Criar caminho relativo para preservar a estrutura de diretórios
+            rel_path = os.path.relpath(source_path, self.project_dir)
+            backup_path = os.path.join(bak_dir, rel_path)
+            
+            # Criar diretórios para o backup se necessário
+            os.makedirs(os.path.dirname(backup_path), exist_ok=True)
+            
+            # Fazer backup do arquivo original
+            if os.path.exists(source_path):
+                shutil.copy2(source_path, backup_path)
+                self.trace(f"Backup criado em: {backup_path}")
+            
+            # Criar diretórios para o destino se necessário
+            os.makedirs(os.path.dirname(target_path), exist_ok=True)
+            
+            # Mover o arquivo
+            if os.path.exists(source_path):
+                shutil.move(source_path, target_path)
+            
+            # Verificar e remover diretórios vazios após a operação
+            self.cleanup_empty_dirs(os.path.dirname(source_path))
+            
+            # Registrar operação nas estatísticas
+            self.stats["refactorings_applied"] += 1
+            self.stats["detailed_changes"].append({
+                "type": "move_file",
+                "source": rel_path,
+                "target": os.path.relpath(target_path, self.project_dir),
+                "backup": os.path.join("bak", rel_path)
+            })
+            
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"FALHA - Erro ao mover arquivo com backup: {str(e)}", exc_info=True)
+            self.stats["errors"] += 1
+            return False
+    
+    def cleanup_empty_dirs(self, directory: str):
+        """
+        Remove recursivamente diretórios vazios.
+        
+        Args:
+            directory: Diretório a verificar e potencialmente remover
+        """
+        try:
+            if not os.path.exists(directory):
+                return
+                
+            # Não remover a raiz do projeto
+            if os.path.samefile(directory, self.project_dir):
+                return
+                
+            # Ignorar diretório bak/
+            if os.path.basename(directory) == "bak" and os.path.dirname(directory) == self.project_dir:
+                return
+                
+            # Primeiro remover subdiretórios vazios
+            for root, dirs, files in os.walk(directory, topdown=False):
+                for dir_name in dirs:
+                    dir_path = os.path.join(root, dir_name)
+                    if os.path.exists(dir_path) and not os.listdir(dir_path):
+                        self.trace(f"Removendo subdiretório vazio: {dir_path}")
+                        os.rmdir(dir_path)
+                        # Registrar nas estatísticas
+                        self.stats["detailed_changes"].append({
+                            "type": "remove_empty_dir",
+                            "path": os.path.relpath(dir_path, self.project_dir)
+                        })
+                
+            # Verificar se o diretório principal está vazio
+            if not os.listdir(directory):
+                self.trace(f"Removendo diretório vazio: {directory}")
+                os.rmdir(directory)
+                
+                # Registrar nas estatísticas
+                self.stats["detailed_changes"].append({
+                    "type": "remove_empty_dir",
+                    "path": os.path.relpath(directory, self.project_dir)
+                })
+                
+                # Recursivamente verificar o diretório pai
+                parent_dir = os.path.dirname(directory)
+                self.cleanup_empty_dirs(parent_dir)
+                
+        except Exception as e:
+            self.logger.warning(f"AVISO - Erro ao remover diretório vazio {directory}: {str(e)}")
+            self.stats["warnings"] += 1
+    
+    def rename_file(self, old_path: str, new_path: str) -> bool:
+        """
+        Renomeia um arquivo com backup e limpeza automática.
+        
+        Args:
+            old_path: Caminho original do arquivo
+            new_path: Novo caminho do arquivo
+            
+        Returns:
+            bool: True se a operação foi bem-sucedida
+        """
+        return self.move_with_backup(old_path, new_path) 
