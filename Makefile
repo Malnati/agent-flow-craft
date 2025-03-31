@@ -726,3 +726,44 @@ start-autoflake-agent:
 		$(if $(force),--force) \
 		$(if $(prompt),--prompt "$(prompt)") \
 		$(if $(output),--output "$(output)",--output "autoflake_result.json") 
+
+# Alvos para execução via MCP
+start-concept-agent-mcp: create-venv print-no-pycache-message
+	@echo "Iniciando ConceptGenerationAgent via MCP..."
+	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_concept_agent.py --mcp
+
+start-feature-concept-agent-mcp: create-venv print-no-pycache-message
+	@echo "Iniciando FeatureConceptAgent via MCP..."
+	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_feature_concept_agent.py --mcp
+
+start-tdd-criteria-agent-mcp: create-venv print-no-pycache-message
+	@echo "Iniciando TDDCriteriaAgent via MCP..."
+	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_tdd_criteria_agent.py --mcp
+
+start-github-agent-mcp: create-venv print-no-pycache-message
+	@echo "Iniciando GitHubIntegrationAgent via MCP..."
+	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_github_agent.py --mcp
+
+start-coordinator-agent-mcp: create-venv print-no-pycache-message
+	@echo "Iniciando FeatureCoordinatorAgent via MCP..."
+	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_coordinator_agent.py --mcp
+
+start-context-manager-mcp: create-venv print-no-pycache-message
+	@echo "Iniciando ContextManager via MCP..."
+	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_context_manager.py --mcp
+
+start-validator-mcp: create-venv print-no-pycache-message
+	@echo "Iniciando PlanValidator via MCP..."
+	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_plan_validator.py --mcp
+
+start-refactor-agent-mcp: create-venv print-no-pycache-message
+	@echo "Iniciando RefactorAgent via MCP..."
+	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_refactor_agent.py --mcp
+
+start-autoflake-agent-mcp: create-venv print-no-pycache-message
+	@echo "Iniciando AutoflakeAgent via MCP..."
+	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_autoflake_agent.py --mcp
+
+start-agent-mcp: create-venv print-no-pycache-message
+	@echo "Iniciando FeatureAgent via MCP..."
+	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/apps/feature_creation/start.py --mcp 
