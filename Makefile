@@ -1,5 +1,5 @@
 .PHONY: install setup test lint format start-agent update-docs-index clean clean-pycache all create-venv \
-	pack deploy undeploy install-cursor install-simple-mcp help build publish version version-info find-commit update-changelog compare-versions test-mcp-e2e \
+	pack deploy undeploy install-cursor install-simple-mcp help build publish version version-info find-commit update-changelog compare-versions test-mcp-e2e test-coordinator-e2e \
 	start-concept-agent start-feature-concept-agent start-concept-guardrail-agent start-github-agent start-coordinator-agent start-context-manager start-validator start-tdd-criteria-agent start-tdd-guardrail-agent setup-env clean-cache \
 	start-refactor-agent start-autoflake-agent
 
@@ -26,6 +26,8 @@ help:
 	@echo "  make clean-pycache            Remove apenas os diretórios __pycache__ e arquivos .pyc"
 	@echo "  make all                      Executa lint, test, formatação e atualização de docs"
 	@echo "  make update-docs-index        Atualiza o índice da documentação automaticamente"
+	@echo "  make test-mcp-e2e             Executa o teste e2e do MCP"
+	@echo "  make test-coordinator-e2e     Executa o teste e2e do FeatureCoordinatorAgent"
 	@echo ""
 	@echo "Agentes disponíveis:"
 	@echo "  make start-agent prompt=\"...\" project_dir=\"...\"  Inicia o agente de criação de features (FeatureCoordinatorAgent)"
@@ -155,7 +157,6 @@ help:
 	@echo "  make find-commit version=X.Y.Z.devN   Retorna o hash do commit associado à versão"
 	@echo "  make update-changelog version=X.Y.Z.devN  Atualiza o CHANGELOG.md com informações da versão"
 	@echo "  make compare-versions from=X.Y.Z.devN to=X.Y.Z.devN  Compara as mudanças entre duas versões"
-	@echo "  make test-mcp-e2e              Executa o teste e2e do MCP"
 	@echo ""
 	@echo "RefactorAgent: Refatoração de código usando Rope"
 	@echo "  make start-refactor-agent project_dir=<diretório_do_projeto> [scope=<arquivo_ou_diretório>] [level=<leve|moderado|agressivo>] [dry_run=true] [output=<arquivo_saída>]"
@@ -516,6 +517,17 @@ test-mcp-e2e: create-venv
 	@echo "\n🚀 Executando teste..."
 	$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python src/tests/test_mcp_e2e.py
 	@echo "\n✅ Teste e2e do MCP concluído!"
+
+# Executar teste e2e do FeatureCoordinatorAgent
+test-coordinator-e2e: create-venv
+	@echo "\n🧪 Executando teste e2e para o FeatureCoordinatorAgent..."
+	@echo "\n🔧 Configurando ambiente de teste..."
+	$(ACTIVATE) && $(PYTHON_ENV) pip install -e .[dev]
+	@echo "\n🚀 Executando teste..."
+	$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/tests/test_coordinator_agent_e2e.py
+	@echo "\n✅ Teste e2e do FeatureCoordinatorAgent concluído!"
+	@echo "\n🧹 Executando limpeza de código com autoflake..."
+	$(ACTIVATE) && $(PYTHON_ENV) autoflake --remove-all-unused-imports --remove-unused-variables --in-place --recursive src/tests/
 
 # Atualizar o CHANGELOG.md com a nova versão
 update-changelog:

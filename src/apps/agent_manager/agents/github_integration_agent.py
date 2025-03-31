@@ -264,40 +264,45 @@ class GitHubIntegrationAgent:
     
     @log_execution
     def get_git_main_log(self):
-        """Obtém o log da branch main"""
-        self.logger.info("INÍCIO - get_git_main_log")
+        """
+        Obtém o log do Git da branch main.
         
+        Returns:
+            str: Log formatado do Git
+        """
+        self.logger.info("INÍCIO - get_git_main_log")
         try:
-            # Mudar para o diretório alvo, se especificado
-            current_dir = os.getcwd()
-            if self.target_dir:
-                os.chdir(self.target_dir)
-                
+            # Verificar se estamos em um repositório Git
+            if not os.path.exists(os.path.join(self.target_dir, ".git")):
+                self.logger.warning("Diretório não é um repositório Git: " + self.target_dir)
+                return "Repositório Git não encontrado."
+
+            # Definir o diretório de trabalho para o repositório Git
+            cwd = os.getcwd()
+            os.chdir(self.target_dir)
+            
             try:
+                # Executar o comando git log
                 result = subprocess.run(
-                    ['git', 'log', '--oneline', '-n', '10'],
-                    check=False, capture_output=True, text=True, timeout=15
+                    ["git", "log", "--pretty=format:%h %ad %s", "--date=short", "-n", "20"],
+                    capture_output=True,
+                    text=True,
+                    check=True
                 )
+                log = result.stdout
                 
-                if result.returncode == 0:
-                    log = result.stdout
-                    self.logger.debug(f"Log Git obtido: {len(log.split(newline))} commits")
-                    return log
-                else:
-                    self.logger.warning(f"AVISO - Comando git log falhou: {result.stderr}")
+                # Não foi possível obter o log
+                if not log:
+                    self.logger.warning("Log do Git está vazio ou não disponível")
                     return "Histórico Git não disponível"
-                    
-            except subprocess.SubprocessError as e:
-                self.logger.warning(f"AVISO - Erro ao executar git log: {str(e)}")
-                return "Histórico Git não disponível"
                 
+                # Log obtido com sucesso
+                self.logger.debug(f"Log Git obtido: {len(log.split('\n'))} commits")
+                return log
             finally:
-                # Voltar ao diretório original
-                if self.target_dir:
-                    os.chdir(current_dir)
-                    
+                os.chdir(cwd)
         except Exception as e:
-            self.logger.error(f"FALHA - get_git_main_log | Erro: {str(e)}", exc_info=True)
+            self.logger.error(f"FALHA - get_git_main_log | Erro: {str(e)}")
             return "Histórico Git não disponível"
     
     @log_execution

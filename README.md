@@ -273,6 +273,12 @@ python -B src/scripts/run_plan_validator.py "planos/feature_plan.json" --project
 10. Atribui uma pontuação de validação ao plano (de 0 a 10)
 11. Retorna um relatório detalhado com o resultado da validação
 
+### Testes
+
+- `make test` - Executa os testes unitários do projeto
+- `make test-mcp-e2e` - Executa o teste e2e do MCP
+- `make test-coordinator-e2e` - Executa o teste e2e do FeatureCoordinatorAgent com o repositório de teste
+
 ---
 
 ## ✅ Status do projeto
@@ -833,3 +839,26 @@ make start-autoflake-agent project_dir=/caminho/do/projeto dry_run=true
 ```
 
 Para mais detalhes e exemplos, consulte a [documentação completa](docs/examples/autoflake_agent_example.md).
+
+## Teste End-to-End do FeatureCoordinatorAgent
+
+O comando `test-coordinator-e2e` executa um teste completo do fluxo de trabalho do FeatureCoordinatorAgent, que inclui:
+
+1. Geração de conceito a partir de prompt
+2. Transformação em feature_concept detalhado
+3. Validação do plano de execução
+4. Integração com GitHub (usando o repositório de teste ou mocks)
+
+O teste utiliza o repositório https://github.com/Malnati/agent-flow-craft-e2e.git para testar a integração real com o GitHub, mas também implementa mocks para casos em que as credenciais reais não estejam disponíveis.
+
+### Execução do Teste
+
+```bash
+make test-coordinator-e2e
+```
+
+O teste criará um ambiente temporário, clonará o repositório de teste, executará todas as etapas do fluxo e fará as verificações necessárias automaticamente.
+
+## Licença
+
+[Inserir informações de licença]

@@ -91,50 +91,53 @@ class ContextManager:
             return None
     
     @log_execution
-    def update_context(self, context_id, data, merge=True):
+    def update_context(self, context_id, data, merge=False):
         """
-        Atualiza um contexto existente.
-        
+        Atualiza um contexto existente com novos dados.
+
         Args:
-            context_id (str): ID do contexto a ser atualizado
-            data (dict): Novos dados a serem adicionados/substituídos
-            merge (bool): Se True, faz merge com dados existentes; se False, substitui completamente
-            
+            context_id (str): ID do contexto a ser atualizado.
+            data (dict): Dados a serem atualizados.
+            merge (bool, optional): Se True, mescla os dados com o contexto existente.
+                                   Se False, sobrescreve o contexto. Padrão é False.
+
         Returns:
-            bool: True se atualização foi bem-sucedida, False caso contrário
+            bool: True se o contexto foi atualizado com sucesso, False caso contrário.
         """
         self.logger.info(f"INÍCIO - update_context | ID: {context_id}, Merge: {merge}")
         
         try:
-            # Recuperar contexto existente
             context_data = self.get_context(context_id)
-            if not context_data:
-                self.logger.warning(f"Contexto não encontrado para atualização | ID: {context_id}")
+            
+            if context_data is None:
+                self.logger.error(f"FALHA - update_context | Contexto não encontrado: {context_id}")
                 return False
-                
-            # Atualizar dados
+            
             if merge:
-                if isinstance(context_data.get('data', {}), dict) and isinstance(data, dict):
+                # Verificar se o contexto tem a chave 'data'
+                if 'data' in context_data:
                     context_data['data'].update(data)
                 else:
-                    # Se um dos dados não for dict, substituir completamente
-                    context_data['data'] = data
+                    # Se não tiver a chave 'data', atualiza diretamente o dicionário principal
+                    context_data.update(data)
             else:
-                context_data['data'] = data
-                
-            # Adicionar metadados de atualização
-            context_data['updated_at'] = datetime.now().isoformat()
+                # Sobrescrever o contexto com os novos dados
+                if 'data' in context_data:
+                    context_data['data'] = data
+                else:
+                    # Se não tiver a chave 'data', substitui diretamente o dicionário principal
+                    context_data = data
             
-            # Salvar contexto atualizado
-            context_file = self.base_dir / f"{context_id}.json"
+            # Salvar o contexto atualizado
+            context_file = os.path.join(self.base_dir, f"{context_id}.json")
             with open(context_file, 'w', encoding='utf-8') as f:
-                json.dump(context_data, f, indent=2)
-                
-            self.logger.info(f"SUCESSO - Contexto atualizado | ID: {context_id}")
+                json.dump(context_data, f, ensure_ascii=False, indent=2)
+            
+            self.logger.info(f"SUCESSO - update_context | Contexto atualizado: {context_id}")
             return True
             
         except Exception as e:
-            self.logger.error(f"FALHA - update_context | Erro: {str(e)}", exc_info=True)
+            self.logger.error(f"FALHA - update_context | Erro: {str(e)}")
             return False
     
     @log_execution
