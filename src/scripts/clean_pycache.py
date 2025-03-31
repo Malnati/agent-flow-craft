@@ -15,7 +15,7 @@ from pathlib import Path
 
 # Tenta importar o logger, mas não falha se não encontrar
 try:
-    from core.core.logger import get_logger, log_execution
+    from core.core.logger import get_logger
     logger = get_logger(__name__)
     use_logger = True
 except ImportError:

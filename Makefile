@@ -169,16 +169,9 @@ help:
 
 # Verifica se ambiente virtual existe e cria se necessário
 create-venv:
-	@if [ ! -d "$(VENV_DIR)" ]; then \
-		echo "Criando ambiente virtual Python..."; \
-		$(PYTHON) -m venv $(VENV_DIR); \
-		$(ACTIVATE) && pip install --upgrade pip; \
-		$(ACTIVATE) && pip install pyyaml requests click pyautogen openai python-slugify build; \
-		echo "export PYTHONDONTWRITEBYTECODE=1" >> $(VENV_DIR)/bin/activate; \
-	else \
-		echo "Ambiente virtual já existe."; \
-		$(ACTIVATE) && pip install -q pyyaml requests click pyautogen openai python-slugify build; \
-	fi
+	@echo "Criando ambiente virtual"
+	@python -m venv .venv
+	@echo "Ambiente virtual criado em .venv/"
 
 check-env:
 	@if [ -z "$(GITHUB_TOKEN)" ]; then \
@@ -387,10 +380,13 @@ start-tdd-guardrail-agent: create-venv print-no-pycache-message
 
 # Instala as dependências do projeto via uv
 install: create-venv
-	$(ACTIVATE) && $(PYTHON_ENV) uv pip install -e . && uv pip install -e .[dev]
+	@echo "Instalando dependências"
+	@. .venv/bin/activate && pip install -e .
+	@echo "Dependências instaladas"
 
 # Instala as dependências do projeto em modo de desenvolvimento
-setup: create-venv
+setup: install
+	@echo "Configurando ambiente"
 	$(ACTIVATE) && $(PYTHON_ENV) uv pip install -e .[dev]
 
 # Executa todos os testes unitários

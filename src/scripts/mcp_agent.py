@@ -8,13 +8,11 @@ import os
 import uuid
 import time
 import logging
-import subprocess
 from pathlib import Path
-import argparse
 
 # Tente importar nossas utilidades, com fallback para funcionalidade básica
 try:
-    from core.core.utils import mask_sensitive_data, log_env_status, get_env_status
+    from core.core.utils import mask_sensitive_data, log_env_status
     has_utils = True
 except ImportError:
     has_utils = False

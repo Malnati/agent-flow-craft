@@ -3,16 +3,11 @@ Agente para limpeza automática de código Python usando Autoflake.
 Este agente remove imports não utilizados e variáveis não usadas.
 """
 import os
-import sys
-import json
-import logging
 import subprocess
 import time
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Set, Union
+from typing import Dict, List, Any, Optional
 
-from core.core.logger import get_logger, log_execution
-from core.core.utils import mask_sensitive_data, get_env_status
+from core.core.logger import log_execution
 from .base_agent import BaseAgent
 
 class AutoflakeAgent(BaseAgent):
@@ -94,7 +89,6 @@ class AutoflakeAgent(BaseAgent):
     def validate_required_tokens(self):
         """Sobrescreve a validação de tokens para que não seja necessário validar tokens."""
         # Não é necessário validar tokens para este agente
-        pass
     
     def trace(self, message: str):
         """

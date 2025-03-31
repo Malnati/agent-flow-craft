@@ -4,23 +4,14 @@ Este agente identifica oportunidades de refatoração e as aplica automaticament
 """
 import os
 import re
-import sys
-import logging
 import time
-from pathlib import Path
-from typing import Dict, List, Tuple, Any, Optional, Set, Union
+from typing import Dict, Any, Optional
 
 import rope.base.project
-from rope.base.project import Project
 from rope.base import libutils, exceptions
-from rope.refactor.rename import Rename
-from rope.refactor.extract import ExtractMethod, ExtractVariable
-from rope.refactor.move import MoveMethod, MoveGlobal
-from rope.refactor import restructure
 from rope.refactor.importutils import ImportOrganizer
 
-from core.core.logger import get_logger, log_execution
-from core.core.utils import mask_sensitive_data, get_env_status
+from core.core.logger import log_execution
 from .base_agent import BaseAgent
 
 class RefactorAgent(BaseAgent):
@@ -125,7 +116,6 @@ class RefactorAgent(BaseAgent):
     def validate_required_tokens(self):
         """Sobrescreve a validação de tokens para que não seja necessário validar tokens."""
         # Não é necessário validar tokens para este agente
-        pass
     
     def trace(self, message: str):
         """

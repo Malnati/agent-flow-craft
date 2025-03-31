@@ -9,7 +9,6 @@ import sys
 import json
 import argparse
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Union
 
 # Adicionar o diretório base ao path para permitir importações
 BASE_DIR = Path(__file__).resolve().parent.parent

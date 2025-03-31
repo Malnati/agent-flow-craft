@@ -9,7 +9,6 @@ import json
 import subprocess
 import logging
 import tempfile
-import time
 import uuid
 from pathlib import Path
 
@@ -76,7 +75,6 @@ class TestMCPE2E(unittest.TestCase):
             # Nome único para a nova feature
             feature_name = f"feature-test-{uuid.uuid4().hex[:8]}"
             prompt = f"Test feature: {feature_name}"
-            execution_plan = "Plano de execução detalhado para teste"
             
             # Criar mensagem para o MCP
             message = {

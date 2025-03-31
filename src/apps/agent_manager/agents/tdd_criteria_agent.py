@@ -12,14 +12,11 @@ da feature descrita no prompt inicial, baseado no contexto do repositório.
 """
 
 import os
-import sys
 import json
 import logging
-import glob
-import time
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Any, Optional, Union
+from typing import Dict, List, Any
 
 try:
     import openai
@@ -58,7 +55,7 @@ except ImportError:
 
 # Mascaramento básico de dados sensíveis
 try:
-    from core.core.utils import mask_sensitive_data, get_env_status
+    from core.core.utils import mask_sensitive_data
     has_utils = True
 except ImportError:
     has_utils = False

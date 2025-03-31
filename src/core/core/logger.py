@@ -6,7 +6,6 @@ import logging.handlers
 from pathlib import Path
 from functools import wraps
 import time
-import traceback
 import re
 
 # Diretório base do projeto

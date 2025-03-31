@@ -3,8 +3,7 @@ Classe base para todos os agentes do sistema.
 """
 import os
 import time
-import logging
-from typing import Optional, Dict, Any
+from typing import Optional
 from core.core.logger import get_logger
 from core.core.utils import TokenValidator
 

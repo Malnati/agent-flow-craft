@@ -10,8 +10,7 @@ import sys
 import json
 import argparse
 import logging
-from pathlib import Path
-from typing import Dict, Any, Optional, List, Union
+from typing import Dict, Any
 
 # Adicionar o diretório raiz ao path
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))

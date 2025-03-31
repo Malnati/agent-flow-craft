@@ -3,7 +3,7 @@ Utilitários para manipulação segura de dados e informações sensíveis.
 """
 import os
 import re
-from typing import Any, Dict, List, Union, Optional
+from typing import Any, List, Optional
 
 # Lista de palavras-chave para identificar dados sensíveis
 SENSITIVE_KEYWORDS = [

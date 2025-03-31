@@ -5,15 +5,11 @@ Este script recebe um prompt de texto e coordena a criação de uma feature comp
 """
 
 import argparse
-import logging
 import os
-import yaml
-from datetime import datetime
 import sys
 from pathlib import Path
 import time
 import json
-import tempfile
 import re
 import asyncio
 
@@ -56,7 +52,6 @@ def _mask_sensitive_args():
                 break
         
         # Verificar se o argumento atual contém um valor sensível diretamente
-        is_sensitive = False
         if '=' in arg:
             # Para argumentos no formato --arg=valor
             parts = arg.split('=', 1)
@@ -66,7 +61,7 @@ def _mask_sensitive_args():
             # Verificar se o prefixo está na lista de argumentos sensíveis
             for s_prefix in sensitive_arg_prefixes:
                 if prefix == s_prefix:
-                    is_sensitive = True
+                    pass
                     # Preservar parte inicial e final para identificação
                     if len(value) > 8:
                         safe_value = value[:4] + '*'*(len(value)-8) + value[-4:]
@@ -78,7 +73,6 @@ def _mask_sensitive_args():
             # Verificar se é um valor sensível isolado (como um token)
             for pattern in [r'sk-[a-zA-Z0-9]{20,}', r'sk-proj-[a-zA-Z0-9_-]{20,}', r'gh[pous]_[a-zA-Z0-9]{20,}']:
                 if re.match(pattern, arg):
-                    is_sensitive = True
                     if len(arg) > 8:
                         safe_arg = arg[:4] + '*'*(len(arg)-8) + arg[-4:]
                     else:
@@ -109,11 +103,10 @@ try:
     if len(sys.argv) > 1:
         safe_command = _mask_sensitive_args()
         print(f"Executando script com argumentos seguros: {safe_command}")
-except Exception as e:
+except Exception:
     # Em caso de erro no mascaramento, não exibir argumentos
     print(f"Executando {os.path.basename(__file__)} com argumentos mascarados")
 
-from slugify import slugify
 from core.core.logger import setup_logging, get_logger, log_execution, mask_sensitive_data
 
 # Adicionar o diretório base ao path para permitir importações
@@ -128,7 +121,7 @@ logger = get_logger(__name__)
 
 # Mascaramento básico de dados sensíveis para logs
 try:
-    from core.core.utils import mask_sensitive_data, get_env_status
+    from core.core.utils import mask_sensitive_data
     has_utils = True
 except ImportError:
     has_utils = False
@@ -316,7 +309,7 @@ async def main():
     _mask_sensitive_args()
     
     # Configurar logging específico
-    feature_logger = setup_logging_for_feature_agent()
+    setup_logging_for_feature_agent()
     
     try:
         # Analisar argumentos
@@ -325,7 +318,7 @@ async def main():
         logger.info(f"Argumentos: {masked_args}")
         
         # Verificar e preparar arquivos de configuração
-        config_files = ensure_config_files()
+        ensure_config_files()
         
         # Verificar prompt - pode ser texto diretamente ou arquivo
         prompt_text = args.prompt
