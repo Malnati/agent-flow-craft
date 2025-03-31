@@ -25,6 +25,7 @@ Este diretório contém toda a documentação oficial do projeto, incluindo plan
 
 
 
+
 <!-- A lista abaixo será gerada automaticamente -->
 - [101 feature plan](pr/101_feature_plan.md)
 - [104 feature plan](pr/104_feature_plan.md)
@@ -53,6 +54,7 @@ Este diretório contém toda a documentação oficial do projeto, incluindo plan
 - [147 feature plan](pr/147_feature_plan.md)
 - [149 feature plan](pr/149_feature_plan.md)
 - [151 feature plan](pr/151_feature_plan.md)
+- [153 feature plan](pr/153_feature_plan.md)
 - [15 feature plan](pr/15_feature_plan.md)
 - [17 feature plan](pr/17_feature_plan.md)
 - [1 fluxo criacao de features](pr/1_fluxo_criacao_de_features.md)
