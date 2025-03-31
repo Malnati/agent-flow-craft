@@ -1,0 +1,20 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Regra de Consolidação de Dependências Python
+
+Objetivo:
+Garantir a centralização e a padronização da gestão de dependências do projeto de forma moderna e sustentável, facilitando o uso de ferramentas como uv, pip, poetry, build, twine, entre outras.
+
+⸻
+
+✅ Regra
+	•	Todas as dependências do projeto devem estar exclusivamente no arquivo pyproject.toml localizado na raiz do repositório.
+	•	Não é permitido utilizar setup.py, requirements.txt, requirements-dev.txt, requirements.in, nem setup.cfg para declarar dependências.
+	•	O pyproject.toml deve conter:
+	•	Seção [project] com dependencies (produção) e optional-dependencies.dev (desenvolvimento)
+	•	Seção [build-system] compatível com setuptools e wheel (ou outro backend adotado)
+	•	O arquivo pyproject.toml deve ser validado com ferramentas como uv pip check ou pip check.
+
