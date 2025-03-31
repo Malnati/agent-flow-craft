@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Script para executar o TDDCriteriaAgent diretamente.
-Gera critérios de aceitação TDD para features a partir de um conceito gerado anteriormente.
+Script para executar o FeatureConceptAgent diretamente.
+Transforma conceitos gerados em feature_concepts detalhados.
 """
 
 import os
@@ -15,8 +15,8 @@ from core.core.logger import get_logger, log_execution
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
-# Importar o agente de critérios TDD
-from apps.agent_manager.agents import TDDCriteriaAgent
+# Importar o agente de feature concept
+from apps.agent_manager.agents import FeatureConceptAgent
 
 # Configurar logger
 logger = get_logger(__name__)
@@ -43,19 +43,13 @@ def parse_arguments():
         argparse.Namespace: Argumentos da linha de comando
     """
     parser = argparse.ArgumentParser(
-        description="Executa o TDDCriteriaAgent para gerar critérios de aceitação TDD",
+        description="Executa o FeatureConceptAgent para transformar conceitos em feature_concepts detalhados",
         formatter_class=argparse.RawTextHelpFormatter
     )
     
     parser.add_argument(
-        "context_id",
-        help="ID do contexto do conceito de feature a ser utilizado"
-    )
-    
-    parser.add_argument(
-        "--project_dir", 
-        help="Diretório do projeto onde serão buscados arquivos de código-fonte (obrigatório)",
-        required=True
+        "concept_id",
+        help="ID do conceito a ser processado (ex: concept_20240328_123456)"
     )
     
     parser.add_argument(
@@ -71,13 +65,18 @@ def parse_arguments():
     
     parser.add_argument(
         "--output",
-        help="Arquivo de saída para os critérios TDD gerados (opcional)"
+        help="Arquivo de saída para o feature concept gerado (opcional)"
     )
     
     parser.add_argument(
         "--context_dir",
         default="agent_context",
         help="Diretório para armazenar/acessar arquivos de contexto (padrão: agent_context)"
+    )
+    
+    parser.add_argument(
+        "--project_dir",
+        help="Diretório do projeto onde o conceito será aplicado (opcional)"
     )
     
     return parser.parse_args()
@@ -100,14 +99,12 @@ def main():
         
         logger.info(f"Argumentos: {masked_args}")
         
-        # Verificar se o diretório do projeto existe
-        project_dir = Path(args.project_dir)
-        if not project_dir.exists() or not project_dir.is_dir():
-            logger.error(f"Diretório do projeto não encontrado: {args.project_dir}")
-            print(f"\n❌ Erro: Diretório do projeto não encontrado: {args.project_dir}")
-            return 1
+        # Inicializar agente de feature concept
+        openai_token = args.openai_token or os.environ.get('OPENAI_API_KEY', '')
+        if not openai_token:
+            logger.warning("Token OpenAI não fornecido. Algumas funcionalidades podem estar limitadas.")
         
-        # Verificar e criar diretório de contexto se necessário
+        # Criar diretório de contexto se não existir
         context_dir = Path(args.context_dir)
         if not context_dir.exists():
             context_dir.mkdir(parents=True, exist_ok=True)
@@ -116,37 +113,42 @@ def main():
         # Configurar diretório de contexto
         logger.info(f"Utilizando diretório de contexto: {context_dir} (absoluto: {context_dir.resolve()})")
         
-        # Inicializar agente de critérios TDD
-        openai_token = args.openai_token or os.environ.get('OPENAI_API_KEY', '')
-        if not openai_token:
-            logger.warning("Token OpenAI não fornecido. Algumas funcionalidades podem estar limitadas.")
-            
         # Inicializar o agente com o diretório de contexto personalizado
-        agent = TDDCriteriaAgent(openai_token=openai_token, model=args.model)
+        agent = FeatureConceptAgent(openai_token=openai_token, model=args.model)
+        # Definir diretório de contexto explicitamente
         agent.context_dir = context_dir
         logger.info(f"Diretório de contexto do agente configurado: {agent.context_dir}")
         logger.info(f"Modelo OpenAI configurado: {args.model}")
         
-        # Verificar se o context_id existe
-        context_file = context_dir / f"{args.context_id}.json"
-        if not context_file.exists():
-            logger.error(f"Arquivo de contexto não encontrado: {context_file}")
-            print(f"\n❌ Erro: Contexto '{args.context_id}' não encontrado no diretório {context_dir}")
+        # Verificar diretório do projeto se fornecido
+        project_dir = None
+        if args.project_dir:
+            project_dir = Path(args.project_dir)
+            if not project_dir.exists():
+                logger.warning(f"Diretório de projeto não encontrado: {project_dir}")
+            else:
+                logger.info(f"Utilizando diretório de projeto: {project_dir}")
+                project_dir = str(project_dir)
+        
+        # Processar conceito
+        logger.info(f"Processando conceito com ID: {args.concept_id}...")
+        feature_concept = agent.process_concept(args.concept_id, project_dir)
+        
+        # Verificar se o feature concept foi criado
+        if not feature_concept:
+            logger.error(f"Falha ao processar conceito: {args.concept_id}")
+            print(f"\n❌ Erro: Falha ao processar conceito: {args.concept_id}")
             return 1
-            
-        # Gerar critérios TDD
-        logger.info(f"Gerando critérios TDD para o conceito: {args.context_id}")
-        criteria = agent.generate_tdd_criteria(args.context_id, args.project_dir)
         
-        # Exibir critérios
-        print("\n🧪 Critérios de aceitação TDD gerados:\n")
-        print(json.dumps(criteria, indent=2, ensure_ascii=False))
+        # Exibir feature concept
+        print("\n🧠 Feature Concept gerado:\n")
+        print(json.dumps(feature_concept, indent=2, ensure_ascii=False))
         
-        # Salvar critérios se solicitado
+        # Salvar feature concept se solicitado
         if args.output:
             with open(args.output, 'w', encoding='utf-8') as f:
-                json.dump(criteria, f, indent=2, ensure_ascii=False)
-            print(f"\n💾 Critérios salvos em: {args.output}")
+                json.dump(feature_concept, f, indent=2, ensure_ascii=False)
+            print(f"\n💾 Feature Concept salvo em: {args.output}")
         
         # Retorno bem-sucedido
         return 0
@@ -157,7 +159,7 @@ def main():
         return 130
         
     except Exception as e:
-        logger.error(f"Erro ao gerar critérios TDD: {str(e)}", exc_info=True)
+        logger.error(f"Erro ao processar conceito: {str(e)}", exc_info=True)
         print(f"\n❌ Erro: {str(e)}")
         return 1
 

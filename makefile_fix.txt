@@ -1,7 +1,0 @@
-# Remover o MCP do Cursor
-undeploy:
-	@echo "Removendo MCP do Cursor IDE..."
-	@rm -f $(HOME)/.cursor/mcp.json
-	@rm -f $(HOME)/.cursor/mcp_agent.py
-	@rm -rf $(HOME)/.cursor/mcp/agent_platform
-	@echo "MCP removido com sucesso!" 

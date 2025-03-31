@@ -7,7 +7,7 @@ import time
 from pathlib import Path
 from typing import Dict, Optional
 from dataclasses import dataclass
-from agent_platform.core.logger import get_logger, log_execution
+from core.core.logger import get_logger, log_execution
 
 @dataclass
 class AgentConfig:

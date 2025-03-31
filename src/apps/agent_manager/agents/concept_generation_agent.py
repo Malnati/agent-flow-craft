@@ -5,11 +5,11 @@ import time
 from datetime import datetime
 from pathlib import Path
 from openai import OpenAI
-from agent_platform.core.logger import get_logger, log_execution
+from core.core.logger import get_logger, log_execution
 
 # Tente importar funções de mascaramento de dados sensíveis
 try:
-    from agent_platform.core.utils import mask_sensitive_data, get_env_status
+    from core.core.utils import mask_sensitive_data, get_env_status
     has_utils = True
 except ImportError:
     has_utils = False
@@ -24,12 +24,12 @@ except ImportError:
 
 class ConceptGenerationAgent:
     """
-    Agente responsável por gerar conceitos de features a partir de prompts do usuário.
-    Este agente lida apenas com a geração de títulos, descrições e planos conceituais
-    usando a OpenAI.
+    Agente responsável por gerar conceitos iniciais de features a partir de prompts do usuário.
+    Este agente lida apenas com a geração de conceitos básicos do que deve ser implementado,
+    utilizando a OpenAI para processar a solicitação do usuário.
     """
     
-    def __init__(self, openai_token=None, model="gpt-4"):
+    def __init__(self, openai_token=None, model="gpt-4", elevation_model=None, force=False):
         self.logger = get_logger(__name__)
         self.logger.info("INÍCIO - ConceptGenerationAgent.__init__")
         
@@ -38,6 +38,13 @@ class ConceptGenerationAgent:
             self.context_dir = Path('agent_context')
             self.context_dir.mkdir(exist_ok=True)
             self.model = model
+            self.elevation_model = elevation_model
+            self.force = force
+            
+            # Se force=True e temos um modelo de elevação, usamos ele diretamente
+            if self.force and self.elevation_model:
+                self.logger.info(f"Modo force ativado. Usando diretamente o modelo de elevação: {self.elevation_model}")
+                self.model = self.elevation_model
             
             # Logar status do token sem expor dados sensíveis
             if has_utils:
@@ -48,6 +55,8 @@ class ConceptGenerationAgent:
                 self.logger.debug(f"Status do token OpenAI: {token_available}")
             
             self.logger.info(f"Modelo OpenAI configurado: {self.model}")
+            if self.elevation_model:
+                self.logger.info(f"Modelo de elevação configurado: {self.elevation_model}")
             
             if not self.openai_token:
                 self.logger.warning("ALERTA - Token OpenAI ausente | Funcionalidades limitadas")
@@ -72,17 +81,44 @@ class ConceptGenerationAgent:
         self.logger.info(f"SUCESSO - Modelo alterado para: {self.model}")
         return self.model
     
+    def set_elevation_model(self, elevation_model):
+        """
+        Define o modelo de elevação a ser utilizado.
+        
+        Args:
+            elevation_model (str): Nome do modelo de elevação
+        """
+        self.logger.info(f"INÍCIO - set_elevation_model | Modelo anterior: {self.elevation_model} | Novo modelo: {elevation_model}")
+        self.elevation_model = elevation_model
+        self.logger.info(f"SUCESSO - Modelo de elevação alterado para: {self.elevation_model}")
+        return self.elevation_model
+    
+    def use_elevation_model(self):
+        """
+        Troca para o modelo de elevação em caso de falha do modelo principal.
+        
+        Returns:
+            bool: True se a elevação foi possível, False caso contrário
+        """
+        if not self.elevation_model:
+            self.logger.warning("Modelo de elevação não configurado, não é possível elevar")
+            return False
+            
+        self.logger.info(f"Elevando de {self.model} para {self.elevation_model}")
+        self.model = self.elevation_model
+        return True
+    
     @log_execution
     def generate_concept(self, prompt_text, git_log=None):
         """
-        Gera um conceito de feature baseado no prompt do usuário e contexto do Git.
+        Gera um conceito de feature básico baseado no prompt do usuário e contexto do Git.
         
         Args:
             prompt_text (str): Descrição da feature desejada
             git_log (str): Log do Git para contexto (opcional)
             
         Returns:
-            dict: Conceito gerado com branch_type, issue_title, issue_description, etc.
+            dict: Conceito básico gerado
         """
         self.logger.info(f"INÍCIO - generate_concept | Prompt: {prompt_text[:100]}...")
         
@@ -102,30 +138,55 @@ class ConceptGenerationAgent:
             Histórico de commits recentes:
             {git_log or "Histórico Git não disponível"}
             
-            Seu papel: Você é um especialista em desenvolvimento de software e deve sugerir melhorias
-            para a feature proposta a seguir, considerando as melhores práticas e o contexto do projeto.
+            Seu papel é entender e conceitualizar uma nova funcionalidade a partir da descrição do usuário.
             
             Retorne sua resposta no seguinte formato JSON (sem texto adicional):
             {{
-                "branch_type": "tipo de branch (feat, fix, docs, chore, etc)",
-                "issue_title": "título claro e conciso para a issue",
-                "issue_description": "descrição detalhada sobre o que deve ser implementado",
-                "generated_branch_suffix": "sufixo para o nome da branch (usar kebab-case)",
-                "execution_plan": "objeto contendo entregáveis de implementação"
+                "concept_summary": "resumo conciso do conceito proposto",
+                "concept_description": "descrição detalhada do conceito",
+                "key_goals": ["lista de principais objetivos"],
+                "possible_approaches": ["possíveis abordagens para implementação"],
+                "considerations": ["considerações importantes sobre a implementação"]
             }}
             """
             
-            response = client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": context},
-                    {"role": "user", "content": prompt_text}
-                ],
-                temperature=0.7,
-                max_tokens=4000
-            )
-            
-            suggestion = response.choices[0].message.content
+            try:
+                response = client.chat.completions.create(
+                    model=self.model,
+                    messages=[
+                        {"role": "system", "content": context},
+                        {"role": "user", "content": prompt_text}
+                    ],
+                    temperature=0.7,
+                    max_tokens=2000
+                )
+                
+                suggestion = response.choices[0].message.content
+                
+            except Exception as model_error:
+                self.logger.warning(f"Erro ao usar o modelo {self.model}: {str(model_error)}")
+                
+                # Tentar elevar para modelo mais potente se configurado
+                if self.elevation_model and self.model != self.elevation_model:
+                    self.logger.info(f"Tentando elevação para o modelo {self.elevation_model}")
+                    self.model = self.elevation_model
+                    
+                    # Tentar novamente com o modelo de elevação
+                    response = client.chat.completions.create(
+                        model=self.model,
+                        messages=[
+                            {"role": "system", "content": context},
+                            {"role": "user", "content": prompt_text}
+                        ],
+                        temperature=0.7,
+                        max_tokens=2000
+                    )
+                    
+                    suggestion = response.choices[0].message.content
+                    self.logger.info(f"Geração bem-sucedida após elevação para {self.model}")
+                else:
+                    # Se não temos modelo de elevação ou já estamos usando ele, propagar o erro
+                    raise model_error
             
             # Mascarar possíveis dados sensíveis na resposta
             safe_suggestion = mask_sensitive_data(suggestion[:100])
@@ -173,27 +234,12 @@ class ConceptGenerationAgent:
         Returns:
             dict: Conceito padrão
         """
-        # Normalizar prompt para branch_suffix
-        suffix = prompt_text.lower().replace(" ", "-")
-        if suffix.startswith("implementar-"):
-            branch_suffix = suffix[:30]
-        else:
-            branch_suffix = "implementar-" + suffix[:20]
-            
         return {
-            "branch_type": "feat",
-            "issue_title": f"Feature: {prompt_text}",
-            "issue_description": prompt_text,
-            "generated_branch_suffix": branch_suffix,
-            "execution_plan": {
-                "steps": [
-                    "1. Análise dos requisitos do sistema de login",
-                    "2. Desenvolvimento da interface de usuário",
-                    "3. Implementação da lógica de autenticação",
-                    "4. Criação de testes unitários e de integração",
-                    "5. Documentação do sistema implementado"
-                ]
-            }
+            "concept_summary": prompt_text,
+            "concept_description": f"Solicitação original: {prompt_text}",
+            "key_goals": ["Implementar a funcionalidade solicitada"],
+            "possible_approaches": ["Abordagem direta de implementação"],
+            "considerations": ["Validar requisitos com o solicitante"]
         }
     
     def _save_concept_to_context(self, concept, prompt_text, error=None):
@@ -204,6 +250,9 @@ class ConceptGenerationAgent:
             concept (dict): Conceito gerado
             prompt_text (str): Prompt original
             error (str): Erro ocorrido, se houver
+            
+        Returns:
+            str: ID do contexto criado
         """
         try:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -222,6 +271,7 @@ class ConceptGenerationAgent:
             
             context_data = {
                 "id": context_id,
+                "type": "concept",
                 "timestamp": timestamp,
                 "prompt": prompt_text,
                 "concept": concept,
@@ -249,20 +299,19 @@ class ConceptGenerationAgent:
             context_id (str): ID do contexto a ser recuperado
             
         Returns:
-            dict: Dados do contexto ou None se não encontrado
+            dict: Conceito ou None se não encontrado
         """
         try:
             context_file = self.context_dir / f"{context_id}.json"
             if not context_file.exists():
-                self.logger.warning(f"Arquivo de contexto não encontrado: {context_file}")
+                self.logger.error(f"Arquivo de contexto não encontrado: {context_file}")
                 return None
                 
             with open(context_file, 'r', encoding='utf-8') as f:
-                context_data = json.loads(f.read())
+                context_data = json.load(f)
                 
-            self.logger.info(f"Contexto {context_id} recuperado com sucesso")
             return context_data
-            
+                
         except Exception as e:
-            self.logger.error(f"Erro ao recuperar contexto {context_id}: {str(e)}")
+            self.logger.error(f"Erro ao carregar conceito: {str(e)}", exc_info=True)
             return None 

@@ -3,11 +3,11 @@ import json
 import os
 import time
 from pathlib import Path
-from agent_platform.core.logger import get_logger, log_execution
+from core.core.logger import get_logger, log_execution
 
 # Tente importar funções de mascaramento de dados sensíveis
 try:
-    from agent_platform.core.utils import mask_sensitive_data, get_env_status
+    from core.core.utils import mask_sensitive_data, get_env_status
     has_utils = True
 except ImportError:
     has_utils = False
@@ -323,8 +323,15 @@ class GitHubIntegrationAgent:
             with open(context_file, 'r', encoding='utf-8') as f:
                 context_data = json.load(f)
             
-            concept = context_data.get("concept", {})
+            # Verificar se o contexto contém concept ou feature_concept
+            concept = {}
             prompt_text = context_data.get("prompt", "")
+            
+            # Extrair dados do conceito conforme o tipo
+            if "feature_concept" in context_data:
+                concept = context_data.get("feature_concept", {})
+            else:
+                concept = context_data.get("concept", {})
             
             # Extrair dados do conceito
             branch_type = concept.get("branch_type", "feat")

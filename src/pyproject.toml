@@ -31,17 +31,13 @@ dev = [
 ]
 
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = [
-    "agent_platform",
-    "apps",
-    "configs",
-    "scripts",
-    "tests"
-]
+package-dir = {"" = "src"}
+packages = ["apps"]
+build-dir = "build"
 
 [tool.black]
 line-length = 88
@@ -58,5 +54,16 @@ extend-ignore = ["E203", "W503"]
 max_line_length = 120
 ignore = ["E203", "E501"]
 
-[tool.pytest.ini_options]
-pythonpath = "."
+[tool.pytest]
+cache_dir = "out/pytest_cache"
+python_files = "test_*.py"
+testpaths = ["tests"]
+
+[tool.coverage]
+directory = "out/coverage"
+
+[tool.tox]
+envdir = "out/tox_envs"
+
+[tool.nox]
+envdir = "out/nox_envs"

@@ -21,6 +21,9 @@ logging.basicConfig(
 
 logger = logging.getLogger('test_mcp_e2e')
 
+# Configurar cache do pytest
+os.environ.setdefault("PYTHONPYCACHEPREFIX", str(Path().absolute() / "out"))
+
 class TestMCPE2E(unittest.TestCase):
     """Testes end-to-end para o MCP"""
     

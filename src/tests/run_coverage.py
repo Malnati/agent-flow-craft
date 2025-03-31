@@ -2,9 +2,13 @@ import os
 import sys
 import unittest
 import coverage
-from agent_platform.core.logger import get_logger, log_execution
+from core.core.logger import get_logger, log_execution
+from pathlib import Path
 
 logger = get_logger(__name__)
+
+# Configurar cache do pytest
+os.environ.setdefault("PYTHONPYCACHEPREFIX", str(Path().absolute() / "out"))
 
 @log_execution
 def run_coverage():

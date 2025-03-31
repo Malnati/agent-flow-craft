@@ -128,7 +128,7 @@ logger = get_logger(__name__)
 
 # Mascaramento básico de dados sensíveis para logs
 try:
-    from agent_platform.core.utils import mask_sensitive_data, get_env_status
+    from core.core.utils import mask_sensitive_data, get_env_status
     has_utils = True
 except ImportError:
     has_utils = False
@@ -207,7 +207,7 @@ def ensure_config_files():
                 logger.warning(f"Não foi possível criar o diretório {directory}: {e}")
     
     # Verificar se o arquivo de requisitos existe
-    requirements_file = "configs/agents/plan_requirements.yaml"
+    requirements_file = "src/configs/agents/plan_requirements.yaml"
     if not os.path.exists(requirements_file):
         logger.warning(f"Arquivo de requisitos não encontrado: {requirements_file}")
         # Não é necessário criar o arquivo, pois o validador usará requisitos padrão

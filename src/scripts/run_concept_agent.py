@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Script para executar o ConceptGenerationAgent diretamente.
-Gera conceitos de features a partir de prompts do usuário usando a OpenAI.
+Gera conceitos iniciais básicos a partir de prompts do usuário usando a OpenAI.
 """
 
 import os
@@ -9,7 +9,7 @@ import sys
 import json
 import argparse
 from pathlib import Path
-from agent_platform.core.logger import get_logger, log_execution
+from core.core.logger import get_logger, log_execution
 
 # Adicionar o diretório base ao path para permitir importações
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -23,7 +23,7 @@ logger = get_logger(__name__)
 
 # Mascaramento básico de dados sensíveis para logs
 try:
-    from agent_platform.core.utils import mask_sensitive_data, get_env_status
+    from core.core.utils import mask_sensitive_data, get_env_status
     has_utils = True
 except ImportError:
     has_utils = False
@@ -43,7 +43,7 @@ def parse_arguments():
         argparse.Namespace: Argumentos da linha de comando
     """
     parser = argparse.ArgumentParser(
-        description="Executa o ConceptGenerationAgent para gerar conceitos de features",
+        description="Executa o ConceptGenerationAgent para gerar conceitos iniciais",
         formatter_class=argparse.RawTextHelpFormatter
     )
     
@@ -61,6 +61,17 @@ def parse_arguments():
         "--model",
         default="gpt-4-turbo",
         help="Modelo da OpenAI a ser utilizado (padrão: gpt-4-turbo)"
+    )
+    
+    parser.add_argument(
+        "--elevation_model",
+        help="Modelo alternativo para elevação em caso de falha (opcional)"
+    )
+    
+    parser.add_argument(
+        "--force", 
+        action="store_true",
+        help="Força o uso direto do modelo de elevação, ignorando o modelo padrão"
     )
     
     parser.add_argument(
@@ -130,14 +141,26 @@ def main():
             logger.info(f"Diretório de contexto criado: {context_dir}")
         
         # Configurar diretório de contexto
-        logger.info(f"Criando diretório de contexto: {context_dir} (absoluto: {context_dir.resolve()})")
+        logger.info(f"Utilizando diretório de contexto: {context_dir} (absoluto: {context_dir.resolve()})")
         
         # Inicializar o agente com o diretório de contexto personalizado
-        agent = ConceptGenerationAgent(openai_token=openai_token, model=args.model)
+        agent = ConceptGenerationAgent(
+            openai_token=openai_token, 
+            model=args.model,
+            elevation_model=args.elevation_model,
+            force=args.force
+        )
+        
         # Definir diretório de contexto explicitamente
         agent.context_dir = context_dir
         logger.info(f"Diretório de contexto do agente configurado: {agent.context_dir}")
         logger.info(f"Modelo OpenAI configurado: {args.model}")
+        
+        # Mostrar informações sobre elevação, se configurada
+        if args.elevation_model:
+            logger.info(f"Modelo de elevação configurado: {args.elevation_model}")
+            if args.force:
+                logger.info(f"Modo force ativado: usando diretamente o modelo de elevação")
         
         # Verificar diretório do projeto se fornecido
         if args.project_dir:
@@ -149,7 +172,7 @@ def main():
                 # Se necessário, pode-se adicionar lógica específica ao diretório do projeto aqui
                 
         # Gerar conceito
-        logger.info("Gerando conceito com base no prompt...")
+        logger.info("Gerando conceito inicial com base no prompt...")
         concept = agent.generate_concept(prompt_text, git_log)
         
         # Verificar se o contexto foi salvo
@@ -168,8 +191,12 @@ def main():
             logger.error(f"Diretório de contexto não existe: {context_dir}")
         
         # Exibir conceito
-        print("\n🧠 Conceito gerado:\n")
+        print("\n🧠 Conceito inicial gerado:\n")
         print(json.dumps(concept, indent=2, ensure_ascii=False))
+        
+        # Exibir próximo passo
+        print("\n✅ Para transformar este conceito em um feature_concept detalhado, execute:")
+        print(f"make start-feature-concept-agent concept_id=\"{concept.get('context_id')}\" project_dir=\"{args.project_dir or '.'}\"\n")
         
         # Salvar conceito se solicitado
         if args.output:
