@@ -696,7 +696,7 @@ start-refactor-agent:
 	@echo "  make start-refactor-agent project_dir=/caminho/do/projeto scope=src/main.py level=moderado output=resultados.json"
 	@echo "------------------------------------------------------"
 	@test -n "$(project_dir)" || (echo "❌ Erro: 'project_dir' é obrigatório"; exit 1)
-	@python src/scripts/start_refactor_agent.py \
+	@python src/scripts/run_refactor_agent.py \
 		--project_dir "$(project_dir)" \
 		$(if $(scope),--scope "$(scope)") \
 		$(if $(level),--level "$(level)") \
