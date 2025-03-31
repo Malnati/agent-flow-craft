@@ -114,7 +114,7 @@ except Exception as e:
     print(f"Executando {os.path.basename(__file__)} com argumentos mascarados")
 
 from slugify import slugify
-from src.core.core.logger import setup_logging, get_logger, log_execution, mask_sensitive_data
+from core.core.logger import setup_logging, get_logger, log_execution, mask_sensitive_data
 
 # Adicionar o diretório base ao path para permitir importações
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -128,7 +128,7 @@ logger = get_logger(__name__)
 
 # Mascaramento básico de dados sensíveis para logs
 try:
-    from src.core.core.utils import mask_sensitive_data, get_env_status
+    from core.core.utils import mask_sensitive_data, get_env_status
     has_utils = True
 except ImportError:
     has_utils = False

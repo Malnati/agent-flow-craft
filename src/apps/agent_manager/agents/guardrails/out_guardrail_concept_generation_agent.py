@@ -33,7 +33,7 @@ except ImportError:
 
 # Tentar importar o logger e funções de logging
 try:
-    from src.core.core.logger import get_logger, log_execution
+    from core.core.logger import get_logger, log_execution
     has_logger = True
 except ImportError:
     has_logger = False
@@ -62,7 +62,7 @@ except ImportError:
 
 # Mascaramento básico de dados sensíveis
 try:
-    from src.core.core.utils import mask_sensitive_data, get_env_status
+    from core.core.utils import mask_sensitive_data, get_env_status
     has_utils = True
 except ImportError:
     has_utils = False
@@ -75,7 +75,7 @@ except ImportError:
 
 # Importar utilidades e classe base
 try:
-    from src.core.core.utils import mask_sensitive_data, TokenValidator
+    from core.core.utils import mask_sensitive_data, TokenValidator
     from apps.agent_manager.agents.base_agent import BaseAgent
     has_utils = True
 except ImportError:

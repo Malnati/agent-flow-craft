@@ -4,7 +4,7 @@ import logging
 import os
 import subprocess
 from agents.feature_creation_agent import FeatureCreationAgent
-from src.core.core.logger import get_logger, log_execution
+from core.core.logger import get_logger, log_execution
 from pathlib import Path
 
 logger = get_logger(__name__)

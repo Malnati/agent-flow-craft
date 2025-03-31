@@ -14,7 +14,7 @@ from pathlib import Path
 root_dir = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(root_dir))
 
-from src.core.core.logger import get_logger
+from core.core.logger import get_logger
 from apps.agent_manager.agents import OutGuardrailTDDCriteriaAgent
 
 # Configuração do logger

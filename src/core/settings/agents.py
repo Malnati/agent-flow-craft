@@ -1,7 +1,7 @@
 # Configurações específicas para agentes
 import os
 from pathlib import Path
-from src.core.core.logger import get_logger, log_execution
+from core.core.logger import get_logger, log_execution
 
 logger = get_logger(__name__)
 
