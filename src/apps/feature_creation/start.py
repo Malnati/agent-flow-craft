@@ -10,7 +10,6 @@ import argparse
 from pathlib import Path
 import logging
 import json
-import uuid
 
 # Adicionar o diretório base ao path para permitir importações
 BASE_DIR = Path(__file__).resolve().parent.parent.parent

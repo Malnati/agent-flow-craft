@@ -8,7 +8,6 @@ gerar conceitos iniciais de features a partir de um prompt.
 import os
 import sys
 import json
-import logging
 import argparse
 import time
 from pathlib import Path

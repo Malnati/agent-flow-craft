@@ -13,12 +13,11 @@ import uuid
 import time
 import logging
 from pathlib import Path
-import importlib
 import asyncio
 
 # Tente importar nossas utilidades
 try:
-    from core.core.utils import mask_sensitive_data, log_env_status
+    from core.core.utils import mask_sensitive_data
     from core.core.logger import get_logger
     has_utils = True
 except ImportError:
@@ -677,7 +676,7 @@ class MCPAgent:
             scope = payload.get("scope")
             level = payload.get("level", "moderado")
             dry_run = payload.get("dry_run", False)
-            output = payload.get("output")
+            payload.get("output")
             
             # Inicializar agente
             agent = RefactorAgent()
@@ -727,7 +726,7 @@ class MCPAgent:
             scope = payload.get("scope")
             aggressiveness = payload.get("aggressiveness", 2)
             dry_run = payload.get("dry_run", False)
-            output = payload.get("output")
+            payload.get("output")
             
             # Inicializar agente
             agent = AutoflakeAgent()
