@@ -27,7 +27,7 @@ class PlanValidator:
         self.logger = logger or get_logger(__name__)
         self.logger.info("INÍCIO - PlanValidator.__init__")
         self.model_name = "gpt-3.5-turbo"
-        self.requirements_file = "configs/agents/plan_requirements.yaml"
+        self.requirements_file = "src/configs/agents/plan_requirements.yaml"
         self.requirements = self._load_requirements()
         self.logger.info("SUCESSO - PlanValidator inicializado")
     
