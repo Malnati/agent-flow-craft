@@ -284,7 +284,7 @@ start-coordinator-agent: create-venv print-no-pycache-message
 	@echo "Executando agente coordenador com prompt: \"$(prompt)\""
 	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_coordinator_agent.py \
 		"$(prompt)" \
-		$(if $(project_dir),--project_dir "$(project_dir)",) \
+		$(if $(project_dir),--target "$(project_dir)",) \
 		$(if $(output),--output "$(output)",) \
 		$(if $(context_dir),--context_dir "$(context_dir)",) \
 		$(if $(github_token),--github_token "$(github_token)",) \

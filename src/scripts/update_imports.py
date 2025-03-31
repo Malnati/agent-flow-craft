@@ -13,9 +13,13 @@ def update_imports_in_file(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
         content = file.read()
     
-    # Substituir importações de agent_platform por src.core
-    modified = re.sub(r'from agent_platform\.', 'from src.core.', content)
-    modified = re.sub(r'import agent_platform\.', 'import src.core.', modified)
+    # Substituir importações de agent_platform por core
+    modified = re.sub(r'from agent_platform\.', 'from core.', content)
+    modified = re.sub(r'import agent_platform\.', 'import core.', modified)
+    
+    # Remover referências a src.core e substituir por core
+    modified = re.sub(r'from src\.core\.', 'from core.', modified)
+    modified = re.sub(r'import src\.core\.', 'import core.', modified)
     
     # Se o conteúdo foi modificado, escrever de volta ao arquivo
     if modified != content:

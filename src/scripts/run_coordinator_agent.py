@@ -11,16 +11,16 @@ import argparse
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Union
 
+# Adicionar o diretório base ao path para permitir importações
+BASE_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(BASE_DIR.parent))  # Adiciona o diretório pai de src
+
 from src.core.core.logger import get_logger, log_execution
 from src.core.core.utils import TokenValidator
 
-# Adicionar o diretório base ao path para permitir importações
-BASE_DIR = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(BASE_DIR))
-
 # Importar o agente coordenador
-from apps.agent_manager.agents import FeatureCoordinatorAgent
-from apps.agent_manager.agents.context_manager import ContextManager
+from src.apps.agent_manager.agents import FeatureCoordinatorAgent
+from src.apps.agent_manager.agents.context_manager import ContextManager
 
 # Configurar logger
 logger = get_logger(__name__)
