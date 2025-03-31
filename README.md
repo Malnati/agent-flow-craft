@@ -41,6 +41,46 @@ export OPENAI_API_KEY=seu_token_openai
 
 ---
 
+## 🛠️ Regras do Cursor
+
+O projeto utiliza regras do Cursor IDE para garantir padrões de qualidade de código e funcionalidades específicas.
+
+### Regra de Gestão de Arquivo no Refactory
+
+Garante um gerenciamento adequado de arquivos e diretórios durante operações de renomeação e movimentação, mantendo o repositório organizado.
+
+**Principais características:**
+- Backup automático de arquivos originais no diretório `bak/` antes de renomeação/movimentação
+- Preservação da estrutura de diretórios original dentro do diretório de backup
+- Remoção automática e recursiva de diretórios vazios após operações de arquivo
+- Implementação de rastreamento de alterações realizadas
+
+**Exemplo de uso:**
+```python
+# Ao mover ou renomear um arquivo:
+refactor_agent.move_with_backup(
+    "src/components/Button.js", 
+    "src/components/ui/Button.js"
+)
+
+# Resultado:
+# 1. Cria: bak/src/components/Button.js (backup)
+# 2. Move: src/components/Button.js → src/components/ui/Button.js
+# 3. Remove diretório src/components se ficar vazio
+```
+
+**Para testar esta funcionalidade:**
+```bash
+# Executar o script de teste para operações de arquivo
+make test-refactor-file-ops
+```
+
+### Outras Regras
+
+O projeto também implementa outras regras para garantir a qualidade e consistência do código gerado.
+
+---
+
 ## 📋 Comandos do Makefile
 
 O projeto disponibiliza diversos comandos através do Makefile para facilitar o uso dos agentes e a execução de tarefas comuns.
