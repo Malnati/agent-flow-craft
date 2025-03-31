@@ -1,5 +1,5 @@
 ---
-description: 
+description: Regra para padronização de comandos no Makefile e README.md
 globs: 
 alwaysApply: true
 ---
@@ -19,3 +19,10 @@ Todo novo comando, script ou funcionalidade executável no projeto deve obrigato
 📘 2. Documentado no README.md
 	•	O novo comando precisa ser descrito na seção correspondente do README.md na raiz do projeto.
 	•	Deve seguir o padrão de nomenclatura, parametros e exemplos já utilizado nos comandos existentes.
+
+⸻
+
+🔒 3. Protocolo MDC
+	•	Todos os comandos devem seguir o protocolo MDC do projeto.
+	•	Novos comandos devem ser criados sempre seguindo o padrão dos comandos existentes.
+	•	Modificações em comandos existentes devem preservar a compatibilidade com o protocolo MDC.
