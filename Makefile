@@ -1,7 +1,7 @@
-.PHONY: install setup test lint format start-agent update-docs-index clean clean-pycache all create-venv \
-	pack deploy undeploy install-cursor install-simple-mcp help build publish version version-info find-commit update-changelog compare-versions test-mcp-e2e \
-	start-concept-agent start-feature-concept-agent start-github-agent prompt-creator start-context-manager start-validator setup-env clean-cache \
-	start-refactor-agent test-refactor-file-ops
+.PHONY: install lint format clean all create-venv \
+	pack deploy undeploy help build publish version version-info update-changelog compare-versions \
+	start-github-agent prompt-creator setup-env clean-cache \
+	start-refactor-agent
 
 VERSION := $(shell python3 -c "import time; print(time.strftime('%Y.%m.%d'))")
 BUILD_DIR := ./dist
@@ -17,51 +17,13 @@ help:
 	@echo "Comandos disponíveis:"
 	@echo "  make create-venv              Cria ambiente virtual Python se não existir"
 	@echo "  make install                  Instala o projeto no ambiente virtual"
-	@echo "  make setup                    Instala o projeto em modo de desenvolvimento"
-	@echo "  make test                     Executa os testes do projeto"
 	@echo "  make lint                     Executa análise de lint para verificar estilo de código"
-	@echo "  make format                   Formata o código usando o Black"
 	@echo "  make build                    Empacota o projeto usando python -m build"
 	@echo "  make clean                    Remove arquivos temporários e de build"
-	@echo "  make clean-pycache            Remove apenas os diretórios __pycache__ e arquivos .pyc"
 	@echo "  make all                      Executa lint, test, formatação e atualização de docs"
 	@echo "  make update-docs-index        Atualiza o índice da documentação automaticamente"
 	@echo ""
 	@echo "Agentes disponíveis:"
-	@echo "  make start-agent prompt=\"...\" project_dir=\"...\"  Inicia o agente de criação de features (FeatureCoordinatorAgent)"
-	@echo "    Opções: [output=\"...\"] [context_dir=\"...\"] [project_dir=\"...\"] [openai_token=\"...\"] [model=\"<modelo_openai>\"]"
-	@echo "    Exemplo: make start-agent prompt=\"Implementar sistema de login\" project_dir=\"/Users/mal/GitHub/agent-flow-craft-aider\" model=\"gpt-4-turbo\""
-	@echo "    Tarefas executadas:"
-	@echo "      1. Inicializa o FeatureCoordinatorAgent com os parâmetros fornecidos"
-	@echo "      2. Configura o modelo OpenAI especificado no ConceptGenerationAgent interno"
-	@echo "      3. Cria um diretório de contexto para armazenar os resultados"
-	@echo "      4. Gera um conceito inicial a partir do prompt usando a API OpenAI"
-	@echo "      5. Transforma o conceito inicial em um feature_concept detalhado"
-	@echo "      6. Processa a criação da feature com base no conceito gerado"
-	@echo "      7. Retorna o resultado em JSON com informações da feature criada"
-	@echo ""
-	@echo "  make start-concept-agent prompt=\"...\"        Inicia o agente de geração de conceitos (ConceptGenerationAgent)"
-	@echo "    Opções: [output=\"...\"] [context_dir=\"...\"] [project_dir=\"...\"] [openai_token=\"...\"] [model=\"<modelo_openai>\"] [elevation_model=\"<modelo_elevacao>\"] [force=true]"
-	@echo "    Exemplo: make start-concept-agent prompt=\"Adicionar autenticação via OAuth\" project_dir=\"/Users/mal/GitHub/agent-flow-craft-aider\" context_dir=\"agent_context\" elevation_model=\"gpt-4-turbo\""
-	@echo "    Tarefas executadas:"
-	@echo "      1. Inicializa o ConceptGenerationAgent com o token OpenAI e modelo especificados"
-	@echo "      2. Obtém o log do Git do projeto (se disponível) para fornecer contexto"
-	@echo "      3. Envia o prompt e contexto para a API OpenAI para gerar um conceito básico de feature"
-	@echo "      4. Estrutura a resposta em JSON com summary, description, key_goals, etc."
-	@echo "      5. Salva o conceito gerado no diretório de contexto com um ID único"
-	@echo "      6. Retorna o conceito completo com o context_id para uso posterior"
-	@echo ""
-	@echo "  make start-feature-concept-agent concept_id=\"...\"  Inicia o agente de geração de feature concepts (FeatureConceptAgent)"
-	@echo "    Opções: [output=\"...\"] [context_dir=\"...\"] [project_dir=\"...\"] [openai_token=\"...\"] [model=\"<modelo_openai>\"] [elevation_model=\"<modelo_elevacao>\"] [force=true]"
-	@echo "    Exemplo: make start-feature-concept-agent concept_id=\"concept_20240328_123456\" project_dir=\"/Users/mal/GitHub/agent-flow-craft-aider\" context_dir=\"agent_context\" elevation_model=\"gpt-4-turbo\""
-	@echo "    Tarefas executadas:"
-	@echo "      1. Inicializa o FeatureConceptAgent com o token OpenAI e modelo especificados"
-	@echo "      2. Carrega o conceito básico do arquivo de contexto especificado"
-	@echo "      3. Analisa informações do diretório do projeto para contextualização"
-	@echo "      4. Envia o conceito e contexto para a API OpenAI para gerar um feature_concept detalhado"
-	@echo "      5. Estrutura a resposta em JSON com branch_type, issue_title, execution_plan, etc."
-	@echo "      6. Salva o feature_concept gerado no diretório de contexto com um ID único"
-	@echo "      7. Retorna o feature_concept completo com o context_id para uso posterior"
 	@echo ""
 	@echo "  make start-github-agent context_id=\"...\"      Inicia o agente de integração com GitHub (GitHubIntegrationAgent)"
 	@echo "    Opções: [project_dir=\"...\"] [context_dir=\"...\"] [base_branch=\"...\"] [github_token=\"...\"] [owner=\"...\"] [repo=\"...\"] [model=\"<modelo_openai>\"] [elevation_model=\"<modelo_elevacao>\"] [force=true]"
@@ -89,32 +51,15 @@ help:
 	@echo "      8. Orquestra todo o fluxo entre os diferentes agentes especializados"
 	@echo "      9. Retorna um resultado consolidado com todas as informações do processo"
 	@echo ""
-	@echo "  make start-validator plan_file=\"...\"         Executa o validador de planos em um arquivo JSON"
-	@echo "    Opções: [output=\"...\"] [requirements=\"...\"] [context_dir=\"...\"] [project_dir=\"...\"] [openai_token=\"...\"] [model=\"<modelo_openai>\"]"
-	@echo "    Exemplo: make start-validator plan_file=\"planos/feature_plan.json\" project_dir=\"/Users/mal/GitHub/agent-flow-craft-aider\" model=\"gpt-4-turbo\""
-	@echo "    Tarefas executadas:"
-	@echo "      1. Inicializa o PlanValidator com as configurações fornecidas"
-	@echo "      2. Carrega o plano de execução do arquivo JSON especificado"
-	@echo "      3. Carrega os requisitos específicos de validação (se fornecidos)"
-	@echo "      4. Usa a API OpenAI para analisar o plano contra os requisitos"
-	@echo "      5. Avalia a qualidade e completude do plano de execução"
-	@echo "      6. Identifica potenciais problemas e sugestões de melhoria"
-	@echo "      7. Atribui uma pontuação de validação ao plano (de 0 a 10)"
-	@echo "      8. Retorna um relatório detalhado com o resultado da validação"
-	@echo ""
 	@echo "Outros comandos:"
 	@echo "  make pack --out=DIRECTORY     Empacota o projeto MCP para o diretório especificado"
 	@echo "  make deploy                   Instala a última versão do pacote do PyPI e verifica a instalação"
-	@echo "  make install-cursor           Instala no diretório MCP do Cursor"
-	@echo "  make install-simple-mcp       Instala Simple MCP no Cursor"
-	@echo "  make undeploy                 Remove o MCP do Cursor IDE"
 	@echo "  make publish                  Publica o projeto no PyPI (requer PyPI_TOKEN)"
 	@echo "  make version                  Mostra a versão que será usada na publicação"
 	@echo "  make version-info version=X.Y.Z.devN  Mostra informações da versão especificada"
 	@echo "  make find-commit version=X.Y.Z.devN   Retorna o hash do commit associado à versão"
 	@echo "  make update-changelog version=X.Y.Z.devN  Atualiza o CHANGELOG.md com informações da versão"
 	@echo "  make compare-versions from=X.Y.Z.devN to=X.Y.Z.devN  Compara as mudanças entre duas versões"
-	@echo "  make test-mcp-e2e              Executa o teste e2e do MCP"
 	@echo ""
 	@echo "RefactorAgent: Refatoração de código usando Rope"
 	@echo "  make start-refactor-agent project_dir=<diretório_do_projeto> [scope=<arquivo_ou_diretório>] [level=<leve|moderado|agressivo>] [dry_run=true] [output=<arquivo_saída>]"
@@ -151,37 +96,6 @@ check-env:
 		echo "Erro: Variável de ambiente OPENAI_TOKEN não definida."; \
 		exit 1; \
 	fi
-
-# Target para iniciar o agente de criação de features (FeatureAgent)
-start-agent: check-env create-venv print-no-pycache-message
-	@if [ -z "$(prompt)" ] || [ -z "$(project_dir)" ]; then \
-		echo "Uso: make start-agent prompt=\"<descricao>\" project_dir=\"<diretório>\" [model=\"<modelo_openai>\"]"; \
-		exit 1; \
-	fi
-	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/apps/feature_creation/start.py \
-		"$(prompt)" \
-		--project_dir "$(project_dir)" \
-		$(if $(model),--model "$(model)",) \
-		$(ARGS)
-
-# Target para iniciar o agente de geração de conceitos (ConceptGenerationAgent)
-start-concept-agent: create-venv print-no-pycache-message
-	@if [ -z "$(prompt)" ]; then \
-		echo "Uso: make start-concept-agent prompt=\"<descricao>\" [output=\"<arquivo_saida>\"] [context_dir=\"<dir_contexto>\"] [project_dir=\"<dir_projeto>\"] [model=\"<modelo_openai>\"] [elevation_model=\"<modelo_elevacao>\"] [force=true]"; \
-		exit 1; \
-	fi
-	@echo "Executando agente de conceito com prompt: \"$(prompt)\""
-	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_agent_concept_generation.py \
-		"$(prompt)" \
-		$(if $(output),--output "$(output)",) \
-		$(if $(git_log_file),--git_log_file "$(git_log_file)",) \
-		$(if $(context_dir),--context_dir "$(context_dir)",) \
-		$(if $(project_dir),--project_dir "$(project_dir)",) \
-		$(if $(openai_token),--openai_token "$(openai_token)",) \
-		$(if $(model),--model "$(model)",) \
-		$(if $(elevation_model),--elevation_model "$(elevation_model)",) \
-		$(if $(force),--force,) \
-		$(ARGS)
 
 # Target para iniciar o agente de feature concept (FeatureConceptAgent)
 start-feature-concept-agent: create-venv print-no-pycache-message
@@ -241,22 +155,6 @@ prompt-creator: create-venv print-no-pycache-message
 		$(if $(force),--force,) \
 		$(ARGS)
 
-# Target para validador de planos (PlanValidator)
-start-validator: create-venv print-no-pycache-message
-	@if [ -z "$(plan_file)" ]; then \
-		echo "Uso: make start-validator plan_file=\"<arquivo_plano.json>\" [output=\"<arquivo_saida>\"] [requirements=\"<arquivo_requisitos>\"] [context_dir=\"<dir_contexto>\"] [project_dir=\"<dir_projeto>\"] [model=\"<modelo_openai>\"]"; \
-		exit 1; \
-	fi
-	@echo "Executando validador de planos com arquivo: \"$(plan_file)\""
-	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_agent_plan_validator.py \
-		"$(plan_file)" \
-		$(if $(requirements),--requirements "$(requirements)",) \
-		$(if $(output),--output "$(output)",) \
-		$(if $(context_dir),--context_dir "$(context_dir)",) \
-		$(if $(project_dir),--project_dir "$(project_dir)",) \
-		$(if $(openai_token),--openai_token "$(openai_token)",) \
-		$(if $(model),--model "$(model)",)
-
 # Instala as dependências do projeto via uv
 install: create-venv
 	$(ACTIVATE) && $(PYTHON_ENV) uv pip install -e . && uv pip install -e .[dev]
@@ -307,11 +205,6 @@ clean: clean-pycache
 	@rm -rf *.egg-info/
 	@echo "Limpeza concluída!"
 
-# Testar operações de arquivo do RefactorAgent
-test-refactor-file-ops: create-venv
-	@echo "Executando testes de operações de arquivo do RefactorAgent..."
-	$(ACTIVATE) && $(PYTHON_ENV) python src/scripts/util_test_refactor_file_ops.py
-
 # Executa lint, test, formatação e atualização de docs
 all: lint test format update-docs-index
 
@@ -342,25 +235,6 @@ deploy: create-venv
 	@$(ACTIVATE) && $(PYTHON_ENV) python -c "import importlib.util; spec = importlib.util.find_spec('agent_platform'); print('✅ Pacote importado: ' + spec.origin if spec is not None else '❌ Erro: Não foi possível importar o pacote agent_platform.'); exit(1 if spec is None else 0)"
 	@echo "\n✅ Implantação concluída com sucesso!"
 
-# Instalar no diretório do MCP do Cursor
-install-cursor:
-	@echo "Instalando no diretório MCP do Cursor..."
-	@mkdir -p $(HOME)/.cursor/mcp/src
-	@pip install -e . --target=$(HOME)/.cursor/mcp/src
-	@echo "Configurando arquivo MCP..."
-	@cp -f .cursor/config.json $(HOME)/.cursor/mcp.json
-	@echo "Configurando permissões de execução..."
-	@chmod +x $(HOME)/.cursor/mcp/src/mcp_agent
-	@echo "Instalação concluída! Reinicie o Cursor para usar o MCP."
-
-# Instalação simplificada do MCP
-install-simple-mcp:
-	@echo "Instalando Simple MCP no Cursor..."
-	@mkdir -p $(HOME)/.cursor/
-	@cp -f .cursor/agents/mcp_agent.py $(HOME)/.cursor/
-	@cp -f .cursor/agents/mcp_simple.json $(HOME)/.cursor/mcp.json
-	@echo "Simple MCP instalado com sucesso! Reinicie o Cursor para utilizá-lo."
-
 # Remover o MCP do Cursor
 undeploy:
 	@echo "Removendo MCP do Cursor IDE..."
@@ -377,15 +251,6 @@ print-no-pycache-message:
 	@echo "python -B seu_script.py"
 	@echo "ou defina a variável de ambiente PYTHONDONTWRITEBYTECODE=1"
 	@echo "======================================================="
-
-# Executar teste e2e do MCP
-test-mcp-e2e: create-venv
-	@echo "\n🧪 Executando teste e2e para o MCP..."
-	@echo "\n🔧 Configurando ambiente de teste..."
-	$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python src/scripts/util_setup_mcp_test.py
-	@echo "\n🚀 Executando teste..."
-	$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python src/tests/test_mcp_e2e.py
-	@echo "\n✅ Teste e2e do MCP concluído!"
 
 # Atualizar o CHANGELOG.md com a nova versão
 update-changelog:
