@@ -3,14 +3,15 @@
 	start-github-agent prompt-creator setup-env clean-cache clean-pycache autoflake \
 	start-refactor-agent test test-coverage clean-code cli-test
 
-VERSION := $(shell python3 -c "import time; print(time.strftime('%Y.%m.%d'))")
-BUILD_DIR := ./dist
-
-# Define variáveis para o ambiente Python
+# Variáveis
 PYTHON := python3
 VENV := .venv
 ACTIVATE := source $(VENV)/bin/activate
 PYTHON_ENV := PYTHONPATH=.
+BUILD_DIR := dist
+
+# Gera a versão baseada em data e build number
+VERSION := $(shell python3 -c "import time, random; print(f'{time.strftime(\"%Y.%m.%d\")}.dev{random.randint(1, 999999)}')")
 
 # Ajuda do Makefile
 help:
@@ -190,8 +191,19 @@ build: clean install
 	@echo "Limpando diretório de distribuição..."
 	@rm -rf $(BUILD_DIR)
 	@mkdir -p $(BUILD_DIR)
-	@echo "Construindo pacote..."
+	@echo "Atualizando versão no setup.py..."
+	@sed -i '' "s/version=\"[^\"]*\"/version=\"$(VERSION)\"/" setup.py
+	@echo "Construindo pacote na versão $(VERSION)..."
 	@$(ACTIVATE) && $(PYTHON_ENV) python -m build
+	@echo "Atualizando version_commits.json..."
+	@$(PYTHON) -c "import json, os, time; \
+		data = {} if not os.path.exists('version_commits.json') else json.load(open('version_commits.json')); \
+		data['$(VERSION)'] = { \
+			'commit_hash': os.popen('git rev-parse --short HEAD').read().strip(), \
+			'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'), \
+			'build_number': int('$(VERSION)'.split('dev')[1]) \
+		}; \
+		json.dump(data, open('version_commits.json', 'w'), indent=2)"
 
 # Atualiza o índice da documentação automaticamente
 update-docs-index: $(VENV)
@@ -415,7 +427,7 @@ publish: build
 		echo "Erro: Variável de ambiente PYPI_TOKEN não definida"; \
 		exit 1; \
 	fi
-	@echo "Publicando pacote no PyPI..."
+	@echo "Publicando pacote $(VERSION) no PyPI..."
 	@$(ACTIVATE) && $(PYTHON_ENV) python -m twine upload --repository-url https://upload.pypi.org/legacy/ \
 		--username __token__ \
 		--password $(PYPI_TOKEN) \

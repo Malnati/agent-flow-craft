@@ -20,7 +20,7 @@ os.environ["PYTEST_ADDOPTS"] = "-v --cov=src --cov-report=term-missing"
 
 setup(
     name="agent-flow-craft",
-    version="0.1.0",
+    version="2025.04.01.dev502163",
     description="Framework para automação de fluxo de criação de features usando agentes de IA",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
