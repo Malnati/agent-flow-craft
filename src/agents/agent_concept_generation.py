@@ -32,7 +32,7 @@ class ConceptGenerationAgent:
         self.logger.info("INÍCIO - ConceptGenerationAgent.__init__")
         
         try:
-            self.openai_token = openai_token or os.environ.get('OPENAI_API_KEY', '')
+            self.openai_token = openai_token or os.environ.get('OPENAI_KEY', '')
             self.context_dir = Path('agent_context')
             self.context_dir.mkdir(exist_ok=True)
             self.model = model
@@ -46,7 +46,7 @@ class ConceptGenerationAgent:
             
             # Logar status do token sem expor dados sensíveis
             if has_utils:
-                token_status = get_env_status('OPENAI_API_KEY')
+                token_status = get_env_status('OPENAI_KEY')
                 self.logger.debug(f"Status do token OpenAI: {token_status}")
             else:
                 token_available = "disponível" if self.openai_token else "ausente"

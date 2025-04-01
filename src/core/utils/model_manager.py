@@ -4,7 +4,6 @@ Gerenciador de modelos de IA com suporte a múltiplos provedores e fallback auto
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
-import deepseek
 import google.generativeai as genai
 import openai
 import openrouter
@@ -19,7 +18,6 @@ class ModelProvider(str, Enum):
     """Provedores de modelos suportados."""
     OPENAI = "openai"
     OPENROUTER = "openrouter"
-    DEEPSEEK = "deepseek"
     GEMINI = "gemini"
 
 
@@ -49,7 +47,7 @@ class ModelManager:
     def _load_configs(self) -> None:
         """Carrega as configurações dos modelos."""
         # OpenAI
-        openai_key = get_env_var("OPENAI_API_KEY")
+        openai_key = get_env_var("OPENAI_KEY")
         if openai_key:
             self._add_openai_models(openai_key)
 
@@ -57,11 +55,6 @@ class ModelManager:
         openrouter_key = get_env_var("OPENROUTER_KEY")
         if openrouter_key:
             self._add_openrouter_models(openrouter_key)
-
-        # DeepSeek
-        deepseek_key = get_env_var("DEEPSEEK_KEY")
-        if deepseek_key:
-            self._add_deepseek_models(deepseek_key)
 
         # Gemini
         gemini_key = get_env_var("GEMINI_KEY")
@@ -104,24 +97,6 @@ class ModelManager:
                 max_retries=int(get_env_var(f"OPENROUTER_{name.upper().replace('/', '_')}_MAX_RETRIES", get_env_var("OPENROUTER_MAX_RETRIES", "3"))),
                 temperature=float(get_env_var(f"OPENROUTER_{name.upper().replace('/', '_')}_TEMPERATURE", get_env_var("OPENROUTER_TEMPERATURE", "0.7"))),
                 max_tokens=int(get_env_var(f"OPENROUTER_{name.upper().replace('/', '_')}_MAX_TOKENS", get_env_var("OPENROUTER_MAX_TOKENS", "4000"))),
-            )
-
-    def _add_deepseek_models(self, api_key: str) -> None:
-        """Adiciona modelos DeepSeek."""
-        models = [
-            ("deepseek-chat", "deepseek-chat"),
-            ("deepseek-coder", "deepseek-coder"),
-        ]
-        
-        for name, model_id in models:
-            self.configs[name] = ModelConfig(
-                provider=ModelProvider.DEEPSEEK,
-                model_id=model_id,
-                api_key=api_key,
-                timeout=int(get_env_var(f"DEEPSEEK_{name.upper().replace('-', '_')}_TIMEOUT", get_env_var("DEEPSEEK_TIMEOUT", "30"))),
-                max_retries=int(get_env_var(f"DEEPSEEK_{name.upper().replace('-', '_')}_MAX_RETRIES", get_env_var("DEEPSEEK_MAX_RETRIES", "3"))),
-                temperature=float(get_env_var(f"DEEPSEEK_{name.upper().replace('-', '_')}_TEMPERATURE", get_env_var("DEEPSEEK_TEMPERATURE", "0.7"))),
-                max_tokens=int(get_env_var(f"DEEPSEEK_{name.upper().replace('-', '_')}_MAX_TOKENS", get_env_var("DEEPSEEK_MAX_TOKENS", "4000"))),
             )
 
     def _add_gemini_models(self, api_key: str) -> None:
@@ -226,17 +201,6 @@ class ModelManager:
 
         elif config.provider == ModelProvider.OPENROUTER:
             client = openrouter.AsyncClient(api_key=config.api_key)
-            response = await client.chat.completions.create(
-                model=config.model_id,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=config.temperature,
-                max_tokens=config.max_tokens,
-                **kwargs,
-            )
-            return response.choices[0].message.content
-
-        elif config.provider == ModelProvider.DEEPSEEK:
-            client = deepseek.AsyncClient(api_key=config.api_key)
             response = await client.chat.completions.create(
                 model=config.model_id,
                 messages=[{"role": "user", "content": prompt}],

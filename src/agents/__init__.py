@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """
-Agentes do sistema.
+Módulo de agentes do sistema.
 """
 
 # Importações essenciais
+from src.agents.agent_concept_generation import ConceptGenerationAgent
+from src.agents.agent_feature_concept import FeatureConceptAgent
+from src.agents.agent_feature_coordinator import FeatureCoordinatorAgent
+from src.agents.agent_github_integration import GitHubIntegrationAgent
+from src.agents.agent_plan_validator import PlanValidator
+from src.agents.agent_tdd_criteria import TDDCriteriaAgent
 from src.agents.base_agent import BaseAgent
-from src.agents.concept_generation_agent import ConceptGenerationAgent
-from src.agents.feature_concept_agent import FeatureConceptAgent
-from src.agents.feature_coordinator_agent import FeatureCoordinatorAgent
-from src.agents.github_integration_agent import GitHubIntegrationAgent
-from src.agents.plan_validator import PlanValidator
-from src.agents.tdd_criteria_agent import TDDCriteriaAgent
 
 # Lista de módulos exportados
 __all__ = [

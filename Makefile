@@ -7,10 +7,10 @@ VERSION := $(shell python3 -c "import time; print(time.strftime('%Y.%m.%d'))")
 BUILD_DIR := ./dist
 
 # Define variáveis para o ambiente Python
-VENV_DIR := .venv
 PYTHON := python3
-ACTIVATE := . $(VENV_DIR)/bin/activate
-PYTHON_ENV := PYTHONDONTWRITEBYTECODE=1
+VENV := .venv
+ACTIVATE := source $(VENV)/bin/activate
+PYTHON_ENV := PYTHONPATH=.
 
 # Ajuda do Makefile
 help:
@@ -61,7 +61,7 @@ help:
 	@echo "Outros comandos:"
 	@echo "  make pack --out=DIRECTORY     Empacota o projeto MCP para o diretório especificado"
 	@echo "  make deploy                   Instala a última versão do pacote do PyPI e verifica a instalação"
-	@echo "  make publish                  Publica o projeto no PyPI (requer PyPI_TOKEN)"
+	@echo "  make publish                  Publica o projeto no PyPI (requer PYPI_KEY)"
 	@echo "  make version                  Mostra a versão que será usada na publicação"
 	@echo "  make version-info version=X.Y.Z.devN  Mostra informações da versão especificada"
 	@echo "  make find-commit version=X.Y.Z.devN   Retorna o hash do commit associado à versão"
@@ -75,15 +75,14 @@ help:
 
 # Verifica se ambiente virtual existe e cria se necessário
 create-venv:
-	@if [ ! -d "$(VENV_DIR)" ]; then \
+	@if [ ! -d "$(VENV)" ]; then \
 		echo "Criando ambiente virtual Python..."; \
-		$(PYTHON) -m venv $(VENV_DIR); \
-		$(ACTIVATE) && pip install --upgrade pip; \
-		$(ACTIVATE) && pip install uv build; \
-		echo "export PYTHONDONTWRITEBYTECODE=1" >> $(VENV_DIR)/bin/activate; \
+		$(PYTHON) -m venv $(VENV); \
+		$(ACTIVATE) && $(PYTHON) -m pip install --upgrade pip uv; \
+		echo "source $(VENV)/bin/activate" >> $(VENV)/bin/activate; \
 	else \
 		echo "Ambiente virtual já existe."; \
-		$(ACTIVATE) && pip install -q uv build; \
+		$(ACTIVATE) && $(PYTHON) -m pip install -q uv; \
 	fi
 
 check-env:
@@ -99,8 +98,8 @@ check-env:
 		echo "Erro: Variável de ambiente GITHUB_REPO não definida."; \
 		exit 1; \
 	fi
-	@if [ -z "$(OPENAI_TOKEN)" ]; then \
-		echo "Erro: Variável de ambiente OPENAI_TOKEN não definida."; \
+	@if [ -z "$(OPENAI_KEY)" ]; then \
+		echo "Erro: Variável de ambiente OPENAI_KEY não definida."; \
 		exit 1; \
 	fi
 
@@ -149,44 +148,45 @@ prompt-creator: create-venv print-no-pycache-message
 		$(ARGS)
 
 # Instala as dependências do projeto via uv e pyproject.toml
-install: create-venv
+install: $(VENV)
 	@echo "Instalando dependências do projeto via pyproject.toml..."
 	@$(ACTIVATE) && $(PYTHON_ENV) uv pip install -e . && uv pip install -e ".[dev]"
 
 # Instala as dependências do projeto em modo de desenvolvimento via pyproject.toml
-setup: create-venv
+setup: $(VENV)
 	@echo "Instalando dependências de desenvolvimento via pyproject.toml..."
 	@$(ACTIVATE) && $(PYTHON_ENV) uv pip install -e ".[dev]"
 
 # Executa todos os testes unitários
-test: create-venv
+test: $(VENV)
 	@echo "Executando testes unitários..."
 	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -m pytest src/tests -v
 
 # Executa testes com relatório de cobertura
-test-coverage: create-venv
+test-coverage: $(VENV)
 	@echo "Executando testes com relatório de cobertura..."
 	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -m pytest src/tests --cov=src --cov-report=term --cov-report=html
 	@echo "✅ Relatório de cobertura HTML gerado em htmlcov/index.html"
 
 # Executa análise de lint para verificar problemas de estilo de código
-lint: create-venv
+lint: $(VENV)
 	@echo "Executando lint com flake8..."
 	@$(ACTIVATE) && $(PYTHON_ENV) flake8 src
 
 # Formata o código usando o Black e isort
-format: create-venv
+format: $(VENV)
 	@echo "Formatando código com black e isort..."
-	@$(ACTIVATE) && $(PYTHON_ENV) black src
-	@$(ACTIVATE) && $(PYTHON_ENV) isort src
+	@$(ACTIVATE) && $(PYTHON_ENV) black src tests
+	@$(ACTIVATE) && $(PYTHON_ENV) isort src tests
+	@$(ACTIVATE) && $(PYTHON_ENV) autoflake --recursive --in-place --remove-all-unused-imports src tests
 
 # Remove imports não utilizados e variáveis não usadas usando autoflake
-autoflake: create-venv
+autoflake: $(VENV)
 	@echo "Removendo imports não utilizados e variáveis não usadas com autoflake..."
-	@$(ACTIVATE) && $(PYTHON_ENV) autoflake --remove-all-unused-imports --remove-unused-variables --in-place --recursive src
+	@$(ACTIVATE) && $(PYTHON_ENV) autoflake --remove-all-unused-imports --remove-unused-variables --in-place --recursive src tests
 
 # Empacota o projeto usando python -m build
-build: create-venv
+build: $(VENV)
 	@echo "Limpando diretório de distribuição..."
 	@rm -rf $(BUILD_DIR)
 	@mkdir -p $(BUILD_DIR)
@@ -194,7 +194,7 @@ build: create-venv
 	@$(ACTIVATE) && $(PYTHON_ENV) cd src && python -m build -o ../$(BUILD_DIR)
 
 # Atualiza o índice da documentação automaticamente
-update-docs-index: create-venv
+update-docs-index: $(VENV)
 	@echo "Atualizando índice da documentação..."
 	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python src/scripts/util_generate_docs_index.py
 
@@ -257,7 +257,7 @@ endif
 	@echo "Empacotamento concluído! Arquivos disponíveis em: $(out)"
 
 # Implantar o pacote
-deploy: create-venv
+deploy: $(VENV)
 	@echo "\n🚀 Instalando a última versão do pacote agent-flow-craft do PyPI..."
 	$(ACTIVATE) && $(PYTHON_ENV) pip install --upgrade --force-reinstall agent-flow-craft
 	@echo "\n🔍 Verificando se a instalação foi bem-sucedida..."
@@ -285,7 +285,7 @@ print-no-pycache-message:
 	@echo "======================================================="
 
 # Target para iniciar o agente de refatoração Python 
-start-refactor-agent: create-venv print-no-pycache-message
+start-refactor-agent: $(VENV) print-no-pycache-message
 	@if [ -z "$(project_dir)" ]; then \
 		echo "Uso: make start-refactor-agent project_dir=\"<diretório>\" [scope=\"<arquivo_ou_diretório>\"] [level=\"<leve|moderado|agressivo>\"] [dry_run=true] [output=\"<arquivo_saída>\"]"; \
 		exit 1; \
@@ -413,17 +413,17 @@ find-commit:
 
 # Publicar no PyPI
 publish: build
-	@if [ -z "$(PyPI_TOKEN)" ]; then \
-		echo "Erro: Variável de ambiente PyPI_TOKEN não definida."; \
+	@if [ -z "$(PYPI_KEY)" ]; then \
+		echo "Erro: Variável de ambiente PYPI_KEY não definida."; \
 		exit 1; \
 	fi
 	@echo "Publicando versão $(VERSION) no PyPI..."
 	@$(ACTIVATE) && $(PYTHON_ENV) twine upload --non-interactive --repository-url https://upload.pypi.org/legacy/ \
-		--username __token__ --password $(PyPI_TOKEN) \
+		--username __token__ --password $(PYPI_KEY) \
 		$(BUILD_DIR)/*
 	@echo "Publicação concluída!"
 
 # Target para testar o CLI da ferramenta
-cli-test: create-venv
+cli-test: $(VENV)
 	@echo "Testando a interface de linha de comando..."
 	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -m src.cli.cli --help 

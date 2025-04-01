@@ -1,149 +1,99 @@
-# AgentFlowCraft
+# Agent Flow Craft
 
-> Estrutura automatizada para criação, execução, avaliação e conformidade de múltiplos agentes de IA orientados a microtarefas, com registro e rastreamento completo.
+Framework para automação de fluxo de criação de features usando agentes de IA.
 
----
+## Instalação
 
-## ⚡ Instalação Rápida
+### Instalação Rápida
 
 ```bash
-# Clone o repositório
+# Clonar o repositório
 git clone https://github.com/seu-usuario/agent-flow-craft.git
 cd agent-flow-craft
 
-# Crie e ative um ambiente virtual
-python -m venv .venv
-source .venv/bin/activate  # Linux/Mac
-# ou
-.venv\Scripts\activate  # Windows
-
-# Instale o pacote em modo de desenvolvimento
+# Criar ambiente virtual e instalar dependências
 make install
+
+# Para desenvolvimento, instalar dependências adicionais
+make setup
 ```
 
-## 🔐 Configuração de Variáveis de Ambiente
+### Configuração
 
-IMPORTANTE: Este projeto não utiliza arquivos .env por questões de segurança. Configure as variáveis diretamente no ambiente ou via argumentos de linha de comando.
-
-### Variáveis Obrigatórias
-
+1. Copie o arquivo `.env.example` para `.env`:
 ```bash
-# Configuração via ambiente (Linux/Mac)
-export OPENAI_API_KEY="sua-chave-aqui"
-export GITHUB_TOKEN="seu-token-aqui"
-export GITHUB_OWNER="seu-usuario"
-export GITHUB_REPO="seu-repositorio"
-
-# Configuração via ambiente (Windows PowerShell)
-$env:OPENAI_API_KEY="sua-chave-aqui"
-$env:GITHUB_TOKEN="seu-token-aqui"
-$env:GITHUB_OWNER="seu-usuario"
-$env:GITHUB_REPO="seu-repositorio"
+cp .env.example .env
 ```
 
-### Variáveis Opcionais para Provedores Adicionais
+2. Configure as variáveis de ambiente no arquivo `.env`:
+```env
+# Chaves de API
+OPENAI_API_KEY=sua-chave-openai
+OPENROUTER_API_KEY=sua-chave-openrouter
+GOOGLE_API_KEY=sua-chave-google
+GITHUB_TOKEN=seu-token-github
 
-```bash
-# Provedores de IA alternativos
-export OPENROUTER_KEY="sua-chave-aqui"
-export DEEPSEEK_KEY="sua-chave-aqui"
-export GEMINI_KEY="sua-chave-aqui"
-
-# Configurações de modelo padrão
-export DEFAULT_MODEL="gpt-4-turbo"
-export ELEVATION_MODEL="gpt-4"
-export FALLBACK_ENABLED="true"
-
-# Timeouts e retentativas
-export MODEL_TIMEOUT="30"
-export MAX_RETRIES="3"
-
-# Cache
-export CACHE_ENABLED="true"
-export CACHE_TTL="3600"
-export CACHE_DIR="./cache"
-
-# Logging
-export LOG_LEVEL="INFO"
-export LOG_FILE="./logs/agent.log"
+# Configurações de Modelos
+DEFAULT_MODEL=gpt-4-turbo-preview
+ELEVATION_MODEL=gpt-4-turbo-preview
+FALLBACK_MODEL=claude-3-sonnet
 ```
 
-### Configuração por Modelo
+## Uso
 
-Cada modelo pode ter suas próprias configurações específicas:
-
-```bash
-# OpenAI GPT-4 Turbo
-export OPENAI_GPT_4_TURBO_TIMEOUT="30"
-export OPENAI_GPT_4_TURBO_MAX_RETRIES="3"
-export OPENAI_GPT_4_TURBO_TEMPERATURE="0.7"
-export OPENAI_GPT_4_TURBO_MAX_TOKENS="4000"
-
-# Claude 3 Opus via OpenRouter
-export OPENROUTER_ANTHROPIC_CLAUDE_3_OPUS_TIMEOUT="30"
-export OPENROUTER_ANTHROPIC_CLAUDE_3_OPUS_TEMPERATURE="0.7"
-export OPENROUTER_ANTHROPIC_CLAUDE_3_OPUS_MAX_TOKENS="4000"
-
-# DeepSeek Coder
-export DEEPSEEK_DEEPSEEK_CODER_TIMEOUT="30"
-export DEEPSEEK_DEEPSEEK_CODER_TEMPERATURE="0.7"
-export DEEPSEEK_DEEPSEEK_CODER_MAX_TOKENS="4000"
-
-# Gemini Pro
-export GEMINI_GEMINI_PRO_TIMEOUT="30"
-export GEMINI_GEMINI_PRO_TEMPERATURE="0.7"
-export GEMINI_GEMINI_PRO_MAX_TOKENS="4000"
-```
-
-## 🚀 Uso via CLI
-
-Todos os comandos aceitam parâmetros para sobrescrever as configurações de ambiente:
+O pacote oferece vários comandos para automação de tarefas:
 
 ```bash
-# Criar feature com configurações específicas
-agent-flow-craft feature "Implementar sistema de notificações" \
-  --model gpt-4-turbo \
-  --elevation-model gpt-4 \
-  --temperature 0.8 \
-  --max-tokens 8000 \
-  --timeout 60
+# Criar uma nova feature
+agent-flow-craft feature --name "nome-da-feature" --description "descrição da feature"
 
-# Gerar conceito com modelo específico
-agent-flow-craft concept "Sistema de cache distribuído" \
-  --model anthropic/claude-3-opus \
-  --api-key "sua-chave-aqui"
+# Gerar conceitos
+agent-flow-craft concept --name "nome-do-conceito"
 
-# Validar plano com configurações personalizadas
-agent-flow-craft validate plano.md \
-  --model deepseek-coder \
-  --temperature 0.5
+# Validar plano
+agent-flow-craft validate --plan "plano-a-validar"
 
-# Integrar com GitHub usando modelo específico
-agent-flow-craft github feature-123 \
-  --model gemini-pro \
-  --max-retries 5
-```
+# Integração com GitHub
+agent-flow-craft github --repo "usuario/repositorio"
 
-## 📊 Status do Sistema
+# Gerar critérios TDD
+agent-flow-craft tdd --feature "nome-da-feature"
 
-Verifique a configuração atual e modelos disponíveis:
-
-```bash
+# Verificar status do sistema
 agent-flow-craft status
 ```
 
-## 🔄 Comandos Make
+## Desenvolvimento
+
+Para contribuir com o projeto:
 
 ```bash
-# Instalar o projeto
-make install
+# Instalar dependências de desenvolvimento
+make setup
+
+# Formatar código
+make format
+
+# Verificar código
+make lint
 
 # Executar testes
 make test
 
-# Limpar arquivos temporários
+# Limpar arquivos gerados
 make clean
-
-# Ver todos os comandos disponíveis
-make help
 ```
+
+## Modelos Suportados
+
+O framework suporta os seguintes provedores de modelos:
+
+- OpenAI (GPT-4, GPT-3.5)
+- OpenRouter (Claude, Mistral, etc)
+- Google (Gemini)
+
+O sistema possui um mecanismo de fallback que alterna automaticamente entre modelos em caso de falhas ou limites de quota.
+
+## Licença
+
+Este projeto está licenciado sob a licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.

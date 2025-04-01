@@ -16,9 +16,9 @@ def load_agent_settings():
         logger.debug(f"Diretório base: {base_dir}")
 
         # Configurações do OpenAI
-        openai_api_key = os.environ.get('OPENAI_API_KEY', '')
+        openai_api_key = os.environ.get('OPENAI_KEY', '')
         if not openai_api_key:
-            logger.warning("ALERTA - OPENAI_API_KEY não definida")
+            logger.warning("ALERTA - OPENAI_KEY não definida")
 
         # Configurações do GitHub
         github_token = os.environ.get('GITHUB_TOKEN', '')
@@ -50,7 +50,7 @@ def load_agent_settings():
 
         logger.info("SUCESSO - Configurações carregadas")
         return {
-            'OPENAI_API_KEY': openai_api_key,
+            'OPENAI_KEY': openai_api_key,
             'GITHUB_TOKEN': github_token,
             'GITHUB_OWNER': github_owner,
             'GITHUB_REPO': github_repo,

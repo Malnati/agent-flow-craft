@@ -668,7 +668,7 @@ async def main():
                         # Extrair parâmetros
                         prompt_text = payload.get("prompt", "")
                         github_token = os.environ.get("GITHUB_TOKEN", "")
-                        openai_token = os.environ.get("OPENAI_API_KEY", "")
+                        openai_token = os.environ.get("OPENAI_KEY", "")
                         
                         # Inicializar agente
                         agent = FeatureCreationAgent(

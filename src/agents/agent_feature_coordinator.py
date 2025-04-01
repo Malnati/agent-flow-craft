@@ -41,7 +41,7 @@ class FeatureCoordinatorAgent:
         self.logger.info("INÍCIO - __init__ | Inicializando FeatureCoordinatorAgent")
         
         # Armazenar tokens
-        self.openai_token = openai_token or os.environ.get("OPENAI_API_KEY", "")
+        self.openai_token = openai_token or os.environ.get("OPENAI_KEY", "")
         self.github_token = github_token or os.environ.get("GITHUB_TOKEN", "")
         
         # Diretório do projeto

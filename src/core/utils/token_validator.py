@@ -56,7 +56,7 @@ class TokenValidator:
         """
         # Se não fornecido, tenta buscar da variável de ambiente
         if token is None:
-            token = os.environ.get("OPENAI_API_KEY", "")
+            token = os.environ.get("OPENAI_KEY", "")
             
         # Verificação específica para tokens da OpenAI (geralmente começam com "sk-")
         if token and not token.startswith("sk-"):

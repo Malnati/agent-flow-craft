@@ -73,14 +73,14 @@ class PlanValidator:
         
         try:
             if not openai_token:
-                openai_token = os.environ.get("OPENAI_API_KEY")
+                openai_token = os.environ.get("OPENAI_KEY")
                 if not openai_token:
                     self.logger.error("FALHA - validate | Token OpenAI ausente")
                     return {"is_valid": False, "missing_items": ["Token da OpenAI ausente"]}
             
             # Não registrar o token OpenAI
             if has_utils:
-                token_status = get_env_status("OPENAI_API_KEY") 
+                token_status = get_env_status("OPENAI_KEY") 
                 self.logger.debug(f"Status do token OpenAI: {token_status}")
             else:
                 self.logger.debug("Token OpenAI disponível para API")

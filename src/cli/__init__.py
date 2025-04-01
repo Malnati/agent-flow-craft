@@ -1,8 +1,6 @@
 """
-Módulo de interface de linha de comando.
+CLI do sistema.
 """
+from src.cli.cli import app
 
-# Importação explícita para referência no cli.py
-from .cli import main
-
-__all__ = ['main'] 
+__all__ = ["app"] 

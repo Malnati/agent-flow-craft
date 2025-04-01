@@ -18,7 +18,7 @@ class FeatureConceptAgent:
         self.logger.info("INÍCIO - FeatureConceptAgent.__init__")
         
         try:
-            self.openai_token = openai_token or os.environ.get('OPENAI_API_KEY', '')
+            self.openai_token = openai_token or os.environ.get('OPENAI_KEY', '')
             self.context_dir = Path('agent_context')
             self.context_dir.mkdir(exist_ok=True)
             self.model = model

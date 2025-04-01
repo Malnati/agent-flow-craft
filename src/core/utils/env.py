@@ -33,7 +33,7 @@ def get_env_status() -> Dict[str, Dict[str, bool]]:
         Dicionário com o status de cada variável.
     """
     required_vars = {
-        "OPENAI_API_KEY": False,
+        "OPENAI_KEY": False,
         "GITHUB_TOKEN": False,
         "GITHUB_OWNER": False,
         "GITHUB_REPO": False,
