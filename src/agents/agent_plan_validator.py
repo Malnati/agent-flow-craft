@@ -2,12 +2,12 @@ import json
 import os
 import yaml
 from openai import OpenAI
-from core.logger import get_logger, log_execution
+from src.core.logger import get_logger, log_execution
 import logging
 
 # Tente importar funções de mascaramento de dados sensíveis
 try:
-    from core.utils import mask_sensitive_data, get_env_status
+    from src.core.utils import mask_sensitive_data, get_env_status
     has_utils = True
 except ImportError:
     has_utils = False
@@ -73,14 +73,14 @@ class PlanValidator:
         
         try:
             if not openai_token:
-                openai_token = os.environ.get("OPENAI_API_KEY")
+                openai_token = os.environ.get("OPENAI_KEY")
                 if not openai_token:
                     self.logger.error("FALHA - validate | Token OpenAI ausente")
                     return {"is_valid": False, "missing_items": ["Token da OpenAI ausente"]}
             
             # Não registrar o token OpenAI
             if has_utils:
-                token_status = get_env_status("OPENAI_API_KEY") 
+                token_status = get_env_status("OPENAI_KEY") 
                 self.logger.debug(f"Status do token OpenAI: {token_status}")
             else:
                 self.logger.debug("Token OpenAI disponível para API")

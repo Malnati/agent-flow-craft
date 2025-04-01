@@ -81,7 +81,7 @@ def parse_arguments():
     
     parser.add_argument(
         "--openai_token",
-        help="Token de acesso à OpenAI (opcional, usa variável de ambiente OPENAI_API_KEY se não especificado)"
+        help="Token de acesso à OpenAI (opcional, usa variável de ambiente OPENAI_KEY se não especificado)"
     )
     
     parser.add_argument(
@@ -125,7 +125,7 @@ def main():
         
         # Inicializar tokens a partir dos argumentos ou variáveis de ambiente
         github_token = args.github_token or os.environ.get('GITHUB_TOKEN', '')
-        openai_token = args.openai_token or os.environ.get('OPENAI_API_KEY', '')
+        openai_token = args.openai_token or os.environ.get('OPENAI_KEY', '')
         
         # Validar tokens obrigatórios
         try:
@@ -136,10 +136,10 @@ def main():
             logger.error(f"Tokens obrigatórios inválidos: {str(e)}")
             print(f"\n❌ Erro: Tokens obrigatórios inválidos: {str(e)}")
             print("\nPara executar o agente, você precisa definir as seguintes variáveis de ambiente:")
-            print("  OPENAI_API_KEY - Token da API da OpenAI")
+            print("  OPENAI_KEY - Token da API da OpenAI")
             print("  GITHUB_TOKEN - Token do GitHub com permissões para criar issues e branches")
             print("\nExemplo:")
-            print("  export OPENAI_API_KEY='sk-....'")
+            print("  export OPENAI_KEY='sk-....'")
             print("  export GITHUB_TOKEN='ghp_....'")
             return 1
         

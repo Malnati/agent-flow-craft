@@ -31,7 +31,7 @@ except ImportError:
 
 # Tentar importar o logger e funções de logging
 try:
-    from core.logger import get_logger, log_execution
+    from src.core.logger import get_logger, log_execution
     has_logger = True
 except ImportError:
     has_logger = False
@@ -60,7 +60,7 @@ except ImportError:
 
 # Mascaramento básico de dados sensíveis
 try:
-    from core.utils import mask_sensitive_data
+    from src.core.utils import mask_sensitive_data
     has_utils = True
 except ImportError:
     has_utils = False
@@ -73,7 +73,7 @@ except ImportError:
 
 # Importar utilidades e classe base
 try:
-    from core.utils import TokenValidator
+    from src.core.utils import TokenValidator
     from agents.base_agent import BaseAgent
     has_utils = True
 except ImportError:
@@ -98,7 +98,7 @@ class OutGuardrailConceptGenerationAgent(BaseAgent):
         
         Args:
             openai_token (str, optional): Token de acesso à API da OpenAI. Padrão é None,
-                                         nesse caso usará a variável de ambiente OPENAI_API_KEY.
+                                         nesse caso usará a variável de ambiente OPENAI_KEY.
             model (str, optional): Modelo OpenAI a ser utilizado. Padrão é "gpt-4-turbo".
                                          
         Raises:
@@ -112,7 +112,7 @@ class OutGuardrailConceptGenerationAgent(BaseAgent):
         self.context_dir = Path("agent_context")
         
         # Configurar token OpenAI
-        self.openai_token = openai_token or os.environ.get("OPENAI_API_KEY", "")
+        self.openai_token = openai_token or os.environ.get("OPENAI_KEY", "")
         # Logging seguro do status do token (sem expor o token)
         self.token_status = "presente" if self.openai_token else "ausente"
         self.logger.info(f"Token OpenAI: {self.token_status}")

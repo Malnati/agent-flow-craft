@@ -2,11 +2,11 @@
 import os
 import sys
 from pathlib import Path
-from core.core.logger import get_logger, log_execution
+from src.core.core.logger import get_logger, log_execution
 
 # Tente importar funções de mascaramento de dados sensíveis
 try:
-    from core.core.utils import mask_sensitive_data, get_env_status
+    from src.core.core.utils import mask_sensitive_data, get_env_status
     has_utils = True
 except ImportError:
     has_utils = False
@@ -62,12 +62,12 @@ class AgentFactory:
             github_token = github_token or os.environ.get('GITHUB_TOKEN', '')
             repo_owner = repo_owner or os.environ.get('GITHUB_OWNER', '')
             repo_name = repo_name or os.environ.get('GITHUB_REPO', '')
-            openai_token = openai_token or os.environ.get('OPENAI_API_KEY', '')
+            openai_token = openai_token or os.environ.get('OPENAI_KEY', '')
             
             # Log seguro do status do token
             if has_utils:
                 github_status = get_env_status('GITHUB_TOKEN')
-                openai_status = get_env_status('OPENAI_API_KEY')
+                openai_status = get_env_status('OPENAI_KEY')
                 logger.debug(f"Status do token GitHub: {github_status}")
                 logger.debug(f"Status do token OpenAI: {openai_status}")
             else:
@@ -162,11 +162,11 @@ class AgentFactory:
         
         try:
             # Usar variável de ambiente se o parâmetro não for fornecido
-            openai_token = openai_token or os.environ.get('OPENAI_API_KEY', '')
+            openai_token = openai_token or os.environ.get('OPENAI_KEY', '')
             
             # Log seguro do status do token
             if has_utils:
-                token_status = get_env_status('OPENAI_API_KEY')
+                token_status = get_env_status('OPENAI_KEY')
                 logger.debug(f"Status do token OpenAI: {token_status}")
             else:
                 token_available = "disponível" if openai_token else "ausente"

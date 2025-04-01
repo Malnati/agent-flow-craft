@@ -3,8 +3,8 @@ import os
 from datetime import datetime
 from pathlib import Path
 from openai import OpenAI
-from core.logger import get_logger, log_execution
-from core.utils import mask_sensitive_data
+from src.core.logger import get_logger, log_execution
+from src.core.utils import mask_sensitive_data
 
 class FeatureConceptAgent:
     """
@@ -18,7 +18,7 @@ class FeatureConceptAgent:
         self.logger.info("INÍCIO - FeatureConceptAgent.__init__")
         
         try:
-            self.openai_token = openai_token or os.environ.get('OPENAI_API_KEY', '')
+            self.openai_token = openai_token or os.environ.get('OPENAI_KEY', '')
             self.context_dir = Path('agent_context')
             self.context_dir.mkdir(exist_ok=True)
             self.model = model

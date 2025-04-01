@@ -13,12 +13,10 @@ Todos os arquivos Python devem seguir rigorosamente a estrutura de diretórios e
 
 ✅ Requisitos Obrigatórios
 	•	Todo código Python novo deve ser colocado dentro do diretório `src/` ou seus subdiretórios existentes:
-		•	src/apps/ - para aplicações e agentes
 		•	src/core/ - para funcionalidades centrais
 		•	src/tests/ - para testes
 		•	src/configs/ - para configurações
 		•	src/scripts/ - para scripts de utilitários
-		•	src/agent_context/ - para contextos de agentes
 	•	É proibido criar novos diretórios na raiz de `src/` sem autorização expressa.
 	•	Todo arquivo Python deve seguir o padrão de nomenclatura já estabelecido em cada módulo.
 

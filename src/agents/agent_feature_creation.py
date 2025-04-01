@@ -6,7 +6,7 @@ import os
 import logging
 import time
 from pathlib import Path
-from core.logger import get_logger, log_execution
+from src.core.logger import get_logger, log_execution
 import yaml
 from .local_agent_runner import LocalAgentRunner, AgentConfig
 import asyncio
@@ -14,7 +14,7 @@ from openai import OpenAI
 import warnings
 
 # Importação das funções de mascaramento de dados sensíveis
-from core.utils import mask_sensitive_data
+from src.core.utils import mask_sensitive_data
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -668,7 +668,7 @@ async def main():
                         # Extrair parâmetros
                         prompt_text = payload.get("prompt", "")
                         github_token = os.environ.get("GITHUB_TOKEN", "")
-                        openai_token = os.environ.get("OPENAI_API_KEY", "")
+                        openai_token = os.environ.get("OPENAI_KEY", "")
                         
                         # Inicializar agente
                         agent = FeatureCreationAgent(

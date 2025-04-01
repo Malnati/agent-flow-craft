@@ -1,41 +1,59 @@
-import asyncio
+"""
+Execução local de agentes com gerenciamento de contexto.
+Permite processar agentes sem dependências externas.
+"""
+
+import os
 import json
-import uuid
-import subprocess
-import time
-from pathlib import Path
-from typing import Dict, Optional
+import asyncio
 from dataclasses import dataclass
-from core.logger import get_logger, log_execution
+
+from src.core.logger import get_logger, log_execution
 
 @dataclass
 class AgentConfig:
     name: str
-    command: str
-    env: Dict[str, str]
-    working_dir: Optional[Path] = None
-    timeout: int = 30
-    buffer_size: int = 4096
-
+    executable: str
+    connection_type: str = "stdio"  # ou "tcp", "udp", etc
+    host: str = "localhost"
+    port: int = 0  # 0 para escolher porta disponível automaticamente
+    args: list = None
+    env: dict = None
+    cwd: str = None
+    timeout: int = 30  # segundos
+    
 class LocalAgentRunner:
-    def __init__(self, config: AgentConfig):
-        self.logger = get_logger(__name__)
-        self.logger.info(f"INÍCIO - LocalAgentRunner.__init__ | Agent: {config.name}")
+    """
+    Executor local de agentes com gerenciamento de contexto.
+    Permite orquestrar a execução de diferentes agentes mantendo o contexto entre chamadas.
+    """
+    
+    def __init__(self, context_dir=None, target_dir=None):
+        """
+        Inicializa o executor local de agentes.
         
-        try:
-            self.config = config
-            self.process = None
-            self.reader = None
-            self.writer = None
-            self.last_heartbeat = 0
-            
-            # Não podemos chamar diretamente o método async, então apenas registramos a configuração
-            # O setup real será feito na primeira chamada a um método
-            self.initialized = False
-            self.logger.info(f"SUCESSO - Agente {config.name} configurado (inicialização pendente)")
-        except Exception as e:
-            self.logger.error(f"FALHA - LocalAgentRunner.__init__ | Erro: {str(e)}", exc_info=True)
-            raise
+        Args:
+            context_dir: Diretório para armazenar dados de contexto
+            target_dir: Diretório alvo para operações de agentes (ex: projeto)
+        """
+        self.logger = get_logger("LocalAgentRunner")
+        self.context_dir = context_dir or os.path.join(os.getcwd(), "agent_context")
+        self.target_dir = target_dir or os.getcwd()
+        
+        # Criar diretório de contexto se não existir
+        if not os.path.exists(self.context_dir):
+            os.makedirs(self.context_dir, exist_ok=True)
+            self.logger.info(f"Diretório de contexto criado: {self.context_dir}")
+        
+        self.logger.info(f"LocalAgentRunner inicializado com contexto em: {self.context_dir}")
+        self.logger.info(f"Diretório alvo: {self.target_dir}")
+        
+        self.config = None
+        self.process = None
+        self.reader = None
+        self.writer = None
+        self.last_heartbeat = 0
+        self.initialized = False
 
     async def ensure_initialized(self):
         """Garante que o processo está inicializado"""

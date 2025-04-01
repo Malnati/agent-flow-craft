@@ -1,105 +1,77 @@
-from setuptools import setup, find_packages
-import subprocess
+#!/usr/bin/env python3
+"""
+Script de instalação do pacote.
+"""
 import os
-import time
-import re
-import json
+from setuptools import find_packages, setup
 
-# Função simples de slugify que não depende de bibliotecas externas
-def simple_slugify(text, separator=''):
-    # Remover caracteres especiais e converter para minúsculas
-    text = re.sub(r'[^\w\s-]', '', text.lower())
-    # Substituir espaços e hífens por separador
-    text = re.sub(r'[-\s]+', separator, text).strip('-')
-    return text
-
-# Obter a versão de forma dinâmica
-def get_version():
-    # Se existir variável de ambiente VERSION, usar ela como base
-    env_version = os.environ.get('VERSION')
-    
-    if env_version:
-        base_version = env_version
-    else:
-        # Usar ano e mês como MAJOR.MINOR
-        year_month = time.strftime('%Y.%m')
-        # Usar dia como PATCH
-        day = time.strftime('%d')
-        base_version = f"{year_month}.{day}"
-    
-    # Obter o hash curto do último commit e usar apenas os primeiros 6 dígitos numéricos do timestamp
-    # mais os primeiros 4 caracteres do hash convertidos para números (somar os códigos ASCII)
-    timestamp = time.strftime('%H%M%S')
-    
-    # Gerar um número baseado no hash do commit
-    commit_hash = None
-    try:
-        commit_hash = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('utf-8').strip()
-        # Converter o hash para um número usando a soma dos códigos ASCII dos primeiros 4 caracteres
-        hash_num = 0
-        for i, c in enumerate(commit_hash[:4]):
-            hash_num += ord(c) * (10 ** i)
-        hash_num = hash_num % 1000  # Limitar a 3 dígitos
-    except (subprocess.SubprocessError, FileNotFoundError):
-        hash_num = int(time.time()) % 1000
-        commit_hash = "unknown"
-    
-    # Formato PEP 440 compatível: X.Y.Z.devN (N deve ser um número)
-    # Usamos os primeiros dígitos do timestamp + número derivado do hash
-    dev_num = int(timestamp[:4] + str(hash_num).zfill(3))
-    
-    version = f"{base_version}.dev{dev_num}"
-    
-    # Salvar o mapeamento entre a versão e o commit em um arquivo
-    version_map = {}
-    map_file = "version_commits.json"
-    
-    # Carregar mapeamento existente se o arquivo existir
-    if os.path.exists(map_file):
-        try:
-            with open(map_file, 'r') as f:
-                version_map = json.load(f)
-        except (json.JSONDecodeError, IOError):
-            version_map = {}
-    
-    # Adicionar novo mapeamento
-    version_map[version] = {
-        "commit_hash": commit_hash,
-        "timestamp": time.strftime('%Y-%m-%d %H:%M:%S'),
-        "build_number": dev_num
-    }
-    
-    # Salvar o mapeamento atualizado
-    with open(map_file, 'w') as f:
-        json.dump(version_map, f, indent=2)
-    
-    return version
-
-version = get_version()
+# Configurações de ferramentas
+os.environ["BLACK_LINE_LENGTH"] = "100"
+os.environ["BLACK_TARGET_VERSION"] = "py39"
+os.environ["ISORT_PROFILE"] = "black"
+os.environ["ISORT_MULTI_LINE_OUTPUT"] = "3"
+os.environ["ISORT_LINE_LENGTH"] = "100"
+os.environ["MYPY_PYTHON_VERSION"] = "3.9"
+os.environ["MYPY_WARN_RETURN_ANY"] = "1"
+os.environ["MYPY_WARN_UNUSED_CONFIGS"] = "1"
+os.environ["MYPY_DISALLOW_UNTYPED_DEFS"] = "1"
+os.environ["MYPY_CHECK_UNTYPED_DEFS"] = "1"
+os.environ["PYTEST_ADDOPTS"] = "-v --cov=src --cov-report=term-missing"
 
 setup(
-    name="agent_flow_craft",
-    version=version,
+    name="agent-flow-craft",
+    version="0.1.0",
+    description="Framework para automação de fluxo de criação de features usando agentes de IA",
+    long_description=open("README.md").read(),
+    long_description_content_type="text/markdown",
+    author="Seu Nome",
+    author_email="seu.email@exemplo.com",
+    python_requires=">=3.9",
     packages=find_packages(),
+    package_dir={"": "."},
     install_requires=[
-        "autogen",
-        "pyyaml",
-        "python-slugify",
-        "openai",
-        "asyncio"
+        "openai>=1.0.0",
+        "openrouter>=0.3.0",
+        "google-generativeai>=0.3.0",
+        "rope>=1.10.0",
+        "pygithub>=2.1.0",
+        "python-dotenv>=1.0.0",
+        "rich>=13.0.0",
+        "typer>=0.9.0",
+        "pydantic>=2.0.0",
+        "requests>=2.31.0",
+        "tenacity>=8.2.0",
+        "cachetools>=5.3.0",
+        # Ferramentas de desenvolvimento
+        "pytest>=7.0.0",
+        "pytest-cov>=4.1.0",
+        "black>=23.0.0",
+        "isort>=5.12.0",
+        "flake8>=6.1.0",
+        "mypy>=1.5.0",
+        "autoflake>=2.2.0",
     ],
-    extras_require={
-        'dev': [
-            'wheel',
-            'pytest',
-            'build',
-            'twine'
-        ]
-    },
     entry_points={
-        'console_scripts': [
-            'mcp_agent=src.core.agents.agent_feature_creation:main',
+        "console_scripts": [
+            "agent-flow-craft=src.cli.cli:app",
         ],
     },
-    python_requires='>=3.8',
+    classifiers=[
+        "Development Status :: 3 - Alpha",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+    ],
+    setup_requires=["setuptools>=61.0.0", "wheel"],
+    options={
+        "flake8": {
+            "max_line_length": 100,
+            "exclude": ".git,__pycache__,build,dist,*.egg-info",
+        },
+    },
 ) 
