@@ -15,16 +15,20 @@ VERSION := $(shell python3 -c "import time, random; print(f'{time.strftime(\"%Y.
 
 # Comandos para commitizen
 commit:
-	@$(ACTIVATE) && $(PYTHON_ENV) cz commit
+	@echo "Iniciando assistente de commit..."
+	@$(ACTIVATE) && $(PYTHON_ENV) python -m commitizen commit
 
 bump:
-	@$(ACTIVATE) && $(PYTHON_ENV) cz bump --yes
+	@echo "Incrementando versão..."
+	@$(ACTIVATE) && $(PYTHON_ENV) python -m commitizen bump --yes
 
 changelog:
-	@$(ACTIVATE) && $(PYTHON_ENV) cz changelog
+	@echo "Gerando changelog..."
+	@$(ACTIVATE) && $(PYTHON_ENV) python -m commitizen changelog
 
 version-cz:
-	@$(ACTIVATE) && $(PYTHON_ENV) cz version --project
+	@echo "Verificando versão atual..."
+	@$(ACTIVATE) && $(PYTHON_ENV) python -m commitizen version --project
 
 # Ajuda do Makefile
 help:

@@ -1,4 +1,4 @@
-## Unreleased
+## 2026.0.0 (2025-04-01)
 
 ### BREAKING CHANGE
 

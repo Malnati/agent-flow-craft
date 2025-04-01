@@ -18,6 +18,14 @@ os.environ["MYPY_DISALLOW_UNTYPED_DEFS"] = "1"
 os.environ["MYPY_CHECK_UNTYPED_DEFS"] = "1"
 os.environ["PYTEST_ADDOPTS"] = "-v --cov=src --cov-report=term-missing"
 
+# Configuração do commitizen
+os.environ["CZ_TYPE"] = "conventional"
+os.environ["CZ_MAX_HEADER_LENGTH"] = "72"
+os.environ["CZ_MAX_LINE_LENGTH"] = "100"
+os.environ["CZ_VERSION_SCHEME"] = "semver"
+os.environ["CZ_VERSION_FILES"] = "setup.py:version,src/__init__.py:__version__"
+os.environ["CZ_CUSTOMIZE_HOOK"] = "cz_customize"
+
 setup(
     name="agent-flow-craft",
     version="2025.04.01.dev502163",
@@ -75,27 +83,5 @@ setup(
             "max_line_length": 100,
             "exclude": ".git,__pycache__,build,dist,*.egg-info",
         },
-        "commitizen": {
-            "name": "cz_conventional_commits",
-            "version": "0.1.0",
-            "tag_format": "$version",
-            "update_changelog_on_bump": True,
-            "version_files": [
-                "setup.py:version",
-                "src/__init__.py:__version__"
-            ],
-            "style": [
-                ["qmark", "fg:#ff9d00 bold"],
-                ["question", "bold"],
-                ["answer", "fg:#ff9d00 bold"],
-                ["pointer", "fg:#ff9d00 bold"],
-                ["highlighted", "fg:#ff9d00 bold"],
-                ["selected", "fg:#cc5454"],
-                ["separator", "fg:#cc5454"],
-                ["instruction", ""],
-                ["text", ""],
-                ["disabled", "fg:#858585 italic"]
-            ]
-        }
     },
 ) 
