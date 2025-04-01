@@ -212,7 +212,7 @@ start-concept-agent: create-venv print-no-pycache-message
 		exit 1; \
 	fi
 	@echo "Executando agente de conceito com prompt: \"$(prompt)\""
-	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_concept_agent.py \
+	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_agent_concept_generation.py \
 		"$(prompt)" \
 		$(if $(output),--output "$(output)",) \
 		$(if $(git_log_file),--git_log_file "$(git_log_file)",) \

@@ -133,7 +133,7 @@ make start-concept-agent prompt="<descricao>" [output="<arquivo_saida>"] [contex
 
 **Chamada direta (sem Makefile):**
 ```bash
-python -B src/scripts/run_concept_agent.py "Adicionar autenticação via OAuth" --project_dir="/Users/mal/GitHub/agent-flow-craft-aider" --context_dir="agent_context" --model="gpt-4-turbo" --elevation_model="gpt-4-turbo"
+python -B src/scripts/run_agent_concept_generation.py "Adicionar autenticação via OAuth" --project_dir="/Users/mal/GitHub/agent-flow-craft-aider" --context_dir="agent_context" --model="gpt-4-turbo" --elevation_model="gpt-4-turbo"
 ```
 
 **Tarefas executadas:**
@@ -487,12 +487,12 @@ Para utilizar o `FeatureCreationAgent`, siga os passos abaixo:
 1. Certifique-se de que o ambiente Python está configurado e que o GitHub CLI (`gh`) está instalado e autenticado.
 2. Instale a dependência `pyautogen` utilizando `uv pip install pyautogen`.
 3. Adicione a dependência no arquivo de controle (`requirements.txt` ou `pyproject.toml`).
-4. Crie um script CLI simples (`src/scripts/run_feature_agent.py`) para facilitar a execução do agente via terminal.
+4. Crie um script CLI simples (`src/scripts/run_agent_feature_creation.py`) para facilitar a execução do agente via terminal.
 
 Exemplo de uso do script CLI:
 
 ```bash
-python src/scripts/run_feature_agent.py "Descrição da nova funcionalidade" "Plano de execução detalhado"
+python src/scripts/run_agent_feature_creation.py "Descrição da nova funcionalidade" "Plano de execução detalhado"
 ```
 
 ### Publicação no PyPI
