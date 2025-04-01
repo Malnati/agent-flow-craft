@@ -410,7 +410,7 @@ build: create-venv
 
 # Atualiza o índice da documentação automaticamente
 update-docs-index: create-venv
-	$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python src/scripts/generate_docs_index.py
+	$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python src/scripts/util_generate_docs_index.py
 
 # Limpa todos os arquivos __pycache__ e .pyc
 clean-pycache:
@@ -433,7 +433,7 @@ clean: clean-pycache
 # Testar operações de arquivo do RefactorAgent
 test-refactor-file-ops: create-venv
 	@echo "Executando testes de operações de arquivo do RefactorAgent..."
-	$(ACTIVATE) && $(PYTHON_ENV) python src/scripts/test_refactor_file_ops.py
+	$(ACTIVATE) && $(PYTHON_ENV) python src/scripts/util_test_refactor_file_ops.py
 
 # Executa lint, test, formatação e atualização de docs
 all: lint test format update-docs-index
@@ -505,7 +505,7 @@ print-no-pycache-message:
 test-mcp-e2e: create-venv
 	@echo "\n🧪 Executando teste e2e para o MCP..."
 	@echo "\n🔧 Configurando ambiente de teste..."
-	$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python src/scripts/setup_mcp_test.py
+	$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python src/scripts/util_setup_mcp_test.py
 	@echo "\n🚀 Executando teste..."
 	$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python src/tests/test_mcp_e2e.py
 	@echo "\n✅ Teste e2e do MCP concluído!"

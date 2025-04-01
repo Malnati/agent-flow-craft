@@ -16,7 +16,7 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
 )
 
-logger = logging.getLogger('setup_mcp_test')
+logger = logging.getLogger('util_setup_mcp_test')
 
 def main():
     """Função principal de configuração"""

@@ -10,7 +10,7 @@ Este projeto segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ### Adicionado
 - Implementação inicial do `FeatureCreationAgent` para automatizar o fluxo de criação de features
-- Script CLI `start_feature_agent.py` para facilitar a execução do agente
+- Script CLI `run_feature_agent.py` para facilitar a execução do agente
 - Criação de testes automatizados para o agente de criação de features
 - Novo método `check_github_auth` para verificar a autenticação do GitHub CLI antes de executar ações
 - Adicionado timeout para comandos de subprocesso para evitar bloqueios
