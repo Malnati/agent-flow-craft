@@ -19,8 +19,10 @@ commit:
 	@$(ACTIVATE) && $(PYTHON_ENV) python -m commitizen commit
 
 bump:
-	@echo "Incrementando versão..."
-	@$(ACTIVATE) && $(PYTHON_ENV) python -m commitizen bump --yes
+	@echo "Analisando último commit e incrementando versão..."
+	@$(ACTIVATE) && $(PYTHON_ENV) python -c "from src.core.utils.version_analyzer import smart_bump; \
+		new_version = smart_bump(); \
+		print(f'Nova versão: {new_version}' if new_version else 'Erro ao incrementar versão')"
 
 changelog:
 	@echo "Gerando changelog..."
@@ -208,19 +210,8 @@ build: clean install
 	@echo "Limpando diretório de distribuição..."
 	@rm -rf $(BUILD_DIR)
 	@mkdir -p $(BUILD_DIR)
-	@echo "Atualizando versão no setup.py..."
-	@$(ACTIVATE) && $(PYTHON_ENV) cz bump --yes || true
-	@echo "Construindo pacote na versão $(VERSION)..."
+	@echo "Construindo pacote..."
 	@$(ACTIVATE) && $(PYTHON_ENV) python -m build
-	@echo "Atualizando version_commits.json..."
-	@$(PYTHON) -c "import json, os, time; \
-		data = {} if not os.path.exists('version_commits.json') else json.load(open('version_commits.json')); \
-		data['$(VERSION)'] = { \
-			'commit_hash': os.popen('git rev-parse --short HEAD').read().strip(), \
-			'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'), \
-			'build_number': int('$(VERSION)'.split('dev')[1]) \
-		}; \
-		json.dump(data, open('version_commits.json', 'w'), indent=2)"
 
 # Atualiza o índice da documentação automaticamente
 update-docs-index: $(VENV)
@@ -395,7 +386,9 @@ compare-versions:
 
 # Mostra a versão atual baseada na data
 version:
-	@echo "Versão atual: $(VERSION)"
+	@$(ACTIVATE) && $(PYTHON_ENV) python -c "from src.core.utils.version_analyzer import get_current_version; \
+		version, _ = get_current_version(); \
+		print(f'Versão atual: {version}')"
 
 # Mostra informações detalhadas sobre uma versão específica
 version-info:
@@ -439,12 +432,12 @@ find-commit:
 		print(data[v]['commit_hash']);"
 
 # Publicar no PyPI
-publish: build
+publish: bump build
 	@if [ -z "$(PYPI_TOKEN)" ]; then \
 		echo "Erro: Variável de ambiente PYPI_TOKEN não definida"; \
 		exit 1; \
 	fi
-	@echo "Publicando pacote $(VERSION) no PyPI..."
+	@echo "Publicando pacote no PyPI..."
 	@$(ACTIVATE) && $(PYTHON_ENV) python -m twine upload --repository-url https://upload.pypi.org/legacy/ \
 		--username __token__ \
 		--password $(PYPI_TOKEN) \

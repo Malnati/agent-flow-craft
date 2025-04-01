@@ -28,7 +28,7 @@ os.environ["CZ_CUSTOMIZE_HOOK"] = "cz_customize"
 
 setup(
     name="agent-flow-craft",
-    version="2025.04.01.dev502163",
+    version="2025.04.01.1",
     description="Framework para automação de fluxo de criação de features usando agentes de IA",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
