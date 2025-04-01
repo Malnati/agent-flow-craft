@@ -110,7 +110,11 @@ start-github-agent: check-env create-venv print-no-pycache-message
 		echo "Uso: make start-github-agent context_id=\"<id>\" [project_dir=\"<diretório>\"] [context_dir=\"<diretório>\"] [base_branch=\"<branch>\"] [github_token=\"<token>\"] [owner=\"<owner>\"] [repo=\"<repo>\"] [model=\"<modelo_openai>\"] [elevation_model=\"<modelo_elevacao>\"] [force=true]"; \
 		exit 1; \
 	fi
-	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_agent_github_integration.py \
+	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src \
+		OPENROUTER_KEY="$(OPENROUTER_KEY)" \
+		DEEPSEEK_KEY="$(DEEPSEEK_KEY)" \
+		GEMINI_KEY="$(GEMINI_KEY)" \
+		python -B src/scripts/run_agent_github_integration.py \
 		"$(context_id)" \
 		$(if $(project_dir),--project_dir "$(project_dir)",) \
 		$(if $(context_dir),--context_dir "$(context_dir)",) \

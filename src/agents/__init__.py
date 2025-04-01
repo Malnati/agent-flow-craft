@@ -1,22 +1,24 @@
 #!/usr/bin/env python3
 """
-Módulo de agentes para automação de tarefas.
+Agentes do sistema.
 """
 
 # Importações essenciais
-from .base_agent import BaseAgent
-from .local_agent_runner import LocalAgentRunner
-from .agent_feature_coordinator import FeatureCoordinatorAgent
-from .agent_github_integration import GitHubIntegrationAgent
-from .agent_python_refactor import RefactorAgent
-from .context_manager import ContextManager
+from src.agents.base_agent import BaseAgent
+from src.agents.concept_generation_agent import ConceptGenerationAgent
+from src.agents.feature_concept_agent import FeatureConceptAgent
+from src.agents.feature_coordinator_agent import FeatureCoordinatorAgent
+from src.agents.github_integration_agent import GitHubIntegrationAgent
+from src.agents.plan_validator import PlanValidator
+from src.agents.tdd_criteria_agent import TDDCriteriaAgent
 
 # Lista de módulos exportados
 __all__ = [
-    'BaseAgent',
-    'LocalAgentRunner',
-    'FeatureCoordinatorAgent',
-    'GitHubIntegrationAgent',
-    'RefactorAgent',
-    'ContextManager',
+    "BaseAgent",
+    "ConceptGenerationAgent",
+    "FeatureConceptAgent",
+    "FeatureCoordinatorAgent",
+    "GitHubIntegrationAgent",
+    "PlanValidator",
+    "TDDCriteriaAgent",
 ]

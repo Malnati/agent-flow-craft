@@ -1,74 +1,59 @@
 [project]
 name = "agent-flow-craft"
-version = "1.0.0"
-description = "Agent Flow Craft - Framework para automação de fluxo de criação de features"
-authors = [{ name = "Agent Flow Craft Team" }]
-requires-python = ">=3.10"
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
+version = "0.1.0"
+description = "Framework para automação de fluxo de criação de features usando agentes de IA"
+authors = [
+    {name = "Seu Nome", email = "seu.email@exemplo.com"},
 ]
 dependencies = [
-    "openai>=1.0.0,<2.0.0",
-    "autogen>=0.2.0,<1.0.0",
-    "pytest>=7.0.0,<8.0.0",
-    "unittest2>=1.1.0,<2.0.0",
-    "uv>=0.1.0,<1.0.0",
-    "ghapi>=1.0.0,<2.0.0",
-    "python-dotenv>=1.0.0,<2.0.0",
-    "loguru>=0.7.0,<1.0.0",
-    "requests>=2.28.0,<3.0.0",
-    "python-slugify>=8.0.0,<9.0.0",
-    "pyyaml>=6.0.0,<7.0.0",
-    "rope>=0.22.0,<1.0.0",
+    "openai>=1.0.0",
+    "openrouter>=0.3.0",
+    "deepseek>=0.2.0",
+    "google-generativeai>=0.3.0",
+    "rope>=1.10.0",
+    "pygithub>=2.1.0",
+    "python-dotenv>=1.0.0",
+    "rich>=13.0.0",
+    "typer>=0.9.0",
+    "pydantic>=2.0.0",
+    "requests>=2.31.0",
+    "tenacity>=8.2.0",
+    "cachetools>=5.3.0",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "black>=22.0.0,<24.0.0",
-    "flake8>=6.0.0,<7.0.0",
-    "isort>=5.12.0,<6.0.0",
-    "pre-commit>=3.0.0,<4.0.0",
-    "pytest-mock>=3.0.0,<4.0.0",
-    "twine>=4.0.0,<5.0.0",
+    "pytest>=7.0.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "flake8>=6.1.0",
+    "mypy>=1.5.0",
 ]
 
-[project.scripts]
-agent-flow-craft = "src.cli.cli:main"
-
 [build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools]
-packages = ["src", "src.cli", "src.core", "src.agents", "src.configs", "src.scripts"]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.black]
-line-length = 88
-target-version = ['py310']
+line-length = 100
+target-version = ['py39']
+include = '\.pyi?$'
 
 [tool.isort]
 profile = "black"
+multi_line_output = 3
+line_length = 100
 
-[tool.flake8]
-max-line-length = 88
-extend-ignore = ["E203", "W503"]
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+check_untyped_defs = true
 
-[tool.autopep8]
-max_line_length = 120
-ignore = ["E203", "E501"]
-
-[tool.pytest]
-cache_dir = "out/pytest_cache"
-python_files = "test_*.py"
+[tool.pytest.ini_options]
 testpaths = ["tests"]
-
-[tool.coverage]
-directory = "out/coverage"
-
-[tool.tox]
-envdir = "out/tox_envs"
-
-[tool.nox]
-envdir = "out/nox_envs"
+python_files = ["test_*.py"]
+addopts = "--cov=src --cov-report=term-missing"
+filterwarnings = ["ignore::DeprecationWarning"]

@@ -1,56 +1,31 @@
 """
-Utilitários para manipulação segura de dados e informações sensíveis.
-Fornece ferramentas para validação de tokens, mascaramento de dados sensíveis
-e gerenciamento de variáveis de ambiente.
+Utilitários do sistema.
 """
+from src.core.utils.env import get_env_status, get_env_var, validate_env
+from src.core.utils.logger import (
+    get_logger,
+    log_debug,
+    log_error,
+    log_info,
+    log_warning,
+    logger,
+)
+from src.core.utils.model_manager import ModelConfig, ModelManager, ModelProvider
 
-from src.core.utils.token_validator import TokenValidator
-
-# Definir funções de utilidade
-def mask_sensitive_data(data, mask_str='***'):
-    """
-    Mascara dados sensíveis em strings e dicionários.
-    
-    Args:
-        data: Dados a serem mascarados (string, dict ou outro tipo)
-        mask_str: String de substituição para dados sensíveis
-        
-    Returns:
-        Dados com informações sensíveis mascaradas
-    """
-    from src.core.logger import mask_sensitive_data as logger_mask_sensitive_data
-    return logger_mask_sensitive_data(data, mask_str)
-
-def get_env_status(var_name):
-    """
-    Retorna o status de uma variável de ambiente sem expor seu valor.
-    
-    Args:
-        var_name: Nome da variável de ambiente
-        
-    Returns:
-        String indicando o status da variável
-    """
-    import os
-    from src.core.logger import mask_sensitive_data
-    
-    # Lista de palavras-chave para identificar dados sensíveis
-    SENSITIVE_KEYWORDS = [
-        'pass', 'senha', 'password', 
-        'token', 'access_token', 'refresh_token', 'jwt', 
-        'secret', 'api_key', 'apikey', 'key', 
-        'auth', 'credential', 'oauth', 
-        'private', 'signature'
-    ]
-    
-    value = os.environ.get(var_name)
-    if not value:
-        return "não definido"
-    elif any(keyword in var_name.lower() for keyword in SENSITIVE_KEYWORDS):
-        return "configurado"
-    else:
-        # Para variáveis não sensíveis, podemos retornar o valor
-        # Mas aplicamos mascaramento para garantir segurança
-        return mask_sensitive_data(value)
-
-__all__ = ['mask_sensitive_data', 'get_env_status', 'TokenValidator']
+__all__ = [
+    # Ambiente
+    "get_env_var",
+    "get_env_status",
+    "validate_env",
+    # Logging
+    "logger",
+    "get_logger",
+    "log_error",
+    "log_warning",
+    "log_info",
+    "log_debug",
+    # Modelos
+    "ModelManager",
+    "ModelProvider",
+    "ModelConfig",
+]

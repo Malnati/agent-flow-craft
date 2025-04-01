@@ -4,14 +4,11 @@ Permite processar agentes sem dependências externas.
 """
 
 import os
-import sys
 import json
 import asyncio
-from pathlib import Path
 from dataclasses import dataclass
 
 from src.core.logger import get_logger, log_execution
-from src.agents.base_agent import BaseAgent
 
 @dataclass
 class AgentConfig:
