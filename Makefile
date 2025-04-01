@@ -1,6 +1,6 @@
 .PHONY: install setup test lint format start-agent update-docs-index clean clean-pycache all create-venv \
 	pack deploy undeploy install-cursor install-simple-mcp help build publish version version-info find-commit update-changelog compare-versions test-mcp-e2e \
-	start-concept-agent start-feature-concept-agent start-concept-guardrail-agent start-github-agent prompt-creator start-context-manager start-validator start-tdd-criteria-agent start-tdd-guardrail-agent setup-env clean-cache \
+	start-concept-agent start-feature-concept-agent start-github-agent prompt-creator start-context-manager start-validator setup-env clean-cache \
 	start-refactor-agent test-refactor-file-ops
 
 VERSION := $(shell python3 -c "import time; print(time.strftime('%Y.%m.%d'))")
@@ -62,19 +62,6 @@ help:
 	@echo "      5. Estrutura a resposta em JSON com branch_type, issue_title, execution_plan, etc."
 	@echo "      6. Salva o feature_concept gerado no diretório de contexto com um ID único"
 	@echo "      7. Retorna o feature_concept completo com o context_id para uso posterior"
-	@echo ""
-	@echo "  make start-tdd-criteria-agent context_id=\"...\" project_dir=\"...\"  Inicia o agente de geração de critérios TDD (TDDCriteriaAgent)"
-	@echo "    Opções: [output=\"...\"] [context_dir=\"...\"] [openai_token=\"...\"] [model=\"<modelo_openai>\"] [elevation_model=\"<modelo_elevacao>\"] [force=true]"
-	@echo "    Exemplo: make start-tdd-criteria-agent context_id=\"feature_concept_20240328_123456\" project_dir=\"/Users/mal/GitHub/agent-flow-craft-aider\" model=\"gpt-4-turbo\" elevation_model=\"gpt-4-turbo\""
-	@echo "    Tarefas executadas:"
-	@echo "      1. Inicializa o TDDCriteriaAgent com o token OpenAI e modelo especificados"
-	@echo "      2. Carrega o conceito da feature do arquivo de contexto especificado"
-	@echo "      3. Lista arquivos de código-fonte relevantes no diretório do projeto"
-	@echo "      4. Gera um prompt otimizado contendo o conceito e código-fonte relevante"
-	@echo "      5. Envia o prompt para a API OpenAI para gerar critérios de aceitação TDD"
-	@echo "      6. Estrutura a resposta em JSON incluindo critérios, plano de testes e casos de borda"
-	@echo "      7. Salva os critérios no diretório de contexto com um ID único"
-	@echo "      8. Retorna os critérios TDD completos para uso na implementação"
 	@echo ""
 	@echo "  make start-github-agent context_id=\"...\"      Inicia o agente de integração com GitHub (GitHubIntegrationAgent)"
 	@echo "    Opções: [project_dir=\"...\"] [context_dir=\"...\"] [base_branch=\"...\"] [github_token=\"...\"] [owner=\"...\"] [repo=\"...\"] [model=\"<modelo_openai>\"] [elevation_model=\"<modelo_elevacao>\"] [force=true]"
@@ -269,24 +256,6 @@ start-validator: create-venv print-no-pycache-message
 		$(if $(project_dir),--project_dir "$(project_dir)",) \
 		$(if $(openai_token),--openai_token "$(openai_token)",) \
 		$(if $(model),--model "$(model)",)
-
-# Target para gerador de critérios TDD (TDDCriteriaAgent)
-start-tdd-criteria-agent: create-venv print-no-pycache-message
-	@if [ -z "$(context_id)" ] || [ -z "$(project_dir)" ]; then \
-		echo "Uso: make start-tdd-criteria-agent context_id=\"<id_do_contexto>\" project_dir=\"<diretório>\" [output=\"<arquivo_saida>\"] [context_dir=\"<dir_contexto>\"] [model=\"<modelo_openai>\"] [elevation_model=\"<modelo_elevacao>\"] [force=true]"; \
-		exit 1; \
-	fi
-	@echo "Executando gerador de critérios TDD com context_id: \"$(context_id)\""
-	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_agent_tdd_criteria_agent.py \
-		"$(context_id)" \
-		--project_dir "$(project_dir)" \
-		$(if $(output),--output "$(output)",) \
-		$(if $(context_dir),--context_dir "$(context_dir)",) \
-		$(if $(openai_token),--openai_token "$(openai_token)",) \
-		$(if $(model),--model "$(model)",) \
-		$(if $(elevation_model),--elevation_model "$(elevation_model)",) \
-		$(if $(force),--force,) \
-		$(ARGS)
 
 # Instala as dependências do projeto via uv
 install: create-venv
