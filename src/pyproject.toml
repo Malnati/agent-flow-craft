@@ -32,7 +32,7 @@ dev = [
 ]
 
 [project.scripts]
-agent-flow-craft = "agent_platform.cli:main"
+agent-flow-craft = "agent_flow_craft.cli:main"
 
 [build-system]
 requires = ["setuptools>=42", "wheel"]

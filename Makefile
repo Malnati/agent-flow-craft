@@ -1,7 +1,7 @@
 .PHONY: install lint format clean all create-venv \
 	pack deploy undeploy help build publish version version-info update-changelog compare-versions \
 	start-github-agent prompt-creator setup-env clean-cache clean-pycache autoflake \
-	start-refactor-agent test test-coverage clean-code
+	start-refactor-agent test test-coverage clean-code cli-test
 
 VERSION := $(shell python3 -c "import time; print(time.strftime('%Y.%m.%d'))")
 BUILD_DIR := ./dist
@@ -22,6 +22,7 @@ help:
 	@echo "  make autoflake                Remove imports não utilizados e variáveis não usadas"
 	@echo "  make test                     Executa os testes unitários do projeto"
 	@echo "  make test-coverage            Executa testes com relatório de cobertura de código"
+	@echo "  make cli-test                 Testa a funcionalidade da interface de linha de comando"
 	@echo "  make build                    Empacota o projeto usando python -m build"
 	@echo "  make clean                    Remove arquivos temporários e de build"
 	@echo "  make clean-pycache            Remove apenas arquivos __pycache__ e .pyc"
@@ -416,4 +417,9 @@ publish: build
 	@$(ACTIVATE) && $(PYTHON_ENV) twine upload --non-interactive --repository-url https://upload.pypi.org/legacy/ \
 		--username __token__ --password $(PyPI_TOKEN) \
 		$(BUILD_DIR)/*
-	@echo "Publicação concluída!" 
+	@echo "Publicação concluída!"
+
+# Target para testar o CLI da ferramenta
+cli-test: create-venv
+	@echo "Testando a interface de linha de comando..."
+	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -m src.cli.cli --help 
