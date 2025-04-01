@@ -13,6 +13,19 @@ BUILD_DIR := dist
 # Gera a versão baseada em data e build number
 VERSION := $(shell python3 -c "import time, random; print(f'{time.strftime(\"%Y.%m.%d\")}.dev{random.randint(1, 999999)}')")
 
+# Comandos para commitizen
+commit:
+	@$(ACTIVATE) && $(PYTHON_ENV) cz commit
+
+bump:
+	@$(ACTIVATE) && $(PYTHON_ENV) cz bump --yes
+
+changelog:
+	@$(ACTIVATE) && $(PYTHON_ENV) cz changelog
+
+version-cz:
+	@$(ACTIVATE) && $(PYTHON_ENV) cz version --project
+
 # Ajuda do Makefile
 help:
 	@echo "Comandos disponíveis:"
@@ -192,7 +205,7 @@ build: clean install
 	@rm -rf $(BUILD_DIR)
 	@mkdir -p $(BUILD_DIR)
 	@echo "Atualizando versão no setup.py..."
-	@sed -i '' "s/version=\"[^\"]*\"/version=\"$(VERSION)\"/" setup.py
+	@$(ACTIVATE) && $(PYTHON_ENV) cz bump --yes || true
 	@echo "Construindo pacote na versão $(VERSION)..."
 	@$(ACTIVATE) && $(PYTHON_ENV) python -m build
 	@echo "Atualizando version_commits.json..."

@@ -50,10 +50,12 @@ setup(
         "flake8>=6.1.0",
         "mypy>=1.5.0",
         "autoflake>=2.2.0",
+        "commitizen>=3.12.0",
     ],
     entry_points={
         "console_scripts": [
             "agent-flow-craft=src.cli.cli:app",
+            "cz=commitizen.cli:main",
         ],
     },
     classifiers=[
@@ -73,5 +75,27 @@ setup(
             "max_line_length": 100,
             "exclude": ".git,__pycache__,build,dist,*.egg-info",
         },
+        "commitizen": {
+            "name": "cz_conventional_commits",
+            "version": "0.1.0",
+            "tag_format": "$version",
+            "update_changelog_on_bump": True,
+            "version_files": [
+                "setup.py:version",
+                "src/__init__.py:__version__"
+            ],
+            "style": [
+                ["qmark", "fg:#ff9d00 bold"],
+                ["question", "bold"],
+                ["answer", "fg:#ff9d00 bold"],
+                ["pointer", "fg:#ff9d00 bold"],
+                ["highlighted", "fg:#ff9d00 bold"],
+                ["selected", "fg:#cc5454"],
+                ["separator", "fg:#cc5454"],
+                ["instruction", ""],
+                ["text", ""],
+                ["disabled", "fg:#858585 italic"]
+            ]
+        }
     },
 ) 
