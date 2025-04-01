@@ -11,7 +11,6 @@ import sys
 import shutil
 import tempfile
 import logging
-from pathlib import Path
 
 # Configurar logging
 logging.basicConfig(
@@ -40,7 +39,7 @@ def setup_test_environment():
     src_dir = os.path.join(test_dir, "src")
     utils_dir = os.path.join(src_dir, "utils")
     components_dir = os.path.join(src_dir, "components")
-    ui_dir = os.path.join(components_dir, "ui")
+    os.path.join(components_dir, "ui")
     
     os.makedirs(utils_dir, exist_ok=True)
     os.makedirs(components_dir, exist_ok=True)

@@ -2,9 +2,7 @@ from rich.console import Console
 from rich.tree import Tree
 import os
 import argparse
-from pathlib import Path
 from core.logger import get_logger, log_execution
-import logging
 
 logger = get_logger(__name__)
 

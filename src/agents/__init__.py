@@ -8,7 +8,7 @@ from .local_agent_runner import LocalAgentRunner
 from .agent_plan_validator import PlanValidator
 from .context_manager import ContextManager
 from .agent_concept_generation import ConceptGenerationAgent
-from .fagent_feature_concept import FeatureConceptAgent
+from .agent_feature_concept import FeatureConceptAgent
 from .agent_github_integration import GitHubIntegrationAgent
 from .agent_feature_creation import FeatureCreationAgent
 from .agent_feature_coordinator import FeatureCoordinatorAgent

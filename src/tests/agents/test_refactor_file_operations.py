@@ -5,7 +5,6 @@ import os
 import shutil
 import tempfile
 import unittest
-from pathlib import Path
 
 from agents.agent_python_refactor import RefactorAgent
 

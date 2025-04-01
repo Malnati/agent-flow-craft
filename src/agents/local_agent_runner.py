@@ -2,7 +2,6 @@ import asyncio
 import json
 import uuid
 import subprocess
-import logging
 import time
 from pathlib import Path
 from typing import Dict, Optional

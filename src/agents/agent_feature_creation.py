@@ -4,21 +4,18 @@ import subprocess
 import json
 import os
 import logging
-from slugify import slugify
-import re
 import time
 from pathlib import Path
 from core.logger import get_logger, log_execution
 import yaml
 from agents.local_agent_runner import LocalAgentRunner, AgentConfig
 import asyncio
-from datetime import datetime
 from openai import OpenAI
 import warnings
 
 # Tente importar funções de mascaramento de dados sensíveis
 try:
-    from core.utils import mask_sensitive_data, get_env_status
+    from core.utils import mask_sensitive_data
     has_utils = True
 except ImportError:
     has_utils = False
@@ -282,7 +279,7 @@ class FeatureCreationAgent(AssistantAgent):
                 suggestion = suggestion[:497] + "..."
             
             # Mascarar tokens sensíveis nos logs
-            safe_token = mask_sensitive_data(openai_token) if openai_token else "não informado"
+            mask_sensitive_data(openai_token) if openai_token else "não informado"
             self.logger.info(f"Notificando OpenAI sobre criação de issue #{issue_number} e branch {branch_name}")
             
             # Simulação: na implementação real chamaríamos a API do OpenAI Agent SDK
@@ -374,7 +371,7 @@ class FeatureCreationAgent(AssistantAgent):
     def get_suggestion_from_openai(self, openai_token, prompt_text, git_log):
         logger = get_logger(__name__)
         # Mascarar token sensível nos logs
-        safe_token = mask_sensitive_data(openai_token) if openai_token else "não informado"
+        mask_sensitive_data(openai_token) if openai_token else "não informado"
         logger.info(f"INÍCIO - get_suggestion_from_openai | Parâmetros: prompt_text={prompt_text[:100]}...")
         
         try:
@@ -452,14 +449,14 @@ class FeatureCreationAgent(AssistantAgent):
     def execute_feature_creation(self, prompt_text, execution_plan, openai_token=None):
         logger = get_logger(__name__)
         # Mascarar token nos logs
-        safe_token = mask_sensitive_data(openai_token) if openai_token else "não informado" 
+        mask_sensitive_data(openai_token) if openai_token else "não informado" 
         logger.info(f"INÍCIO - execute_feature_creation | Parâmetros: prompt_text={prompt_text[:100]}...")
         
         try:
             logger.info("Iniciando processo de criação de feature")
             
             git_log = self.get_git_main_log()
-            context = self.get_project_context()
+            self.get_project_context()
             
             # Verificar se estamos em um repositório Git
             is_git_repo = git_log != "Histórico Git não disponível"
@@ -556,7 +553,7 @@ class FeatureCreationAgent(AssistantAgent):
     def request_plan_correction(self, prompt, current_plan, validation_result, openai_token):
         logger = get_logger(__name__)
         # Mascarar token nos logs
-        safe_token = mask_sensitive_data(openai_token) if openai_token else "não informado"
+        mask_sensitive_data(openai_token) if openai_token else "não informado"
         logger.info(f"INÍCIO - request_plan_correction | Parâmetros: prompt={prompt[:100]}...")
         
         try:

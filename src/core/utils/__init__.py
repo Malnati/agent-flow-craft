@@ -4,7 +4,7 @@ Fornece ferramentas para validação de tokens, mascaramento de dados sensíveis
 e gerenciamento de variáveis de ambiente.
 """
 
-from core.utils import TokenValidator
+from core.utils.token_validator import TokenValidator
 
 # Definir funções de utilidade
 def mask_sensitive_data(data, mask_str='***'):

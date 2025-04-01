@@ -1,7 +1,5 @@
 import json
 import os
-import logging
-import time
 from datetime import datetime
 from pathlib import Path
 from openai import OpenAI

@@ -24,7 +24,7 @@ logger = get_logger(__name__)
 
 # Mascaramento básico de dados sensíveis para logs
 try:
-    from core.utils import mask_sensitive_data, get_env_status
+    from core.utils import mask_sensitive_data
     has_utils = True
 except ImportError:
     has_utils = False

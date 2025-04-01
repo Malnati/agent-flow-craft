@@ -15,18 +15,16 @@ e alinhados com a funcionalidade solicitada pelo usuário.
 """
 
 import os
-import sys
 import json
 import logging
 import time
 import re
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Any, Optional, Union
+from typing import Dict, List, Any
 import tracemalloc
 
 try:
-    import openai
     has_openai = True
 except ImportError:
     has_openai = False
@@ -62,7 +60,7 @@ except ImportError:
 
 # Mascaramento básico de dados sensíveis
 try:
-    from core.utils import mask_sensitive_data, get_env_status
+    from core.utils import mask_sensitive_data
     has_utils = True
 except ImportError:
     has_utils = False
@@ -75,7 +73,7 @@ except ImportError:
 
 # Importar utilidades e classe base
 try:
-    from core.utils import mask_sensitive_data, TokenValidator
+    from core.utils import TokenValidator
     from agents.base_agent import BaseAgent
     has_utils = True
 except ImportError:
