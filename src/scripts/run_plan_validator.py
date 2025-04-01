@@ -86,14 +86,11 @@ def parse_arguments():
     
     return parser.parse_args()
 
-def main():
+def main_cli(args):
     """
     Função principal de execução do script.
     """
     try:
-        # Analisar argumentos
-        args = parse_arguments()
-        
         # Mascarar dados sensíveis para logging
         masked_args = vars(args).copy()
         if args.openai_token:
@@ -196,4 +193,4 @@ def main():
         return 1
 
 if __name__ == "__main__":
-    sys.exit(main()) 
+    sys.exit(main_cli(parse_arguments()))
