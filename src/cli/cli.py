@@ -23,7 +23,7 @@ try:
     )
 except ImportError:
     # Fallback para importação direta quando instalado como pacote
-    from agent_platform.scripts import (
+    from src.scripts import (
         run_agent_plan_validator,
         run_agent_feature_coordinator,
         run_agent_github_integration,

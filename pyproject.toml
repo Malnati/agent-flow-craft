@@ -3,6 +3,7 @@ name = "agent-flow-craft"
 version = "1.0.0"
 description = "Automatização do fluxo de criação de features via agentes e integração com o GitHub e OpenAI."
 authors = [{ name = "Malnati", email = "ricardomalnati@gmail.com" }]
+requires-python = ">=3.8"
 dependencies = [
     "openai>=1.0.0,<2.0.0",
     "autogen>=0.2.0,<1.0.0",
@@ -32,15 +33,14 @@ dev = [
 ]
 
 [project.scripts]
-agent-flow-craft = "agent_flow_craft.cli:main"
+agent-flow-craft = "src.cli.cli:main"
 
 [build-system]
 requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-package-dir = {"" = "src"}
-packages = ["agent_flow_craft"]
+packages = ["src", "src.cli", "src.core", "src.agents", "src.configs", "src.scripts"]
 
 [tool.black]
 line-length = 88

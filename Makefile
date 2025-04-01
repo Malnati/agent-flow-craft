@@ -147,12 +147,12 @@ prompt-creator: create-venv print-no-pycache-message
 # Instala as dependências do projeto via uv e pyproject.toml
 install: create-venv
 	@echo "Instalando dependências do projeto via pyproject.toml..."
-	@$(ACTIVATE) && $(PYTHON_ENV) cd src && uv pip install -e . && uv pip install -e .[dev]
+	@$(ACTIVATE) && $(PYTHON_ENV) uv pip install -e . && uv pip install -e ".[dev]"
 
 # Instala as dependências do projeto em modo de desenvolvimento via pyproject.toml
 setup: create-venv
 	@echo "Instalando dependências de desenvolvimento via pyproject.toml..."
-	@$(ACTIVATE) && $(PYTHON_ENV) cd src && uv pip install -e .[dev]
+	@$(ACTIVATE) && $(PYTHON_ENV) uv pip install -e ".[dev]"
 
 # Executa todos os testes unitários
 test: create-venv
