@@ -5,8 +5,8 @@ import os
 import time
 import logging
 from typing import Optional, Dict, Any
-from core.core.logger import get_logger
-from core.core.utils import TokenValidator
+from core.logger import get_logger
+from core.utils import TokenValidator
 
 class BaseAgent:
     """

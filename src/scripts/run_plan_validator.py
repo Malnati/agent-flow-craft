@@ -9,21 +9,21 @@ import sys
 import json
 import argparse
 from pathlib import Path
-from core.core.logger import get_logger, log_execution
+from core.logger import get_logger, log_execution
 
 # Adicionar o diretório base ao path para permitir importações
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
 # Importar o validador de planos
-from apps.agent_manager.agents import PlanValidator
+from agents import PlanValidator
 
 # Configurar logger
 logger = get_logger(__name__)
 
 # Mascaramento básico de dados sensíveis para logs
 try:
-    from core.core.utils import mask_sensitive_data, get_env_status
+    from core.utils import mask_sensitive_data, get_env_status
     has_utils = True
 except ImportError:
     has_utils = False

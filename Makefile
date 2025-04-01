@@ -231,7 +231,7 @@ start-feature-concept-agent: create-venv print-no-pycache-message
 		exit 1; \
 	fi
 	@echo "Executando agente de feature concept com concept_id: \"$(concept_id)\""
-	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_feature_concept_agent.py \
+	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_fagent_feature_concept.py \
 		"$(concept_id)" \
 		$(if $(output),--output "$(output)",) \
 		$(if $(context_dir),--context_dir "$(context_dir)",) \
@@ -334,7 +334,7 @@ start-validator: create-venv print-no-pycache-message
 		exit 1; \
 	fi
 	@echo "Executando validador de planos com arquivo: \"$(plan_file)\""
-	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_plan_validator.py \
+	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_agent_plan_validator.py \
 		"$(plan_file)" \
 		$(if $(requirements),--requirements "$(requirements)",) \
 		$(if $(output),--output "$(output)",) \
@@ -350,7 +350,7 @@ start-tdd-criteria-agent: create-venv print-no-pycache-message
 		exit 1; \
 	fi
 	@echo "Executando gerador de critérios TDD com context_id: \"$(context_id)\""
-	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_tdd_criteria_agent.py \
+	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_agent_tdd_criteria_agent.py \
 		"$(context_id)" \
 		--project_dir "$(project_dir)" \
 		$(if $(output),--output "$(output)",) \
@@ -701,7 +701,7 @@ start-refactor-agent:
 	@echo "  make start-refactor-agent project_dir=/caminho/do/projeto scope=src/main.py level=moderado output=resultados.json"
 	@echo "------------------------------------------------------"
 	@test -n "$(project_dir)" || (echo "❌ Erro: 'project_dir' é obrigatório"; exit 1)
-	@python src/scripts/start_refactor_agent.py \
+	@python src/scripts/start_agent_python_refactor.py \
 		--project_dir "$(project_dir)" \
 		$(if $(scope),--scope "$(scope)") \
 		$(if $(level),--level "$(level)") \

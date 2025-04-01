@@ -2,21 +2,21 @@ import os
 import json
 import asyncio
 from pathlib import Path
-from core.core.logger import get_logger, log_execution
-from core.core.utils import mask_sensitive_data, TokenValidator
+from core.logger import get_logger, log_execution
+from core.utils import mask_sensitive_data, TokenValidator
 
-from apps.agent_manager.agents.concept_generation_agent import ConceptGenerationAgent
-from apps.agent_manager.agents.feature_concept_agent import FeatureConceptAgent
-from apps.agent_manager.agents.github_integration_agent import GitHubIntegrationAgent
-from apps.agent_manager.agents.context_manager import ContextManager
-from apps.agent_manager.agents.plan_validator import PlanValidator
-from apps.agent_manager.agents.tdd_criteria_agent import TDDCriteriaAgent
-from apps.agent_manager.agents.guardrails.out_guardrail_tdd_criteria_agent import OutGuardrailTDDCriteriaAgent
-from apps.agent_manager.agents.guardrails.out_guardrail_concept_generation_agent import OutGuardrailConceptGenerationAgent
+from agents.agent_concept_generation import ConceptGenerationAgent
+from agents.fagent_feature_concept import FeatureConceptAgent
+from agents.agent_github_integration import GitHubIntegrationAgent
+from agents.context_manager import ContextManager
+from agents.agent_plan_validator import PlanValidator
+from agents.agent_tdd_criteria_agent import TDDCriteriaAgent
+from agents.guardrails.out_guardrail_agent_tdd_criteria_agent import OutGuardrailTDDCriteriaAgent
+from agents.guardrails.out_guardrail_agent_concept_generation import OutGuardrailConceptGenerationAgent
 
 # Tente importar funções de mascaramento de dados sensíveis
 try:
-    from core.core.utils import mask_sensitive_data, get_env_status
+    from core.utils import mask_sensitive_data, get_env_status
     has_utils = True
 except ImportError:
     has_utils = False
@@ -72,10 +72,10 @@ class FeatureCoordinatorAgent:
             
             # Inicialização tardia de agentes (lazy loading)
             self._concept_agent = None
-            self._feature_concept_agent = None
+            self._fagent_feature_concept = None
             self._github_agent = None
-            self._plan_validator = None
-            self._tdd_criteria_agent = None
+            self._agent_plan_validator = None
+            self._agent_tdd_criteria_agent = None
             
             # Logar detalhes de inicialização
             if has_utils:
@@ -107,11 +107,11 @@ class FeatureCoordinatorAgent:
         return self._concept_agent
     
     @property
-    def feature_concept_agent(self):
+    def fagent_feature_concept(self):
         """Lazy loading do agente de feature concept"""
-        if self._feature_concept_agent is None:
-            self._feature_concept_agent = FeatureConceptAgent(openai_token=self.openai_token)
-        return self._feature_concept_agent
+        if self._fagent_feature_concept is None:
+            self._fagent_feature_concept = FeatureConceptAgent(openai_token=self.openai_token)
+        return self._fagent_feature_concept
     
     @property
     def github_agent(self):
@@ -126,18 +126,18 @@ class FeatureCoordinatorAgent:
         return self._github_agent
     
     @property
-    def plan_validator(self):
+    def agent_plan_validator(self):
         """Lazy loading do validador de planos"""
-        if self._plan_validator is None:
-            self._plan_validator = PlanValidator()
-        return self._plan_validator
+        if self._agent_plan_validator is None:
+            self._agent_plan_validator = PlanValidator()
+        return self._agent_plan_validator
     
     @property
-    def tdd_criteria_agent(self):
+    def agent_tdd_criteria_agent(self):
         """Lazy loading do agente de critérios TDD"""
-        if self._tdd_criteria_agent is None:
-            self._tdd_criteria_agent = TDDCriteriaAgent(openai_token=self.openai_token)
-        return self._tdd_criteria_agent
+        if self._agent_tdd_criteria_agent is None:
+            self._agent_tdd_criteria_agent = TDDCriteriaAgent(openai_token=self.openai_token)
+        return self._agent_tdd_criteria_agent
     
     @property
     def tdd_guardrail_agent(self):
@@ -192,7 +192,7 @@ class FeatureCoordinatorAgent:
             
             # Etapa 3: Transformar conceito em feature_concept via FeatureConceptAgent
             self.logger.info("Transformando conceito em feature_concept detalhado")
-            feature_concept = self.feature_concept_agent.process_concept(concept_id, self.target_dir)
+            feature_concept = self.fagent_feature_concept.process_concept(concept_id, self.target_dir)
             feature_concept_id = feature_concept.get("context_id")
             self.logger.info(f"Feature concept gerado com ID: {feature_concept_id}")
             
@@ -228,7 +228,7 @@ class FeatureCoordinatorAgent:
             
             # Etapa 4: Gerar critérios TDD
             self.logger.info("Gerando critérios TDD")
-            tdd_criteria = self.tdd_criteria_agent.generate_tdd_criteria(feature_concept_id, self.target_dir)
+            tdd_criteria = self.agent_tdd_criteria_agent.generate_tdd_criteria(feature_concept_id, self.target_dir)
             criteria_id = None
             
             # Obter o ID do contexto dos critérios TDD
@@ -274,7 +274,7 @@ class FeatureCoordinatorAgent:
             execution_plan_str = json.dumps(execution_plan, indent=2)
             self.logger.info("Validando plano de execução")
             
-            validation_result = self.plan_validator.validate(
+            validation_result = self.agent_plan_validator.validate(
                 execution_plan_str, 
                 self.openai_token
             )

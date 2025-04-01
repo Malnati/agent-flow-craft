@@ -8,9 +8,9 @@ from slugify import slugify
 import re
 import time
 from pathlib import Path
-from core.core.logger import get_logger, log_execution
+from core.logger import get_logger, log_execution
 import yaml
-from apps.agent_manager.agents.local_agent_runner import LocalAgentRunner, AgentConfig
+from agents.local_agent_runner import LocalAgentRunner, AgentConfig
 import asyncio
 from datetime import datetime
 from openai import OpenAI
@@ -18,7 +18,7 @@ import warnings
 
 # Tente importar funções de mascaramento de dados sensíveis
 try:
-    from core.core.utils import mask_sensitive_data, get_env_status
+    from core.utils import mask_sensitive_data, get_env_status
     has_utils = True
 except ImportError:
     has_utils = False

@@ -27,7 +27,7 @@ project_root = os.path.dirname(os.path.dirname(current_dir))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from src.apps.agent_manager.agents.refactor_agent import RefactorAgent
+from src.agents.agent_python_refactor import RefactorAgent
 
 
 def setup_test_environment():

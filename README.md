@@ -58,7 +58,7 @@ Garante um gerenciamento adequado de arquivos e diretórios durante operações 
 **Exemplo de uso:**
 ```python
 # Ao mover ou renomear um arquivo:
-refactor_agent.move_with_backup(
+agent_python_refactor.move_with_backup(
     "src/components/Button.js", 
     "src/components/ui/Button.js"
 )
@@ -179,7 +179,7 @@ make start-tdd-criteria-agent context_id="<id_do_contexto>" project_dir="<diret�
 
 **Chamada direta (sem Makefile):**
 ```bash
-python -B src/scripts/run_tdd_criteria_agent.py "feature_concept_20240328_123456" --project_dir="/Users/mal/GitHub/agent-flow-craft-aider" --model="gpt-4-turbo" --elevation_model="gpt-4-turbo" --context_dir="agent_context"
+python -B src/scripts/run_agent_tdd_criteria_agent.py "feature_concept_20240328_123456" --project_dir="/Users/mal/GitHub/agent-flow-craft-aider" --model="gpt-4-turbo" --elevation_model="gpt-4-turbo" --context_dir="agent_context"
 ```
 
 **Tarefas executadas:**
@@ -297,7 +297,7 @@ make start-validator plan_file="<arquivo_plano.json>" [output="<arquivo_saida>"]
 
 **Chamada direta (sem Makefile):**
 ```bash
-python -B src/scripts/run_plan_validator.py "planos/feature_plan.json" --project_dir="/Users/mal/GitHub/agent-flow-craft-aider" --model="gpt-4-turbo" --elevation_model="gpt-4-turbo" --context_dir="agent_context"
+python -B src/scripts/run_agent_plan_validator.py "planos/feature_plan.json" --project_dir="/Users/mal/GitHub/agent-flow-craft-aider" --model="gpt-4-turbo" --elevation_model="gpt-4-turbo" --context_dir="agent_context"
 ```
 
 **Tarefas executadas:**
@@ -853,7 +853,7 @@ make start-refactor-agent project_dir=/caminho/do/projeto scope=src/main.py leve
 ### Exemplo via Linha de Comando
 
 ```bash
-python src/scripts/start_refactor_agent.py --project_dir /caminho/do/projeto --scope src/main.py --level moderado --output resultado_refatoracao.json
+python src/scripts/start_agent_python_refactor.py --project_dir /caminho/do/projeto --scope src/main.py --level moderado --output resultado_refatoracao.json
 ```
 
 ### Níveis de Refatoração

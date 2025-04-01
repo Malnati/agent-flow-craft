@@ -15,12 +15,12 @@ from typing import Dict, Any, List, Optional, Union
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR.parent))  # Adiciona o diretório pai de src
 
-from src.core.core.logger import get_logger, log_execution
-from src.core.core.utils import TokenValidator
+from src.core.logger import get_logger, log_execution
+from src.core.utils import TokenValidator
 
 # Importar o agente coordenador
-from src.apps.agent_manager.agents import FeatureCoordinatorAgent
-from src.apps.agent_manager.agents.context_manager import ContextManager
+from src.agents import FeatureCoordinatorAgent
+from src.agents.context_manager import ContextManager
 
 # Configurar logger
 logger = get_logger(__name__)
@@ -191,7 +191,7 @@ def main():
                 logger.info(f"Modelo de elevação configurado para ConceptAgent: {args.elevation_model}")
             
             # Configurar elevation model para outros agentes usados internamente
-            for agent_attr in ['feature_concept_agent', 'tdd_criteria_agent', 'github_agent']:
+            for agent_attr in ['fagent_feature_concept', 'agent_tdd_criteria_agent', 'github_agent']:
                 if hasattr(agent, agent_attr) and hasattr(getattr(agent, agent_attr), 'set_elevation_model'):
                     getattr(agent, agent_attr).set_elevation_model(args.elevation_model)
                     logger.info(f"Modelo de elevação configurado para {agent_attr}: {args.elevation_model}")
@@ -201,7 +201,7 @@ def main():
             logger.info("Modo force ativado: usando diretamente o modelo de elevação")
             
             # Aplicar force em todos os agentes internos que suportam
-            for agent_attr in ['concept_agent', 'feature_concept_agent', 'tdd_criteria_agent', 'github_agent']:
+            for agent_attr in ['concept_agent', 'fagent_feature_concept', 'agent_tdd_criteria_agent', 'github_agent']:
                 if hasattr(agent, agent_attr):
                     agent_instance = getattr(agent, agent_attr)
                     if hasattr(agent_instance, 'force'):

@@ -16,7 +16,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
 # Importar o agente de feature
-from apps.agent_manager.agents import FeatureCoordinatorAgent
+from agents import FeatureCoordinatorAgent
 
 # Configurar logger
 logging.basicConfig(

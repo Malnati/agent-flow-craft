@@ -5,11 +5,11 @@ import time
 from datetime import datetime
 from pathlib import Path
 from openai import OpenAI
-from core.core.logger import get_logger, log_execution
+from core.logger import get_logger, log_execution
 
 # Tente importar funções de mascaramento de dados sensíveis
 try:
-    from core.core.utils import mask_sensitive_data, get_env_status
+    from core.utils import mask_sensitive_data, get_env_status
     has_utils = True
 except ImportError:
     has_utils = False

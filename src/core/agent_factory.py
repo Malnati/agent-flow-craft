@@ -28,14 +28,14 @@ logger = get_logger(__name__)
 
 try:
     # Importar os novos agentes do padrão de design separado
-    from apps.agent_manager.agents.feature_coordinator_agent import FeatureCoordinatorAgent
-    from apps.agent_manager.agents.concept_generation_agent import ConceptGenerationAgent
-    from apps.agent_manager.agents.github_integration_agent import GitHubIntegrationAgent
-    from apps.agent_manager.agents.plan_validator import PlanValidator
-    from apps.agent_manager.agents.context_manager import ContextManager
+    from agents.agent_feature_coordinator import FeatureCoordinatorAgent
+    from agents.agent_concept_generation import ConceptGenerationAgent
+    from agents.agent_github_integration import GitHubIntegrationAgent
+    from agents.agent_plan_validator import PlanValidator
+    from agents.context_manager import ContextManager
     
     # Para compatibilidade com código existente, manter o agente legado
-    from apps.agent_manager.agents.feature_creation_agent import FeatureCreationAgent
+    from agents.agent_feature_creation import FeatureCreationAgent
 except ImportError as e:
     error_msg = mask_sensitive_data(str(e))
     logger.critical(f"FALHA - Importação de agentes | Erro: {error_msg}", exc_info=True)
@@ -138,12 +138,12 @@ class AgentFactory:
     
     @classmethod
     @log_execution
-    def create_plan_validator(cls):
+    def create_agent_plan_validator(cls):
         """Cria um validador de planos"""
-        logger.info("INÍCIO - create_plan_validator")
+        logger.info("INÍCIO - create_agent_plan_validator")
         
         try:
-            validator_logger = get_logger("plan_validator")
+            validator_logger = get_logger("agent_plan_validator")
             validator = PlanValidator(validator_logger)
             logger.info("SUCESSO - Validador de planos criado")
             return validator
@@ -151,7 +151,7 @@ class AgentFactory:
         except Exception as e:
             # Mascarar possíveis tokens na mensagem de erro
             error_msg = mask_sensitive_data(str(e))
-            logger.error(f"FALHA - create_plan_validator | Erro: {error_msg}", exc_info=True)
+            logger.error(f"FALHA - create_agent_plan_validator | Erro: {error_msg}", exc_info=True)
             raise
     
     @classmethod

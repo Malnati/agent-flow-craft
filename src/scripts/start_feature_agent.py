@@ -114,21 +114,21 @@ except Exception as e:
     print(f"Executando {os.path.basename(__file__)} com argumentos mascarados")
 
 from slugify import slugify
-from core.core.logger import setup_logging, get_logger, log_execution, mask_sensitive_data
+from core.logger import setup_logging, get_logger, log_execution, mask_sensitive_data
 
 # Adicionar o diretório base ao path para permitir importações
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
 # Importar o agente coordenador
-from apps.agent_manager.agents.feature_coordinator_agent import FeatureCoordinatorAgent
+from agents.agent_feature_coordinator import FeatureCoordinatorAgent
 
 # Configurar logger
 logger = get_logger(__name__)
 
 # Mascaramento básico de dados sensíveis para logs
 try:
-    from core.core.utils import mask_sensitive_data, get_env_status
+    from core.utils import mask_sensitive_data, get_env_status
     has_utils = True
 except ImportError:
     has_utils = False

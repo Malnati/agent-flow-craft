@@ -5,8 +5,8 @@ import time
 from datetime import datetime
 from pathlib import Path
 from openai import OpenAI
-from core.core.logger import get_logger, log_execution
-from core.core.utils import mask_sensitive_data
+from core.logger import get_logger, log_execution
+from core.utils import mask_sensitive_data
 
 class FeatureConceptAgent:
     """

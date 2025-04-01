@@ -17,8 +17,8 @@ from typing import Dict, Any, Optional, List, Union
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 sys.path.insert(0, root_dir)
 
-from src.apps.agent_manager.agents.refactor_agent import RefactorAgent
-from core.core.logger import get_logger
+from src.agents.agent_python_refactor import RefactorAgent
+from core.logger import get_logger
 
 def setup_logger() -> logging.Logger:
     """
@@ -123,7 +123,7 @@ def execute_refactor(args: argparse.Namespace, logger: logging.Logger) -> Dict[s
         logger.info(f"INÍCIO - Inicializando agente de refatoração | Projeto: {args.project_dir} | Nível: {args.level} | Dry-run: {args.dry_run}")
         
         # Inicializar o agente
-        refactor_agent = RefactorAgent(
+        agent_python_refactor = RefactorAgent(
             project_dir=args.project_dir,
             scope=args.scope,
             level=args.level,
@@ -132,7 +132,7 @@ def execute_refactor(args: argparse.Namespace, logger: logging.Logger) -> Dict[s
         )
         
         # Executar o agente
-        result = refactor_agent.run()
+        result = agent_python_refactor.run()
         
         if result["status"] == "success":
             logger.info(f"SUCESSO - Refatoração concluída | Arquivos analisados: {result['statistics']['files_analyzed']} | Modificados: {result['statistics']['files_modified']}")

@@ -20,8 +20,8 @@ from rope.refactor.move import MoveMethod, MoveGlobal
 from rope.refactor import restructure
 from rope.refactor.importutils import ImportOrganizer
 
-from core.core.logger import get_logger, log_execution
-from core.core.utils import mask_sensitive_data, get_env_status
+from core.logger import get_logger, log_execution
+from core.utils import mask_sensitive_data, get_env_status
 from .base_agent import BaseAgent
 
 class RefactorAgent(BaseAgent):

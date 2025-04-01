@@ -1,9 +1,9 @@
 import argparse
 from agent_platform.scripts import (
-    run_plan_validator,
+    run_agent_plan_validator,
     run_context_manager,
-    start_refactor_agent,
-    run_tdd_criteria_agent,
+    start_agent_python_refactor,
+    run_agent_tdd_criteria_agent,
     run_tdd_guardrail_agent,
     test_mcp_e2e,
     install_cursor,
@@ -83,13 +83,13 @@ def main():
     args = parser.parse_args()
 
     if args.command == "run":
-        run_plan_validator.main(args)
+        run_agent_plan_validator.main(args)
     elif args.command == "context":
         run_context_manager.main(args)
     elif args.command == "refactor":
-        start_refactor_agent.main(args)
+        start_agent_python_refactor.main(args)
     elif args.command == "tdd-criteria":
-        run_tdd_criteria_agent.main(args)
+        run_agent_tdd_criteria_agent.main(args)
     elif args.command == "tdd-guardrail":
         run_tdd_guardrail_agent.main(args)
     elif args.command == "test-mcp":

@@ -17,8 +17,8 @@ from datetime import datetime
 root_dir = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(root_dir))
 
-from core.core.logger import get_logger
-from apps.agent_manager.agents import OutGuardrailConceptGenerationAgent
+from core.logger import get_logger
+from agents import OutGuardrailConceptGenerationAgent
 
 # Configuração do logger
 logger = get_logger(__name__)
