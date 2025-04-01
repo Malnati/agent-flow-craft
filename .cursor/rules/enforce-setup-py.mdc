@@ -6,11 +6,10 @@ alwaysApply: true
 # Regra de Consolidação de Dependências Python
 
 
-Nunca usar pyproject.toml ou setup.cfg neste projeto, pois estamos com o setup.py para isto.
-
 ❌ Práticas Proibidas
-	•	Instalar pacotes diretamente em scripts ou Makefile que não setup.py
-	•	Manter arquivos requirements.txt, setup.cfg ou pyproject.toml paralelos
-	•	Definir dependências em múltiplos locais
-	•	Omitir informações de versão nas declarações de dependências
+	•	Nunca usar pyproject.toml ou setup.cfg neste projeto, pois estamos com o setup.py para isto.
+	•	Nunca instalar pacotes diretamente em scripts ou Makefile que não setup.py
+	•	Nunca usar arquivos setup.cfg ou pyproject.toml 
+	•	Nunca definir dependências em múltiplos locais
+	•	Nunca omitir informações de versão nas declarações de dependências
 

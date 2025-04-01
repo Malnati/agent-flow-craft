@@ -246,11 +246,9 @@ ifndef out
 	$(error Por favor especifique um diretório de saída: make pack out=DIRECTORY)
 endif
 	@echo "Empacotando projeto na versão $(VERSION)..."
-	@mkdir -p $(BUILD_DIR)
 	@mkdir -p $(out)
-	@rm -rf $(BUILD_DIR)/*
-	@cd src && python -m build -o ../$(BUILD_DIR)
-	@cp -f $(BUILD_DIR)/*.whl $(out)/
+	@$(ACTIVATE) && $(PYTHON_ENV) python setup.py sdist bdist_wheel
+	@cp -f dist/*.whl $(out)/
 	@cp -f .cursor/config.json $(out)/ 2>/dev/null || true
 	@echo '#!/bin/bash\npip install *.whl\nif [ -f "config.json" ]; then\n  mkdir -p "$(HOME)/.cursor"\n  cp -f config.json "$(HOME)/.cursor/"\n  echo "Configuração instalada!"\nfi\necho "Instalação concluída! Reinicie o Cursor para usar o agent-flow-craft."' > $(out)/install.sh
 	@chmod +x $(out)/install.sh
