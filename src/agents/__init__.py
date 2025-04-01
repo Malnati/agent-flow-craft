@@ -13,8 +13,8 @@ from .agent_github_integration import GitHubIntegrationAgent
 from .agent_feature_creation import FeatureCreationAgent
 from .agent_feature_coordinator import FeatureCoordinatorAgent
 from .agent_tdd_criteria import TDDCriteriaAgent
-from .guardrails.out_guardrail_agent_concept_generation import OutGuardrailConceptGenerationAgent
-from .guardrails.out_guardrail_agent_tdd_criteria_agent import OutGuardrailTDDCriteriaAgent
+from .guardrails.out_guardrail_concept_generation_agent import OutGuardrailConceptGenerationAgent
+from .guardrails.out_guardrail_tdd_criteria_agent import OutGuardrailTDDCriteriaAgent
 
 # Classes expostas publicamente
 __all__ = [
