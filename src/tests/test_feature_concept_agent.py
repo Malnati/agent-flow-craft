@@ -1,5 +1,4 @@
 import unittest
-import os
 import json
 import sys
 from unittest.mock import patch, MagicMock
@@ -8,7 +7,7 @@ from pathlib import Path
 # Adicionar o diretório raiz ao sys.path para importações relativas corretas
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from apps.agent_manager.agents.feature_concept_agent import FeatureConceptAgent
+from src.agents.agent_feature_concept import FeatureConceptAgent
 
 class TestFeatureConceptAgent(unittest.TestCase):
     """Testes para o FeatureConceptAgent"""
@@ -45,7 +44,7 @@ class TestFeatureConceptAgent(unittest.TestCase):
         self.assertEqual(result, "gpt-3.5-turbo")
         self.assertEqual(self.agent.model, "gpt-3.5-turbo")
     
-    @patch("apps.agent_manager.agents.feature_concept_agent.OpenAI")
+    @patch("src.agents.agent_feature_concept.OpenAI")
     def test_process_concept(self, mock_openai):
         """Testa processamento de conceito quando OpenAI responde corretamente."""
         # Criar um conceito de teste no diretório de contexto

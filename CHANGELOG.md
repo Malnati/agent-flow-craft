@@ -10,13 +10,13 @@ Este projeto segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ### Adicionado
 - Implementação inicial do `FeatureCreationAgent` para automatizar o fluxo de criação de features
-- Script CLI `start_feature_agent.py` para facilitar a execução do agente
+- Script CLI `run_agent_feature_creation` para facilitar a execução do agente
 - Criação de testes automatizados para o agente de criação de features
 - Novo método `check_github_auth` para verificar a autenticação do GitHub CLI antes de executar ações
 - Adicionado timeout para comandos de subprocesso para evitar bloqueios
 - Inclusão de logs detalhados para rastreamento de ações do agente
 - Script `run_coverage.py` para gerar relatórios de cobertura de testes
-- Cobertura de testes ampliada para 100% no módulo `feature_creation_agent.py`
+- Cobertura de testes ampliada para 100% no módulo `agent_feature_creation.py`
 - Testes adicionais para o caso de falha na autenticação do GitHub
 
 ### Alterado

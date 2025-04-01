@@ -98,7 +98,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'mcp_agent=src.core.apps.agent_manager.agents.feature_creation_agent:main',
+            'mcp_agent=src.core.agents.agent_feature_creation:main',
         ],
     },
     python_requires='>=3.8',

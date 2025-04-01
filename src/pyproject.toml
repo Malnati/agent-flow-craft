@@ -27,8 +27,12 @@ dev = [
     "build",
     "twine>=4.0.0,<5.0.0",
     "pytest>=7.0.0,<8.0.0",
-    "pytest-mock>=3.0.0,<4.0.0"
+    "pytest-mock>=3.0.0,<4.0.0",
+    "autoflake>=2.2.0"
 ]
+
+[project.scripts]
+agent-flow-craft = "agent_flow_craft.cli:main"
 
 [build-system]
 requires = ["setuptools>=42", "wheel"]

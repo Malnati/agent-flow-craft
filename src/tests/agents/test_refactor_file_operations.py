@@ -5,9 +5,8 @@ import os
 import shutil
 import tempfile
 import unittest
-from pathlib import Path
 
-from apps.agent_manager.agents.refactor_agent import RefactorAgent
+from agents.agent_python_refactor import RefactorAgent
 
 
 class TestRefactorFileOperations(unittest.TestCase):

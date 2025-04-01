@@ -35,7 +35,7 @@ jobs:
         run: |
           # Adiciona o diretório src ao PYTHONPATH
           export PYTHONPATH=$PYTHONPATH:$(pwd):$(pwd)/src
-          python src/scripts/generate_docs_index.py --output docs/README.md
+          python src/scripts/util_generate_docs_index.py --output docs/README.md
         
       - name: Verificar alterações
         id: verify_changes

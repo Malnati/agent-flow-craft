@@ -4,7 +4,7 @@ Fornece ferramentas para validação de tokens, mascaramento de dados sensíveis
 e gerenciamento de variáveis de ambiente.
 """
 
-from core.core.utils import TokenValidator
+from core.utils.token_validator import TokenValidator
 
 # Definir funções de utilidade
 def mask_sensitive_data(data, mask_str='***'):
@@ -18,7 +18,7 @@ def mask_sensitive_data(data, mask_str='***'):
     Returns:
         Dados com informações sensíveis mascaradas
     """
-    from core.core.logger import mask_sensitive_data as logger_mask_sensitive_data
+    from core.logger import mask_sensitive_data as logger_mask_sensitive_data
     return logger_mask_sensitive_data(data, mask_str)
 
 def get_env_status(var_name):
@@ -32,7 +32,7 @@ def get_env_status(var_name):
         String indicando o status da variável
     """
     import os
-    from core.core.logger import mask_sensitive_data
+    from core.logger import mask_sensitive_data
     
     # Lista de palavras-chave para identificar dados sensíveis
     SENSITIVE_KEYWORDS = [

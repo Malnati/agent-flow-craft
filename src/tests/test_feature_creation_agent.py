@@ -3,8 +3,8 @@ from unittest.mock import patch, MagicMock
 import logging
 import os
 import subprocess
-from agents.feature_creation_agent import FeatureCreationAgent
-from core.core.logger import get_logger, log_execution
+from agents.agent_feature_creation import FeatureCreationAgent
+from core.logger import get_logger, log_execution
 from pathlib import Path
 
 logger = get_logger(__name__)
