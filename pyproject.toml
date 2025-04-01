@@ -40,8 +40,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
-packages = ["apps"]
-build-dir = "build"
+packages = ["agent_flow_craft"]
 
 [tool.black]
 line-length = 88
