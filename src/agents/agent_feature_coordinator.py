@@ -12,11 +12,11 @@ from .agent_tdd_criteria import TDDCriteriaAgent
 from .guardrails.out_guardrail_concept_generation_agent import OutGuardrailConceptGenerationAgent
 from .guardrails.out_guardrail_tdd_criteria_agent import OutGuardrailTDDCriteriaAgent
 
-from core.logger import get_logger, log_execution
+from src.core.logger import get_logger, log_execution
 
 def mask_sensitive_data(data, mask_str='***'):
     """Mascara dados sensíveis para logging."""
-    from core.logger import mask_sensitive_data as logger_mask_sensitive_data
+    from src.core.logger import mask_sensitive_data as logger_mask_sensitive_data
     return logger_mask_sensitive_data(data, mask_str)
 
 class FeatureCoordinatorAgent:

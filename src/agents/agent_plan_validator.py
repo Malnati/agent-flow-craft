@@ -2,12 +2,12 @@ import json
 import os
 import yaml
 from openai import OpenAI
-from core.logger import get_logger, log_execution
+from src.core.logger import get_logger, log_execution
 import logging
 
 # Tente importar funções de mascaramento de dados sensíveis
 try:
-    from core.utils import mask_sensitive_data, get_env_status
+    from src.core.utils import mask_sensitive_data, get_env_status
     has_utils = True
 except ImportError:
     has_utils = False

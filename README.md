@@ -4,6 +4,35 @@
 
 ---
 
+## ⚡ Instalação Rápida
+
+```bash
+# Clone o repositório
+git clone https://github.com/Malnati/agent-flow-craft.git
+cd agent-flow-craft
+
+# Crie um ambiente virtual (opcional mas recomendado)
+python -m venv .venv
+source .venv/bin/activate  # Linux/macOS
+# ou
+# .venv\Scripts\activate  # Windows
+
+# Instale o pacote em modo de desenvolvimento
+pip install -e .
+
+# Verifique se a instalação foi bem-sucedida
+agent-flow-craft --help
+```
+
+Após a instalação, você terá acesso aos seguintes comandos:
+- `agent-flow-craft feature` - Cria uma nova feature a partir de um prompt
+- `agent-flow-craft github` - Integra com GitHub para criar issues, branches e PRs
+- `agent-flow-craft refactor` - Executa o agente de refatoração Python
+- `agent-flow-craft docs` - Gera o índice da documentação
+- `agent-flow-craft clean` - Limpa arquivos de cache Python
+
+---
+
 ## 📦 Instalação
 
 Você pode instalar o AgentFlowCraft diretamente via pip:

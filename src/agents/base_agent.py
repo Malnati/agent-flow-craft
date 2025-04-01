@@ -4,8 +4,8 @@ Classe base para todos os agentes do sistema.
 import os
 import time
 from typing import Optional
-from core.logger import get_logger
-from core.utils import TokenValidator
+from src.core.logger import get_logger
+from src.core.utils import TokenValidator
 
 class BaseAgent:
     """

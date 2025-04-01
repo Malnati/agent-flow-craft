@@ -9,7 +9,7 @@ import sys
 import json
 import argparse
 from pathlib import Path
-from core.logger import get_logger, log_execution
+from src.core.logger import get_logger, log_execution
 
 # Adicionar o diretório base ao path para permitir importações
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,7 +24,7 @@ logger = get_logger(__name__)
 
 # Mascaramento básico de dados sensíveis para logs
 try:
-    from core.utils import mask_sensitive_data
+    from src.core.utils import mask_sensitive_data
     has_utils = True
 except ImportError:
     has_utils = False

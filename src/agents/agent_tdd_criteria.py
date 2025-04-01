@@ -26,7 +26,7 @@ except ImportError:
 
 # Tentar importar o logger e funções de logging
 try:
-    from core.logger import get_logger, log_execution
+    from src.core.logger import get_logger, log_execution
     has_logger = True
 except ImportError:
     has_logger = False
@@ -55,7 +55,7 @@ except ImportError:
 
 # Mascaramento básico de dados sensíveis
 try:
-    from core.utils import mask_sensitive_data
+    from src.core.utils import mask_sensitive_data
     has_utils = True
 except ImportError:
     has_utils = False

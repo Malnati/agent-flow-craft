@@ -12,7 +12,7 @@ import rope.base.project
 from rope.base import libutils, exceptions
 from rope.refactor.importutils import ImportOrganizer
 
-from core.logger import log_execution
+from src.core.logger import log_execution
 from .base_agent import BaseAgent
 
 class RefactorAgent(BaseAgent):

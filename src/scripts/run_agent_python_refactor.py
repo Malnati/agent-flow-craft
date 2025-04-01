@@ -17,7 +17,7 @@ root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 sys.path.insert(0, root_dir)
 
 from src.agents.agent_python_refactor import RefactorAgent
-from core.logger import get_logger
+from src.core.logger import get_logger
 
 def setup_logger() -> logging.Logger:
     """
