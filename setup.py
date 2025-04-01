@@ -67,7 +67,7 @@ setup(
         "Programming Language :: Python :: 3.11",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
-    setup_requires=["setuptools>=61.0.0", "wheel"],
+    setup_requires=["setuptools>=61.0.0", "wheel>=0.40.0"],
     options={
         "flake8": {
             "max_line_length": 100,

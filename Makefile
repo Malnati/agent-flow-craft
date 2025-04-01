@@ -147,15 +147,15 @@ prompt-creator: create-venv print-no-pycache-message
 		$(if $(force),--force,) \
 		$(ARGS)
 
-# Instala as dependências do projeto via uv e pyproject.toml
+# Instalar as dependências do projeto via uv e pyproject.toml
 install: $(VENV)
 	@echo "Instalando dependências do projeto via pyproject.toml..."
-	@$(ACTIVATE) && $(PYTHON_ENV) uv pip install -e . && uv pip install -e ".[dev]"
+	@$(ACTIVATE) && $(PYTHON_ENV) uv pip install -e . && uv pip install build twine wheel
 
-# Instala as dependências do projeto em modo de desenvolvimento via pyproject.toml
+# Instalar as dependências do projeto em modo de desenvolvimento via pyproject.toml
 setup: $(VENV)
 	@echo "Instalando dependências de desenvolvimento via pyproject.toml..."
-	@$(ACTIVATE) && $(PYTHON_ENV) uv pip install -e ".[dev]"
+	@$(ACTIVATE) && $(PYTHON_ENV) uv pip install -e . && uv pip install build twine wheel
 
 # Executa todos os testes unitários
 test: $(VENV)
@@ -186,12 +186,12 @@ autoflake: $(VENV)
 	@$(ACTIVATE) && $(PYTHON_ENV) autoflake --remove-all-unused-imports --remove-unused-variables --in-place --recursive src tests
 
 # Empacota o projeto usando python -m build
-build: $(VENV)
+build: clean install
 	@echo "Limpando diretório de distribuição..."
 	@rm -rf $(BUILD_DIR)
 	@mkdir -p $(BUILD_DIR)
 	@echo "Construindo pacote..."
-	@$(ACTIVATE) && $(PYTHON_ENV) cd src && python -m build -o ../$(BUILD_DIR)
+	@$(ACTIVATE) && $(PYTHON_ENV) python -m build
 
 # Atualiza o índice da documentação automaticamente
 update-docs-index: $(VENV)
@@ -411,14 +411,15 @@ find-commit:
 
 # Publicar no PyPI
 publish: build
-	@if [ -z "$(PYPI_KEY)" ]; then \
-		echo "Erro: Variável de ambiente PYPI_KEY não definida."; \
+	@if [ -z "$(PYPI_TOKEN)" ]; then \
+		echo "Erro: Variável de ambiente PYPI_TOKEN não definida"; \
 		exit 1; \
 	fi
-	@echo "Publicando versão $(VERSION) no PyPI..."
-	@$(ACTIVATE) && $(PYTHON_ENV) twine upload --non-interactive --repository-url https://upload.pypi.org/legacy/ \
-		--username __token__ --password $(PYPI_KEY) \
-		$(BUILD_DIR)/*
+	@echo "Publicando pacote no PyPI..."
+	@$(ACTIVATE) && $(PYTHON_ENV) python -m twine upload --repository-url https://upload.pypi.org/legacy/ \
+		--username __token__ \
+		--password $(PYPI_TOKEN) \
+		dist/*
 	@echo "Publicação concluída!"
 
 # Target para testar o CLI da ferramenta
