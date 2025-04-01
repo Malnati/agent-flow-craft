@@ -97,24 +97,6 @@ check-env:
 		exit 1; \
 	fi
 
-# Target para iniciar o agente de feature concept (FeatureConceptAgent)
-start-feature-concept-agent: create-venv print-no-pycache-message
-	@if [ -z "$(concept_id)" ]; then \
-		echo "Uso: make start-feature-concept-agent concept_id=\"<id_do_conceito>\" [output=\"<arquivo_saida>\"] [context_dir=\"<dir_contexto>\"] [project_dir=\"<dir_projeto>\"] [model=\"<modelo_openai>\"] [elevation_model=\"<modelo_elevacao>\"] [force=true]"; \
-		exit 1; \
-	fi
-	@echo "Executando agente de feature concept com concept_id: \"$(concept_id)\""
-	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_agent_feature_concept.py \
-		"$(concept_id)" \
-		$(if $(output),--output "$(output)",) \
-		$(if $(context_dir),--context_dir "$(context_dir)",) \
-		$(if $(project_dir),--project_dir "$(project_dir)",) \
-		$(if $(openai_token),--openai_token "$(openai_token)",) \
-		$(if $(model),--model "$(model)",) \
-		$(if $(elevation_model),--elevation_model "$(elevation_model)",) \
-		$(if $(force),--force,) \
-		$(ARGS)
-
 # Target para iniciar o agente GitHub (GitHubIntegrationAgent)
 start-github-agent: check-env create-venv print-no-pycache-message
 	@if [ -z "$(context_id)" ]; then \
