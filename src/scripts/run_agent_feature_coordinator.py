@@ -190,7 +190,7 @@ def main():
                 logger.info(f"Modelo de elevação configurado para ConceptAgent: {args.elevation_model}")
             
             # Configurar elevation model para outros agentes usados internamente
-            for agent_attr in ['fagent_feature_concept', 'agent_tdd_criteria_agent', 'github_agent']:
+            for agent_attr in ['feature_concept_agent', 'agent_tdd_criteria_agent', 'github_agent']:
                 if hasattr(agent, agent_attr) and hasattr(getattr(agent, agent_attr), 'set_elevation_model'):
                     getattr(agent, agent_attr).set_elevation_model(args.elevation_model)
                     logger.info(f"Modelo de elevação configurado para {agent_attr}: {args.elevation_model}")
@@ -200,7 +200,7 @@ def main():
             logger.info("Modo force ativado: usando diretamente o modelo de elevação")
             
             # Aplicar force em todos os agentes internos que suportam
-            for agent_attr in ['concept_agent', 'fagent_feature_concept', 'agent_tdd_criteria_agent', 'github_agent']:
+            for agent_attr in ['concept_agent', 'feature_concept_agent', 'agent_tdd_criteria_agent', 'github_agent']:
                 if hasattr(agent, agent_attr):
                     agent_instance = getattr(agent, agent_attr)
                     if hasattr(agent_instance, 'force'):

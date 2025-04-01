@@ -8,25 +8,13 @@ import time
 from pathlib import Path
 from core.logger import get_logger, log_execution
 import yaml
-from agents.local_agent_runner import LocalAgentRunner, AgentConfig
+from .local_agent_runner import LocalAgentRunner, AgentConfig
 import asyncio
 from openai import OpenAI
 import warnings
 
-# Tente importar funções de mascaramento de dados sensíveis
-try:
-    from core.utils import mask_sensitive_data
-    has_utils = True
-except ImportError:
-    has_utils = False
-    # Função básica de fallback para mascaramento
-    def mask_sensitive_data(data, mask_str='***'):
-        if isinstance(data, str) and any(s in data.lower() for s in ['token', 'key', 'secret', 'password']):
-            # Mostrar parte do início e fim para debugging
-            if len(data) > 10:
-                return f"{data[:4]}{'*' * 12}{data[-4:] if len(data) > 8 else ''}"
-            return mask_str
-        return data
+# Importação das funções de mascaramento de dados sensíveis
+from core.utils import mask_sensitive_data
 
 logging.basicConfig(level=logging.DEBUG)
 
