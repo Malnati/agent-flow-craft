@@ -3,14 +3,34 @@
 	start-github-agent prompt-creator setup-env clean-cache clean-pycache autoflake \
 	start-refactor-agent test test-coverage clean-code cli-test
 
-VERSION := $(shell python3 -c "import time; print(time.strftime('%Y.%m.%d'))")
-BUILD_DIR := ./dist
-
-# Define variáveis para o ambiente Python
+# Variáveis
 PYTHON := python3
 VENV := .venv
 ACTIVATE := source $(VENV)/bin/activate
 PYTHON_ENV := PYTHONPATH=.
+BUILD_DIR := dist
+
+# Gera a versão baseada em data e build number
+VERSION := $(shell python3 -c "import time, random; print(f'{time.strftime(\"%Y.%m.%d\")}.dev{random.randint(1, 999999)}')")
+
+# Comandos para commitizen
+commit:
+	@echo "Iniciando assistente de commit..."
+	@$(ACTIVATE) && $(PYTHON_ENV) python -m commitizen commit
+
+bump:
+	@echo "Analisando último commit e incrementando versão..."
+	@$(ACTIVATE) && $(PYTHON_ENV) python -c "from src.core.utils.version_analyzer import smart_bump; \
+		new_version = smart_bump(); \
+		print(f'Nova versão: {new_version}' if new_version else 'Erro ao incrementar versão')"
+
+changelog:
+	@echo "Gerando changelog..."
+	@$(ACTIVATE) && $(PYTHON_ENV) python -m commitizen changelog
+
+version-cz:
+	@echo "Verificando versão atual..."
+	@$(ACTIVATE) && $(PYTHON_ENV) python -m commitizen version --project
 
 # Ajuda do Makefile
 help:
@@ -147,15 +167,15 @@ prompt-creator: create-venv print-no-pycache-message
 		$(if $(force),--force,) \
 		$(ARGS)
 
-# Instala as dependências do projeto via uv e pyproject.toml
+# Instalar as dependências do projeto via uv e pyproject.toml
 install: $(VENV)
 	@echo "Instalando dependências do projeto via pyproject.toml..."
-	@$(ACTIVATE) && $(PYTHON_ENV) uv pip install -e . && uv pip install -e ".[dev]"
+	@$(ACTIVATE) && $(PYTHON_ENV) uv pip install -e . && uv pip install build twine wheel
 
-# Instala as dependências do projeto em modo de desenvolvimento via pyproject.toml
+# Instalar as dependências do projeto em modo de desenvolvimento via pyproject.toml
 setup: $(VENV)
 	@echo "Instalando dependências de desenvolvimento via pyproject.toml..."
-	@$(ACTIVATE) && $(PYTHON_ENV) uv pip install -e ".[dev]"
+	@$(ACTIVATE) && $(PYTHON_ENV) uv pip install -e . && uv pip install build twine wheel
 
 # Executa todos os testes unitários
 test: $(VENV)
@@ -186,12 +206,12 @@ autoflake: $(VENV)
 	@$(ACTIVATE) && $(PYTHON_ENV) autoflake --remove-all-unused-imports --remove-unused-variables --in-place --recursive src tests
 
 # Empacota o projeto usando python -m build
-build: $(VENV)
+build: clean install
 	@echo "Limpando diretório de distribuição..."
 	@rm -rf $(BUILD_DIR)
 	@mkdir -p $(BUILD_DIR)
 	@echo "Construindo pacote..."
-	@$(ACTIVATE) && $(PYTHON_ENV) cd src && python -m build -o ../$(BUILD_DIR)
+	@$(ACTIVATE) && $(PYTHON_ENV) python -m build
 
 # Atualiza o índice da documentação automaticamente
 update-docs-index: $(VENV)
@@ -366,7 +386,9 @@ compare-versions:
 
 # Mostra a versão atual baseada na data
 version:
-	@echo "Versão atual: $(VERSION)"
+	@$(ACTIVATE) && $(PYTHON_ENV) python -c "from src.core.utils.version_analyzer import get_current_version; \
+		version, _ = get_current_version(); \
+		print(f'Versão atual: {version}')"
 
 # Mostra informações detalhadas sobre uma versão específica
 version-info:
@@ -410,15 +432,16 @@ find-commit:
 		print(data[v]['commit_hash']);"
 
 # Publicar no PyPI
-publish: build
-	@if [ -z "$(PYPI_KEY)" ]; then \
-		echo "Erro: Variável de ambiente PYPI_KEY não definida."; \
+publish: bump build
+	@if [ -z "$(PYPI_TOKEN)" ]; then \
+		echo "Erro: Variável de ambiente PYPI_TOKEN não definida"; \
 		exit 1; \
 	fi
-	@echo "Publicando versão $(VERSION) no PyPI..."
-	@$(ACTIVATE) && $(PYTHON_ENV) twine upload --non-interactive --repository-url https://upload.pypi.org/legacy/ \
-		--username __token__ --password $(PYPI_KEY) \
-		$(BUILD_DIR)/*
+	@echo "Publicando pacote no PyPI..."
+	@$(ACTIVATE) && $(PYTHON_ENV) python -m twine upload --repository-url https://upload.pypi.org/legacy/ \
+		--username __token__ \
+		--password $(PYPI_TOKEN) \
+		dist/*
 	@echo "Publicação concluída!"
 
 # Target para testar o CLI da ferramenta

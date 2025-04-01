@@ -25,7 +25,7 @@ from src.core import (
     validate_env,
 )
 
-__version__ = "0.1.0"
+__version__ = "2025.04.01.1"
 
 __all__ = [
     # Versão

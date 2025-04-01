@@ -18,9 +18,17 @@ os.environ["MYPY_DISALLOW_UNTYPED_DEFS"] = "1"
 os.environ["MYPY_CHECK_UNTYPED_DEFS"] = "1"
 os.environ["PYTEST_ADDOPTS"] = "-v --cov=src --cov-report=term-missing"
 
+# Configuração do commitizen
+os.environ["CZ_TYPE"] = "conventional"
+os.environ["CZ_MAX_HEADER_LENGTH"] = "72"
+os.environ["CZ_MAX_LINE_LENGTH"] = "100"
+os.environ["CZ_VERSION_SCHEME"] = "semver"
+os.environ["CZ_VERSION_FILES"] = "setup.py:version,src/__init__.py:__version__"
+os.environ["CZ_CUSTOMIZE_HOOK"] = "cz_customize"
+
 setup(
     name="agent-flow-craft",
-    version="0.1.0",
+    version="2025.04.01.1",
     description="Framework para automação de fluxo de criação de features usando agentes de IA",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
@@ -50,10 +58,12 @@ setup(
         "flake8>=6.1.0",
         "mypy>=1.5.0",
         "autoflake>=2.2.0",
+        "commitizen>=3.12.0",
     ],
     entry_points={
         "console_scripts": [
             "agent-flow-craft=src.cli.cli:app",
+            "cz=commitizen.cli:main",
         ],
     },
     classifiers=[
@@ -67,7 +77,7 @@ setup(
         "Programming Language :: Python :: 3.11",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
-    setup_requires=["setuptools>=61.0.0", "wheel"],
+    setup_requires=["setuptools>=61.0.0", "wheel>=0.40.0"],
     options={
         "flake8": {
             "max_line_length": 100,
