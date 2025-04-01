@@ -1,6 +1,6 @@
 .PHONY: install setup test lint format start-agent update-docs-index clean clean-pycache all create-venv \
 	pack deploy undeploy install-cursor install-simple-mcp help build publish version version-info find-commit update-changelog compare-versions test-mcp-e2e \
-	start-concept-agent start-feature-concept-agent start-concept-guardrail-agent start-github-agent start-coordinator-agent start-context-manager start-validator start-tdd-criteria-agent start-tdd-guardrail-agent setup-env clean-cache \
+	start-concept-agent start-feature-concept-agent start-concept-guardrail-agent start-github-agent prompt-creator start-context-manager start-validator start-tdd-criteria-agent start-tdd-guardrail-agent setup-env clean-cache \
 	start-refactor-agent test-refactor-file-ops
 
 VERSION := $(shell python3 -c "import time; print(time.strftime('%Y.%m.%d'))")
@@ -76,19 +76,6 @@ help:
 	@echo "      7. Salva os critérios no diretório de contexto com um ID único"
 	@echo "      8. Retorna os critérios TDD completos para uso na implementação"
 	@echo ""
-	@echo "  make start-tdd-guardrail-agent criteria_id=\"...\" concept_id=\"...\" project_dir=\"...\"  Inicia o agente guardrail de critérios TDD (TDDGuardrailAgent)"
-	@echo "    Opções: [output=\"...\"] [context_dir=\"...\"] [openai_token=\"...\"] [model=\"<modelo_openai>\"] [elevation_model=\"<modelo_elevacao>\"] [force=true]"
-	@echo "    Exemplo: make start-tdd-guardrail-agent criteria_id=\"tdd_criteria_20240328_123456\" concept_id=\"feature_concept_20240328_123456\" project_dir=\"/Users/mal/GitHub/agent-flow-craft-aider\" model=\"gpt-4-turbo\" elevation_model=\"gpt-4-turbo\""
-	@echo "    Tarefas executadas:"
-	@echo "      1. Inicializa o TDDGuardrailAgent com o token OpenAI e modelo especificados"
-	@echo "      2. Carrega os critérios TDD e o conceito da feature dos arquivos de contexto especificados"
-	@echo "      3. Avalia a qualidade dos critérios TDD existentes (pontuação, problemas, etc.)"
-	@echo "      4. Verifica se os critérios incluem elementos de UI (que devem ser evitados)"
-	@echo "      5. Se necessário, gera um prompt otimizado para melhorar os critérios"
-	@echo "      6. Solicita à API OpenAI critérios TDD aprimorados, focados em API/CLI (não em UI)"
-	@echo "      7. Salva os critérios melhorados no diretório de contexto com um ID único"
-	@echo "      8. Retorna uma avaliação completa e os critérios TDD aprimorados"
-	@echo ""
 	@echo "  make start-github-agent context_id=\"...\"      Inicia o agente de integração com GitHub (GitHubIntegrationAgent)"
 	@echo "    Opções: [project_dir=\"...\"] [context_dir=\"...\"] [base_branch=\"...\"] [github_token=\"...\"] [owner=\"...\"] [repo=\"...\"] [model=\"<modelo_openai>\"] [elevation_model=\"<modelo_elevacao>\"] [force=true]"
 	@echo "    Exemplo: make start-github-agent context_id=\"feature_concept_20240601_123456\" project_dir=\"/Users/mal/GitHub/agent-flow-craft-aider\" owner=\"Malnati\" repo=\"agent-flow-craft-aider\" model=\"gpt-4-turbo\" elevation_model=\"gpt-4-turbo\""
@@ -101,9 +88,9 @@ help:
 	@echo "      6. Cria um pull request no GitHub associado à issue e branch"
 	@echo "      7. Retorna um JSON com issue_number, branch_name e status da integração"
 	@echo ""
-	@echo "  make start-coordinator-agent prompt=\"...\"    Inicia o agente coordenador (FeatureCoordinatorAgent)"
+	@echo "  make prompt-creator prompt=\"...\"    Inicia o agente coordenador (FeatureCoordinatorAgent)"
 	@echo "    Opções: [plan_file=\"...\"] [project_dir=\"...\"] [output=\"...\"] [context_dir=\"...\"] [github_token=\"...\"] [openai_token=\"...\"] [model=\"<modelo_openai>\"] [elevation_model=\"<modelo_elevacao>\"] [force=true]"
-	@echo "    Exemplo: make start-coordinator-agent prompt=\"Implementar sistema de notificações\" project_dir=\"/Users/mal/GitHub/agent-flow-craft-aider\" model=\"gpt-4-turbo\" elevation_model=\"gpt-4-turbo\""
+	@echo "    Exemplo: make prompt-creator prompt=\"Implementar sistema de notificações\" project_dir=\"/Users/mal/GitHub/agent-flow-craft-aider\" model=\"gpt-4-turbo\" elevation_model=\"gpt-4-turbo\""
 	@echo "    Tarefas executadas:"
 	@echo "      1. Inicializa o FeatureCoordinatorAgent com tokens e diretórios configurados"
 	@echo "      2. Configura o ConceptGenerationAgent interno com o modelo especificado"
@@ -114,21 +101,6 @@ help:
 	@echo "      7. Processa o conceito no GitHub usando o GitHubIntegrationAgent"
 	@echo "      8. Orquestra todo o fluxo entre os diferentes agentes especializados"
 	@echo "      9. Retorna um resultado consolidado com todas as informações do processo"
-	@echo ""
-	@echo "  make start-context-manager operation=\"...\"   Executa operação do gerenciador de contexto (listar, obter, criar, etc.)"
-	@echo "    Opções: [context_id=\"...\"] [data_file=\"...\"] [limit=10] [type=\"...\"] [context_dir=\"...\"] [output=\"...\"]"
-	@echo "    Exemplo: make start-context-manager operation=\"listar\" context_dir=\"agent_context\" limit=5"
-	@echo "    Tarefas executadas:"
-	@echo "      1. Inicializa o ContextManager com o diretório de contexto especificado"
-	@echo "      2. Baseado na operação solicitada, executa uma das seguintes ações:"
-	@echo "         - lista: Lista os contextos disponíveis com limite e filtro por tipo"
-	@echo "         - obter: Recupera um contexto específico pelo ID"
-	@echo "         - criar: Cria um novo contexto a partir de um arquivo JSON"
-	@echo "         - atualizar: Atualiza um contexto existente com novos dados"
-	@echo "         - excluir: Remove um contexto pelo ID"
-	@echo "         - limpar: Remove contextos antigos com base em dias especificados"
-	@echo "      3. Formata e exibe o resultado da operação solicitada"
-	@echo "      4. Opcionalmente salva o resultado em um arquivo de saída"
 	@echo ""
 	@echo "  make start-validator plan_file=\"...\"         Executa o validador de planos em um arquivo JSON"
 	@echo "    Opções: [output=\"...\"] [requirements=\"...\"] [context_dir=\"...\"] [project_dir=\"...\"] [openai_token=\"...\"] [model=\"<modelo_openai>\"]"
@@ -231,7 +203,7 @@ start-feature-concept-agent: create-venv print-no-pycache-message
 		exit 1; \
 	fi
 	@echo "Executando agente de feature concept com concept_id: \"$(concept_id)\""
-	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_fagent_feature_concept.py \
+	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_agent_feature_concept.py \
 		"$(concept_id)" \
 		$(if $(output),--output "$(output)",) \
 		$(if $(context_dir),--context_dir "$(context_dir)",) \
@@ -240,26 +212,6 @@ start-feature-concept-agent: create-venv print-no-pycache-message
 		$(if $(model),--model "$(model)",) \
 		$(if $(elevation_model),--elevation_model "$(elevation_model)",) \
 		$(if $(force),--force,) \
-		$(ARGS)
-
-# Target para iniciar o agente guardrail de conceito (ConceptGuardrailAgent)
-start-concept-guardrail-agent: create-venv print-no-pycache-message
-	@if [ -z "$(concept_id)" ] || [ -z "$(prompt)" ]; then \
-		echo "Uso: make start-concept-guardrail-agent concept_id=\"<id_do_conceito>\" prompt=\"<prompt_original>\" [project_dir=\"<diretório>\"] [output=\"<arquivo_saida>\"] [context_dir=\"<dir_contexto>\"] [model=\"<modelo_openai>\"] [elevation_model=\"<modelo_elevacao>\"] [force=true]"; \
-		exit 1; \
-	fi
-	@echo "Executando guardrail de conceito com concept_id: \"$(concept_id)\" e prompt: \"$(prompt)\""
-	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_concept_guardrail_agent.py \
-		"$(concept_id)" \
-		"$(prompt)" \
-		$(if $(project_dir),--project_dir "$(project_dir)",) \
-		$(if $(output),--output "$(output)",) \
-		$(if $(context_dir),--context_dir "$(context_dir)",) \
-		$(if $(openai_token),--openai_token "$(openai_token)",) \
-		$(if $(model),--model "$(model)",) \
-		$(if $(elevation_model),--elevation_model "$(elevation_model)",) \
-		$(if $(force),--force,) \
-		$(if $(is_async),--async,) \
 		$(ARGS)
 
 # Target para iniciar o agente GitHub (GitHubIntegrationAgent)
@@ -268,7 +220,7 @@ start-github-agent: check-env create-venv print-no-pycache-message
 		echo "Uso: make start-github-agent context_id=\"<id>\" [project_dir=\"<diretório>\"] [context_dir=\"<diretório>\"] [base_branch=\"<branch>\"] [github_token=\"<token>\"] [owner=\"<owner>\"] [repo=\"<repo>\"] [model=\"<modelo_openai>\"] [elevation_model=\"<modelo_elevacao>\"] [force=true]"; \
 		exit 1; \
 	fi
-	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_github_agent.py \
+	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_agent_github_integration.py \
 		"$(context_id)" \
 		$(if $(project_dir),--project_dir "$(project_dir)",) \
 		$(if $(context_dir),--context_dir "$(context_dir)",) \
@@ -282,13 +234,13 @@ start-github-agent: check-env create-venv print-no-pycache-message
 		$(ARGS)
 
 # Target para iniciar o agente coordenador (FeatureCoordinatorAgent)
-start-coordinator-agent: create-venv print-no-pycache-message
+prompt-creator: create-venv print-no-pycache-message
 	@if [ -z "$(prompt)" ]; then \
-		echo "Uso: make start-coordinator-agent prompt=\"<descricao>\" [project_dir=\"<diretório>\"] [output=\"<arquivo_saida>\"] [context_dir=\"<dir_contexto>\"] [model=\"<modelo_openai>\"] [elevation_model=\"<modelo_elevacao>\"] [force=true]"; \
+		echo "Uso: make prompt-creator prompt=\"<descricao>\" [project_dir=\"<diretório>\"] [output=\"<arquivo_saida>\"] [context_dir=\"<dir_contexto>\"] [model=\"<modelo_openai>\"] [elevation_model=\"<modelo_elevacao>\"] [force=true]"; \
 		exit 1; \
 	fi
 	@echo "Executando agente coordenador com prompt: \"$(prompt)\""
-	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_coordinator_agent.py \
+	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_agent_feature_coordinator.py \
 		"$(prompt)" \
 		$(if $(project_dir),--target "$(project_dir)",) \
 		$(if $(output),--output "$(output)",) \
@@ -301,31 +253,6 @@ start-coordinator-agent: create-venv print-no-pycache-message
 		$(if $(elevation_model),--elevation_model "$(elevation_model)",) \
 		$(if $(force),--force,) \
 		$(ARGS)
-
-# Target para gerenciador de contexto (ContextManager)
-start-context-manager: create-venv print-no-pycache-message
-	@if [ -z "$(operation)" ]; then \
-		echo "Uso: make start-context-manager operation=<lista|obter|criar|atualizar|excluir> [context_id=\"<id>\"] [data_file=\"<arquivo.json>\"] [limit=10] [type=\"<tipo>\"] [context_dir=\"<dir_contexto>\"]"; \
-		echo "Operações disponíveis:"; \
-		echo "  lista   - Lista contextos. Opções: [limit=10] [type=\"tipo\"]"; \
-		echo "  obter   - Obtém um contexto. Requer: context_id=\"id\""; \
-		echo "  criar   - Cria um contexto. Requer: data_file=\"arquivo.json\" [type=\"tipo\"]"; \
-		echo "  atualizar - Atualiza um contexto. Requer: context_id=\"id\" data_file=\"arquivo.json\" [merge=true|false]"; \
-		echo "  excluir - Exclui um contexto. Requer: context_id=\"id\""; \
-		echo "  limpar  - Remove contextos antigos. Opções: [days=7]"; \
-		exit 1; \
-	fi
-	@echo "Executando gerenciador de contexto com operação: \"$(operation)\""
-	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_context_manager.py \
-		"$(operation)" \
-		$(if $(context_id),--context_id "$(context_id)",) \
-		$(if $(data_file),--data_file "$(data_file)",) \
-		$(if $(type),--type "$(type)",) \
-		$(if $(limit),--limit $(limit),) \
-		$(if $(days),--days $(days),) \
-		$(if $(merge),--merge $(merge),) \
-		$(if $(output),--output "$(output)",) \
-		$(if $(context_dir),--context_dir "$(context_dir)",)
 
 # Target para validador de planos (PlanValidator)
 start-validator: create-venv print-no-pycache-message
@@ -352,25 +279,6 @@ start-tdd-criteria-agent: create-venv print-no-pycache-message
 	@echo "Executando gerador de critérios TDD com context_id: \"$(context_id)\""
 	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_agent_tdd_criteria_agent.py \
 		"$(context_id)" \
-		--project_dir "$(project_dir)" \
-		$(if $(output),--output "$(output)",) \
-		$(if $(context_dir),--context_dir "$(context_dir)",) \
-		$(if $(openai_token),--openai_token "$(openai_token)",) \
-		$(if $(model),--model "$(model)",) \
-		$(if $(elevation_model),--elevation_model "$(elevation_model)",) \
-		$(if $(force),--force,) \
-		$(ARGS)
-
-# Target para guardrail de critérios TDD (TDDGuardrailAgent)
-start-tdd-guardrail-agent: create-venv print-no-pycache-message
-	@if [ -z "$(criteria_id)" ] || [ -z "$(concept_id)" ] || [ -z "$(project_dir)" ]; then \
-		echo "Uso: make start-tdd-guardrail-agent criteria_id=\"<id_dos_criterios>\" concept_id=\"<id_do_conceito>\" project_dir=\"<diretório>\" [output=\"<arquivo_saida>\"] [context_dir=\"<dir_contexto>\"] [model=\"<modelo_openai>\"] [elevation_model=\"<modelo_elevacao>\"] [force=true]"; \
-		exit 1; \
-	fi
-	@echo "Executando guardrail de critérios TDD com criteria_id: \"$(criteria_id)\" e concept_id: \"$(concept_id)\""
-	@$(ACTIVATE) && $(PYTHON_ENV) PYTHONPATH=./src python -B src/scripts/run_tdd_guardrail_agent.py \
-		"$(criteria_id)" \
-		"$(concept_id)" \
 		--project_dir "$(project_dir)" \
 		$(if $(output),--output "$(output)",) \
 		$(if $(context_dir),--context_dir "$(context_dir)",) \
